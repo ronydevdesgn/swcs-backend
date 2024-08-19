@@ -1,0 +1,29 @@
+{
+  "name": "swcs-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node dist/server.mjs",
+    "build": "tsup src --format esm",
+    "dev": "tsx watch --env-file .env src/server.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "keywords": [],
+  "author": "ronydevdesgn",
+  "license": "ISC",
+  "description": "O swcs é um sistema web para o controlo de sumário universitario...",
+  "dependencies": {
+    "@prisma/client": "^5.15.1",
+    "fastify": "^4.28.0",
+    "fastify-plugin": "^4.5.1",
+    "mysql2": "^3.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "prisma": "^5.15.1",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.2"
+  }
+}
