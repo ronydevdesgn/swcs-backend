@@ -1,9 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// new code prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,85 +14,93 @@ enum Estado {
 }
 
 enum TipoUsuario {
-  SUMARISTA
+  FUNCIONARIO
   PROFESSOR
 }
 
 model Professor {
-  ProfessorID  Int           @id @default(autoincrement())
-  Nome         String        @db.VarChar(100)
-  Departamento String        @db.VarChar(100)
-  CargaHoraria Int
-  Sumarios     Sumario[]     @relation("ProfessorSumarios")
-  Presencas    Presenca[]
-  Efetividades Efetividade[]
-  Usuario      Usuario?
+  ProfessorID    Int          @id @default(autoincrement())
+  Nome           String       @db.VarChar(100)
+  Departamento   String       @db.VarChar(100)
+  CargaHoraria   Int
+  Sumarios       Sumario[]    @relation("ProfessorSumarios")
+  Presencas      Presenca[]
+  Efetividades   Efetividade[]
+  Usuario        Usuario?     @relation(fields: [UsuarioID], references: [UsuarioID])
+  UsuarioID      Int?         @unique
+}
+
+model Funcionario {
+  FuncionarioID  Int        @id @default(autoincrement())
+  Nome           String     @db.VarChar(100)
+  Email          String     @unique @db.VarChar(255)
+  Cargo          String     @db.VarChar(100) // Ex: "Sumarista", "Secretário"
+  Usuario        Usuario?   @relation(fields: [UsuarioID], references: [UsuarioID])
+  UsuarioID      Int?       @unique
+}
+
+model Usuario {
+  UsuarioID     Int                 @id @default(autoincrement())
+  Nome          String              @db.VarChar(100)
+  Email         String              @unique @db.VarChar(255)
+  SenhaHash     String              @db.VarChar(255)
+  Tipo          TipoUsuario
+  Permissoes    UsuarioPermissao[]
+  Professor     Professor?
+  Funcionario   Funcionario?
+}
+
+model Curso {
+  CursoID      Int        @id @default(autoincrement())
+  Nome         String     @db.VarChar(100)
+  Descricao    String     @db.Text
+  Sumarios     Sumario[]
 }
 
 model Sumario {
-  SumarioID   Int       @id @default(autoincrement())
-  Data        DateTime
-  Conteudo    String    @db.Text
-  CursoID     Int
-  ProfessorID Int
-  Curso       Curso     @relation(fields: [CursoID], references: [CursoID])
-  Professor   Professor @relation("ProfessorSumarios", fields: [ProfessorID], references: [ProfessorID])
+  SumarioID     Int       @id @default(autoincrement())
+  Data          DateTime
+  Conteudo      String    @db.Text
+  CursoID       Int
+  ProfessorID   Int
+  Curso         Curso     @relation(fields: [CursoID], references: [CursoID])
+  Professor     Professor @relation("ProfessorSumarios", fields: [ProfessorID], references: [ProfessorID])
 
   @@index([CursoID])
   @@index([ProfessorID])
 }
 
-model Curso {
-  CursoID   Int       @id @default(autoincrement())
-  Nome      String    @db.VarChar(100)
-  Descricao String    @db.Text
-  Sumarios  Sumario[]
-}
-
 model Presenca {
-  PresencaID  Int       @id @default(autoincrement())
-  Data        DateTime
-  Estado      Estado
-  ProfessorID Int
-  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID])
+  PresencaID   Int       @id @default(autoincrement())
+  Data         DateTime
+  Estado       Estado
+  ProfessorID  Int
+  Professor    Professor @relation(fields: [ProfessorID], references: [ProfessorID])
 
   @@index([ProfessorID])
 }
 
 model Efetividade {
-  EfetividadeID    Int       @id @default(autoincrement())
-  Data             DateTime
+  EfetividadeID  Int       @id @default(autoincrement())
+  Data           DateTime
   HorasTrabalhadas Int
-  ProfessorID      Int
-  Professor        Professor @relation(fields: [ProfessorID], references: [ProfessorID])
-
-  @@index([ProfessorID])
-}
-
-model Usuario {
-  UsuarioID   Int                @id @default(autoincrement())
-  Nome        String             @db.VarChar(100)
-  Email       String             @unique @db.VarChar(100)
-  SenhaHash   String             @db.VarChar(100)
-  Tipo        TipoUsuario
-  ProfessorID Int?               @unique // Pode ser nulo se for Sumarista @unique
-  Professor   Professor?         @relation(fields: [ProfessorID], references: [ProfessorID])
-  Permissoes  UsuarioPermissao[]
+  ProfessorID    Int
+  Professor      Professor @relation(fields: [ProfessorID], references: [ProfessorID])
 
   @@index([ProfessorID])
 }
 
 model Permissao {
-  PermissaoID Int                @id @default(autoincrement())
-  Descricao   String             @db.VarChar(100)
-  Usuarios    UsuarioPermissao[]
+  PermissaoID  Int                @id @default(autoincrement())
+  Descricao    String             @db.VarChar(100)
+  Usuarios     UsuarioPermissao[]
 }
 
 model UsuarioPermissao {
-  UsuarioID   Int
-  PermissaoID Int
-  Usuario     Usuario   @relation(fields: [UsuarioID], references: [UsuarioID])
-  Permissao   Permissao @relation(fields: [PermissaoID], references: [PermissaoID])
+  UsuarioID    Int
+  PermissaoID  Int
+  Usuario      Usuario   @relation(fields: [UsuarioID], references: [UsuarioID])
+  Permissao    Permissao @relation(fields: [PermissaoID], references: [PermissaoID])
 
   @@id([UsuarioID, PermissaoID])
 }
