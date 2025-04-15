@@ -1,1 +1,1 @@
-# Project Back-End For Server SWCS
+# Project Back-End for server SWCS
