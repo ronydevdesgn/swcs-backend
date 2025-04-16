@@ -1,4 +1,7 @@
-// new code prisma
+// prisma/schema.prisma
+
+// Atualizado conforme novo schema com Funcionario, enums e ajustes
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -33,7 +36,7 @@ model Professor {
 model Funcionario {
   FuncionarioID  Int        @id @default(autoincrement())
   Nome           String     @db.VarChar(100)
-  Email          String     @unique @db.VarChar(255)
+  Email          String     @unique @db.VarChar(100)
   Cargo          String     @db.VarChar(100) // Ex: "Sumarista", "Secretário"
   Usuario        Usuario?   @relation(fields: [UsuarioID], references: [UsuarioID])
   UsuarioID      Int?       @unique
@@ -42,8 +45,8 @@ model Funcionario {
 model Usuario {
   UsuarioID     Int                 @id @default(autoincrement())
   Nome          String              @db.VarChar(100)
-  Email         String              @unique @db.VarChar(255)
-  SenhaHash     String              @db.VarChar(255)
+  Email         String              @unique @db.VarChar(100)
+  SenhaHash     String              @db.VarChar(100)
   Tipo          TipoUsuario
   Permissoes    UsuarioPermissao[]
   Professor     Professor?

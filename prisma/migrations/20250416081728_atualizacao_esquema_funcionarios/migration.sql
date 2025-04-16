@@ -20,15 +20,13 @@ ALTER TABLE `professor` ADD COLUMN `UsuarioID` INTEGER NULL;
 
 -- AlterTable
 ALTER TABLE `usuario` DROP COLUMN `ProfessorID`,
-    MODIFY `Email` VARCHAR(255) NOT NULL,
-    MODIFY `SenhaHash` VARCHAR(255) NOT NULL,
     MODIFY `Tipo` ENUM('FUNCIONARIO', 'PROFESSOR') NOT NULL;
 
 -- CreateTable
 CREATE TABLE `Funcionario` (
     `FuncionarioID` INTEGER NOT NULL AUTO_INCREMENT,
     `Nome` VARCHAR(100) NOT NULL,
-    `Email` VARCHAR(255) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL,
     `Cargo` VARCHAR(100) NOT NULL,
     `UsuarioID` INTEGER NULL,
 
