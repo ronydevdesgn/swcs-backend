@@ -1,16 +1,17 @@
-import Fastify from 'fastify'
-import dotenv from 'dotenv'
-import prismaPlugin from './plugins/prisma'
-import swagger from './plugins/swagger'
-import authRoutes from './routes/auth.routes'
-import professorRoutes from './routes/professor.routes'
-import funcionarioRoutes from './routes/funcionario.routes'
-import usuarioRoutes from './routes/usuario.routes'
-import permissoesRoutes from './routes/permissoes.routes'
-import cursosRoutes from './routes/cursos.routes'
-import sumariosRoutes from './routes/sumarios.routes'
-import presencasRoutes from './routes/presencas.routes'
-import efetividadesRoutes from './routes/efetividades.routes'
+import Fastify from 'fastify';
+import dotenv from 'dotenv';
+import prismaPlugin from './plugins/prisma';
+import swagger from './plugins/swagger';
+import authRoutes from './routers/auth.routes';
+import professorRoutes from './routers/professor.routes';
+import funcionarioRoutes from "./routers/funcionario.routes";
+import usuarioRoutes from './routers/usuario.routes';
+import permissoesRoutes from './routers/permissoes.routes';
+import cursosRoutes from './routers/cursos.routes';
+import sumariosRoutes from './routers/sumarios.routes';
+import presencasRoutes from './routers/presencas.routes';
+import efetividadesRoutes from './routers/efetividades.routes';
+
 
 dotenv.config()
 
@@ -30,10 +31,10 @@ app.register(efetividadesRoutes, { prefix: '/efetividades' })
 
 const start = async () => {
   try {
-    await app.listen({ port: 3000 })
+    await app.listen({ port: 3306 })
   } catch (err) {
     app.log.error(err)
-    console.log(`Servidor está agora ouvindo a porta 3000`);
+    console.log(`Servidor está agora ouvindo a porta 3306`);
     process.exit(1)
   }
 }

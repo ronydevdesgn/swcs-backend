@@ -6,7 +6,7 @@ export default fp(async (fastify) => {
   await fastify.register(fastifySwagger, {
     swagger: {
       info: {
-        title: 'Sistema de Professores e Funcionários',
+        title: 'SWCS de Professores e Funcionários',
         description: 'API documentada com Swagger',
         version: '1.0.0',
       },
