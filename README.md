@@ -11,7 +11,7 @@
 - Zod, 
 - Autenticação JWT, 
 - Swagger, 
-- E testes com Jest.
+- E Jest para testes.
 
  O projecto apresenta a seguinte estrutura de pastas:<br>
  ├── <b>src</b><br>
