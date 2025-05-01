@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { verificarToken } from '../utils/jwt'
+import { verificarToken } from '../utils/jwt.js'
 
 export async function autenticar(req: FastifyRequest, reply: FastifyReply) {
   const authHeader = req.headers.authorization

@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { loginSchema } from '../schemas/auth.schema'
-import { compararSenha } from '../utils/hash'
-import { gerarToken } from '../utils/jwt'
+import { loginSchema } from '../schemas/auth.schema.js'
+import { compararSenha } from '../utils/hash.js'
+import { gerarToken } from '../utils/jwt.js'
 
 export async function loginHandler(request: FastifyRequest, reply: FastifyReply) {
   const { email, senha } = loginSchema.parse(request.body)
