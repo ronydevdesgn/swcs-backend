@@ -25,3 +25,8 @@ export const getUsuarioSchema = z.object({
   message: "Custom validation failed",
   path: ["custom"],
 });
+
+// deleteUsuarioSchema
+export const deleteUsuarioSchema = z.object({
+  id: z.string().uuid(),
+}).strict();

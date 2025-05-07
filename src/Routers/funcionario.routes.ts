@@ -3,9 +3,9 @@ import {
   criarFuncionario,
   listarFuncionarios,
   atualizarFuncionario,
-  removerFuncionario,
-} from "../controllers/funcionario.controller";
-import { autenticar } from "../middlewares/authMiddleware";
+  deletarFuncionario,
+} from "../controllers/funcionario.controller.js";
+import { autenticar } from "../middlewares/authMiddleware.js";
 
 export default async function funcionarioRoutes(fastify: FastifyInstance) {
   fastify.addHook("onRequest", autenticar);
@@ -13,5 +13,5 @@ export default async function funcionarioRoutes(fastify: FastifyInstance) {
   fastify.get("/", listarFuncionarios);
   fastify.post("/", criarFuncionario);
   fastify.put("/:id", atualizarFuncionario);
-  fastify.delete("/:id", removerFuncionario);
+  fastify.delete("/:id", deletarFuncionario);
 }
