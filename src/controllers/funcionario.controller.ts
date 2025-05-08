@@ -95,21 +95,24 @@
 // }
 
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { prisma } from '../plugins/prisma.js';
 import { criarFuncionarioSchema, atualizarFuncionarioSchema } from '../schemas/funcionario.schema.js';
 
 export async function criarFuncionario(req: FastifyRequest, reply: FastifyReply) {
+  const prisma = req.server.prisma;
+  // Verifica se o usuário está autenticado
   const data = criarFuncionarioSchema.parse(req.body);
   const funcionario = await prisma.funcionario.create({ data });
   return reply.status(201).send(funcionario);
 }
 
-export async function listarFuncionarios(_: FastifyRequest, reply: FastifyReply) {
+export async function listarFuncionarios(req: FastifyRequest, reply: FastifyReply) {
+  const prisma = req.server.prisma;
   const funcionarios = await prisma.funcionario.findMany();
   return reply.send(funcionarios);
 }
 
 export async function atualizarFuncionario(req: FastifyRequest, reply: FastifyReply) {
+  const prisma = req.server.prisma;
   const id = Number((req.params as any).id);
   const data = atualizarFuncionarioSchema.parse(req.body);
   const funcionario = await prisma.funcionario.update({ where: { FuncionarioID: id }, data });
@@ -117,6 +120,8 @@ export async function atualizarFuncionario(req: FastifyRequest, reply: FastifyRe
 }
 
 export async function deletarFuncionario(req: FastifyRequest, reply: FastifyReply) {
+  const prisma = req.server.prisma;
+  // Verifica se o usuário está autenticado
   const id = Number((req.params as any).id);
   await prisma.funcionario.delete({ where: { FuncionarioID: id } });
   return reply.status(204).send();

@@ -1,10 +1,11 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { loginSchema } from '../schemas/auth.schema.js';
-import { prisma } from '../plugins/prisma.js';
 import { compararSenha } from '../utils/hash.js';
 import { gerarToken } from '../utils/jwt.js';
 
+
 export async function loginHandler(req: FastifyRequest, reply: FastifyReply) {
+  const prisma = req.server.prisma;
   const { email, senha } = loginSchema.parse(req.body);
 
   const usuario = await prisma.usuario.findUnique({ where: { Email: email } });
