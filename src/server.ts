@@ -15,7 +15,7 @@ import efetividadesRoutes from './routers/efetividades.routes.js';
 
 dotenv.config()
 
-const app = Fastify({ logger: true })
+export const app = Fastify({ logger: true })
 
 app.register(prismaPlugin)
 app.register(swagger)
