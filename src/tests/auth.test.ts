@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { app } from '../server.js';
-import request from 'supertest';
+// import request from 'supertest';
 
 describe('Auth Routes', () => {
   let server: ReturnType<typeof Fastify>;  
@@ -21,17 +21,21 @@ describe('Auth Routes', () => {
 
   it('should login with valid credentials', async () => {
     // Assumindo que já exista um usuário seed
-    const res = await request(server.server)
-      .post('/auth/login')
-      .send({ email: 'admin@teste.com', senha: 'senha123' });
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('token');
+    const res = await server.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'admin@teste.com', senha: 'senha123' }
+    });
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.payload)).toHaveProperty('token');
   });
 
   it('should reject invalid credentials', async () => {
-    const res = await request(server.server)
-      .post('/auth/login')
-      .send({ email: 'naoexistente@teste.com', senha: 'errada' });
-    expect(res.status).toBe(401);
+    const res = await server.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'naoexistente@teste.com', senha: 'errada' }
+    });
+    expect(res.statusCode).toBe(401);
   });
 });
