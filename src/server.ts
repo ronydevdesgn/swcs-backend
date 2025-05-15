@@ -31,10 +31,10 @@ app.register(efetividadesRoutes, { prefix: '/efetividades' })
 
 const start = async () => {
   try {
-    await app.listen({ port: 3306 })
+    await app.listen({ port: 3000 })
   } catch (err) {
     app.log.error(err)
-    console.log(`Servidor está agora ouvindo a porta 3306`);
+    console.log(`Servidor está agora ouvindo a porta 3000`);
     process.exit(1)
   }
 }

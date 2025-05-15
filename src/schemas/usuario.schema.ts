@@ -19,6 +19,8 @@ export const getUsuarioSchema = z.object({
   Nome: z.string().optional(),
   Email: z.string().email().optional(),
   Senha: z.string().min(6).optional(),
+  Tipo: z.enum(['Professor', 'Sumarista']).optional(),
+  ProfessorID: z.number().optional().nullable(),
 }).strict().refine(data => {
   return data.id !== '';
 }, {

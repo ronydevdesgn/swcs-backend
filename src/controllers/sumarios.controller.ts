@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { createSumarioSchema } from '../schemas/sumarios.schema.js';
+import { createSumarioSchema } from '../schemas/sumarios.schema';
 
 export async function criarSumario(req: FastifyRequest, reply: FastifyReply) {
   const prisma = req.server.prisma;

@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { createPresencaSchema } from '../schemas/presencas.schema.js';
+import { createPresencaSchema } from '../schemas/presencas.schema';
 
 export async function criarPresenca(req: FastifyRequest, reply: FastifyReply) {
   const prisma = req.server.prisma;

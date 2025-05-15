@@ -1,7 +1,7 @@
 {
-  "name": "SWCS - BackEnd",
+  "name": "@swcs/backend",
   "version": "1.0.1",
-  "type": "module",
+  "type": "commonjs",
   "main": "server.ts",
   "scripts": {
     "start": "node dist/server.mjs",
@@ -18,8 +18,8 @@
   "license": "ISC",
   "description": "O swcs é um sistema web para o controlo de sumário universitario...",
   "dependencies": {
-    "@fastify/swagger": "^9.5.0",
-    "@fastify/swagger-ui": "^5.2.2",
+    "@fastify/swagger": "^6.1.1",
+    "@fastify/swagger-ui": "^4.2.0",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",

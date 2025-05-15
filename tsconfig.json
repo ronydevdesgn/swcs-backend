@@ -4,14 +4,14 @@
 
    "compilerOptions" : {
       "lib": [ "ES2023" ],
-      "module": "Node16",
+      "module": "commonjs",
       "target": "ES2023",
       "strict": true,
       "esModuleInterop": true,
       "skipDefaultLibCheck": false,
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
-      "moduleResolution": "node16",
+      "moduleResolution": "node",
       "outDir": "./dist",
       "sourceMap": true
    },

@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { createProfessorSchema, updateProfessorSchema } from '../schemas/professor.schema.js';
+import { createProfessorSchema, updateProfessorSchema } from '../schemas/professor.schema';
 
 export async function criarProfessor(req: FastifyRequest, reply: FastifyReply) {
   const prisma = req.server.prisma;
