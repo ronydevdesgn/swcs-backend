@@ -1,16 +1,16 @@
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
-import prismaPlugin from './plugins/prisma.js';
-import swagger from './plugins/swagger.js';
-import authRoutes from './routers/auth.routes.js';
-import professorRoutes from './routers/professor.routes.js';
-import funcionarioRoutes from "./routers/funcionario.routes.js";
-import usuarioRoutes from './routers/usuario.routes.js';
-import permissoesRoutes from './routers/permissoes.routes.js';
-import cursosRoutes from './routers/cursos.routes.js';
-import sumariosRoutes from './routers/sumarios.routes.js';
-import presencasRoutes from './routers/presencas.routes.js';
-import efetividadesRoutes from './routers/efetividades.routes.js';
+import prismaPlugin from './plugins/prisma';
+import swagger from './plugins/swagger';
+import authRoutes from './Routers/auth.routes';
+import professorRoutes from './Routers/professor.routes.js';
+import funcionarioRoutes from "./Routers/funcionario.routes.js";
+import usuarioRoutes from './Routers/usuario.routes.js';
+import permissoesRoutes from './Routers/permissoes.routes.js';
+import cursosRoutes from './Routers/cursos.routes.js';
+import sumariosRoutes from './Routers/sumarios.routes.js';
+import presencasRoutes from './Routers/presencas.routes.js';
+import efetividadesRoutes from './Routers/efetividades.routes.js';
 
 
 dotenv.config()
