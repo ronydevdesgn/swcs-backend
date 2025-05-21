@@ -21,14 +21,17 @@ export default fp(async (fastify) => {
         { name: 'presencas' },
         { name: 'efetividades' }
       ],
+      host: 'localhost:3306',
+      schemes: ['http'],
+      consumes: ['application/json'],
+      produces: ['application/json'],
     },
   })
 
   await fastify.register(fastifySwaggerUi, {
     routePrefix: '/docs',
     uiConfig: {
-      docExpansion: 'full',
-      deepLinking: false,
+      docExpansion: 'full'
     },
   })
 
