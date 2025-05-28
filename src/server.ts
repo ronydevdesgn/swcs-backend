@@ -29,6 +29,27 @@ export const app = Fastify({ logger: true })
   // habilita o TypeProvider que faz converter Zod→JSONSchema
   .withTypeProvider<ZodTypeProvider>();
 
+// ROTA PADRÃO
+app.get('/', async (request, reply) => {
+  return { 
+    message: 'SWCS BACKEND API IS RUNNING',
+    status: 'server running',
+    docs: '/docs',
+    version: '1.0.1',
+    endpoints: {
+      auth: '/auth',
+      professores: '/professores',
+      funcionarios: '/funcionarios',
+      usuarios: '/usuarios',
+      permissoes: '/permissoes',
+      cursos: '/cursos',
+      sumarios: '/sumarios',
+      presencas: '/presencas',
+      efetividades: '/efetividades'
+    }
+  }
+})
+
 app.register(prismaPlugin)
 app.register(swagger)
 app.register(authRoutes, { prefix: '/auth' })
@@ -41,16 +62,62 @@ app.register(sumariosRoutes, { prefix: '/sumarios' })
 app.register(presencasRoutes, { prefix: '/presencas' })
 app.register(efetividadesRoutes, { prefix: '/efetividades' })
 
+/** Configura o cabeçalho CORS para permitir requisições do meu frontend
+ Isso é necessário para que o frontend possa fazer requisições para o backend
+ e evitar problemas de CORS (Cross-Origin Resource Sharing)
+*/
+app.addHook('onRequest', (request, reply, done) => {
+  reply.header('Access-Control-Allow-Origin', 'http://localhost:5173/')
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  done()
+})
+
+/** Tratamento de erros 404 do Fastify
+ Isso é necessário para que o Fastify retorne um erro 404 personalizado
+ quando uma rota não for encontrada.
+*/
+app.setNotFoundHandler((request, reply) => {
+  reply.status(404).send({
+    statusCode: 404,
+    error: 'Not Found',
+    message: `Rota ${request.method} ${request.url} não encontrada`,
+  });
+});
+
+app.setErrorHandler((error, request, reply) => {
+  app.log.error(error);
+  reply.status(error.statusCode || 500).send({
+    statusCode: error.statusCode || 500,
+    error: error.name,
+    message: error.message || 'Erro interno do servidor',
+  });
+});
+
 const start = async () => {
   try {
     await app.listen({ port: 3000 })
-  } catch (err) {
-    app.log.error(err)
     console.log(`Servidor está agora ouvindo a rota http://localhost:3000`)
     console.log(`Swagger docs está disponível na rota http://localhost:3000/docs`)
+  } catch (err) {
+    app.log.error(err)
     // Se o servidor não conseguir iniciar, exibe o erro e encerra o processo
-    process.exit(1)
+    console.error('Erro ao iniciar o servidor:', err);
+    app.close();
+
+    if (err instanceof Error) {
+      console.error('Mensagem de erro:', err.message);
+      console.error('Stack trace:', err.stack);
+    } else {
+      console.error('Erro desconhecido:', err);
+    }
+
+    process.exit(1);
+
   }
+  console.error('Servidor encerrado devido a um erro crítico.');
+  app.close();
+  process.exit(1);
 }
 
 start();
