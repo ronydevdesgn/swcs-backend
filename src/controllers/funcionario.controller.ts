@@ -6,9 +6,14 @@ export async function criarFuncionario(
   reply: FastifyReply
 ) {
   const prisma = req.server.prisma;
-  // Valida o body
-  const data = criarFuncionarioSchema.parse(req.body);
-  // Cria o funcionário
+  /**
+ * Valida e analisa o corpo da solicitação usando o criarFuncionarioSchema
+ * Converte os dados analisados ​​para o tipo 'qualquer' para tratamento flexível de dados
+ */
+ const data = criarFuncionarioSchema.parse(req.body) as any;
+ /**
+ * Cria o funcionário no banco de dados
+ */
   const funcionario = await prisma.funcionario.create({ data });
   return reply.status(201).send(funcionario);
 }

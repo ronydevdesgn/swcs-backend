@@ -1,3 +1,4 @@
+import { Estado } from '@prisma/client';
 import { z } from 'zod';
 
 /** 
@@ -8,7 +9,7 @@ import { z } from 'zod';
 */
 export const createPresencaSchema = z.object({
   Data: z.string(),
-  Status: z.enum(['Presente', 'Faltou', 'Justificada']),
+  Estado: z.enum(['Presente', 'Falta']),
   ProfessorID: z.number(),
 });
 
@@ -25,13 +26,13 @@ export const listPresencaSchema = z.object({
 * Esquema de validação para atualizar uma presença existente
 * @param id O identificador único da presença a ser atualizada
 * @param Data A nova data da presença (opcional)
-* @param Status O novo status da presença (Presente, Faltou ou Justificado) (opcional)
+* @param Estado O novo status da presença (Presente, Faltou ou Justificado) (opcional)
 * @param ProfessorID O novo identificador do professor associado à presença (opcional)
 */
 export const updatePresencaSchema = z.object({
   id: z.number(),
   Data: z.string().optional(),
-  Status: z.enum(['Presente', 'Faltou', 'Justificada']).optional(),
+  Estado: z.enum(['Presente', 'Faltou', 'Justificada']).optional(),
   ProfessorID: z.number().optional(),
 });
 
