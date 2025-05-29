@@ -62,12 +62,9 @@ app.register(sumariosRoutes, { prefix: '/sumarios' })
 app.register(presencasRoutes, { prefix: '/presencas' })
 app.register(efetividadesRoutes, { prefix: '/efetividades' })
 
-/** Configura o cabeçalho CORS para permitir requisições do meu frontend
- Isso é necessário para que o frontend possa fazer requisições para o backend
- e evitar problemas de CORS (Cross-Origin Resource Sharing)
-*/
+/** Configuração do CORS */
 app.addHook('onRequest', (request, reply, done) => {
-  reply.header('Access-Control-Allow-Origin', 'http://localhost:5173/')
+  reply.header('Access-Control-Allow-Origin', 'http://localhost:5173') // Removido a barra final
   reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   done()
@@ -96,30 +93,30 @@ app.setErrorHandler((error, request, reply) => {
 
 const start = async () => {
   try {
-    await app.listen({ port: 3000 })
-    console.log(`Servidor está agora ouvindo a rota http://localhost:3000`)
-    console.log(`Swagger docs está disponível na rota http://localhost:3000/docs`)
+    await app.listen({ 
+      port: 3000,
+      host: '0.0.0.0' // Permite conexões de qualquer IP
+    })
+    
+    console.log(`Servidor está agora ouvindo na rota http://localhost:3000`)
+    console.log(`Documentação Swagger disponível em http://localhost:3000/docs`)
+    
   } catch (err) {
     app.log.error(err)
-    // Se o servidor não conseguir iniciar, exibe o erro e encerra o processo
-    console.error('Erro ao iniciar o servidor:', err);
-    app.close();
-
+    console.error('Erro ao iniciar o servidor:', err)
+    
     if (err instanceof Error) {
-      console.error('Mensagem de erro:', err.message);
-      console.error('Stack trace:', err.stack);
+      console.error('Mensagem de erro:', err.message)
+      console.error('Stack trace:', err.stack)
     } else {
-      console.error('Erro desconhecido:', err);
+      console.error('Erro desconhecido:', err)
     }
 
-    process.exit(1);
-
+    await app.close() // Aguarda o fechamento do servidor
+    process.exit(1)
   }
-  console.error('Servidor encerrado devido a um erro crítico.');
-  app.close();
-  process.exit(1);
 }
 
-start();
+start()
 
 export default app;
