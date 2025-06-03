@@ -30,10 +30,10 @@ export const getEfetividadeByProfessorSchema = z.object({
 
 /**
 * Esquema para deletar uma efetividade
-* @param id O identificador único da efetividade a ser deletada
-* @param Data A nova data da efetividade (opcional)
-* @param HorasTrabalhadas O novo número de horas trabalhadas (opcional)
-* @param ProfessorID O novo identificador do professor associado à efetividade (opcional)
+* @param id O identificador único da efetividade a ser deletada.
+* @param Data A nova data da efetividade (opcional).
+* @param HorasTrabalhadas O novo número de horas trabalhadas (opcional).
+* @param ProfessorID O novo identificador do professor associado à efetividade (opcional).
 */
 export const deleteEfetividadeSchema = z.object({
   id: z.number(),

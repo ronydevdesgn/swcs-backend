@@ -13,8 +13,23 @@ export const createSumarioSchema = z.object({
   CursoID: z.number(),
   ProfessorID: z.number(),
 }).partial();
-export const updateSumarioSchema = createSumarioSchema.partial();
+
+// Script para criar um esquema para atualizar um sumário existente
+export const updateSumarioSchema = createSumarioSchema.extend({
+  id: z.number(),
+}).partial();
+
+// Esquema para listar sumários com paginação
+// export const listSumarioSchema = z.object({
+//   page: z.number().min(1).default(1),
+//   limit: z.number().min(1).max(100).default(10),
+// });
+
+// Esquema para obter um sumário específico por ID
 export const getSumarioSchema = z.object({
   id: z.number(),
 });
-export const deleteSumarioSchema = getSumarioSchema.partial();
+
+export const deleteSumarioSchema = z.object({
+  id: z.number(),
+});
