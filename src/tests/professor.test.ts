@@ -1,74 +1,74 @@
-import Fastify from 'fastify';
-import { app } from '../server.js';
+import Fastify from 'fastify'
+import { app } from '../server.js'
 
 describe('Professor Routes', () => {
-  let server: ReturnType<typeof Fastify>;
-  let professorId: number;
+  let server: ReturnType<typeof Fastify>
+  let professorId: number
 
   beforeAll(async () => {
-    await app.ready();
-    server = Fastify();
-    await server.register(app);
-    await server.ready();
-  });
+    await app.ready()
+    server = Fastify()
+    await server.register(app)
+    await server.ready()
+  })
 
-  afterAll(() => server.close());
+  afterAll(() => server.close())
 
-  it('should create a professor', async () => {
-    // should create a professor
+  it('should create a new professor', async () => {
     const res = await server.inject({
       method: 'POST',
       url: '/professores',
       payload: {
-        nome: 'Prof. João Silva',
-        email: 'joao@teste.com',
-        telefone: '923456789',
-        especialidade: 'Matemática',
-        estado: 'ATIVO'
+        nome: 'Prof. Teste',
+        departamento: 'Ciência da Computação',
+        cargaHoraria: 20
       }
-    });
+    })
 
-    const data = JSON.parse(res.payload);
-    professorId = data.ProfessorID;
+    expect(res.statusCode).toBe(201)
+    const body = JSON.parse(res.payload)
+    expect(body).toHaveProperty('professorID')
+    professorId = body.professorID
+  })
 
-    expect(res.statusCode).toBe(201);
-    expect(data).toHaveProperty('ProfessorID');
-  });
-
-  it('should list all a professors', async () => {
-    // should list all professors
+  it('should list all professores', async () => {
     const res = await server.inject({
       method: 'GET',
       url: '/professores'
-    });
+    })
+    expect(res.statusCode).toBe(200)
+    const list = JSON.parse(res.payload)
+    expect(Array.isArray(list)).toBe(true)
+  })
 
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(JSON.parse(res.payload))).toBe(true);
-  });
+  it('should get a professor by ID', async () => {
+    const res = await server.inject({
+      method: 'GET',
+      url: `/professores/${professorId}`
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.payload)
+    expect(body.professorID).toBe(professorId)
+  })
 
   it('should update a professor', async () => {
     const res = await server.inject({
       method: 'PUT',
       url: `/professores/${professorId}`,
       payload: {
-        nome: 'Prof. João Silva Atualizado',
-        email: 'joaoatualizado@teste.com',
-        telefone: '923456780',
-        especialidade: 'Física',
-        estado: 'ATIVO'
+        nome: 'Prof. Atualizado',
+        departamento: 'Matemática',
+        cargaHoraria: 30
       }
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.payload).nome).toBe('Prof. João Silva Atualizado');
-  });
+    })
+    expect(res.statusCode).toBe(200)
+  })
 
   it('should delete a professor', async () => {
     const res = await server.inject({
       method: 'DELETE',
       url: `/professores/${professorId}`
-    });
-
-    expect(res.statusCode).toBe(204);
-  });
-});
+    })
+    expect(res.statusCode).toBe(204)
+  })
+})

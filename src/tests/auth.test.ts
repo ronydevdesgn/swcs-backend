@@ -24,7 +24,10 @@ describe('Auth Routes', () => {
     const res = await server.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: 'admin@teste.com', senha: 'senha123' }
+      payload: { 
+        email: 'admin@teste.com', 
+        senha: 'senha123' 
+      }
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.payload)).toHaveProperty('token');
@@ -34,7 +37,9 @@ describe('Auth Routes', () => {
     const res = await server.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: { email: 'naoexistente@teste.com', senha: 'errada' }
+      payload: { 
+        email: 'naoexistente@teste.com', 
+        senha: 'errada' }
     });
     expect(res.statusCode).toBe(401);
   });

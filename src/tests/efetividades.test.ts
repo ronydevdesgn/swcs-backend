@@ -1,11 +1,10 @@
 import Fastify from 'fastify'
 import { app } from '../server.js'
 
-describe('Sumario Routes', () => {
+describe('Efetividade Routes', () => {
   let server: ReturnType<typeof Fastify>
-  let sumarioId: number
-  const cursoId = 1 // ajuste conforme seu seed
-  const professorId = 1 // ajuste conforme seu seed
+  let efetividadeId: number
+  let professorId = 1 // Ajuste conforme o ProfessorID existente no seu banco
 
   beforeAll(async () => {
     await app.ready()
@@ -16,62 +15,61 @@ describe('Sumario Routes', () => {
 
   afterAll(() => server.close())
 
-  it('should create a new sumario', async () => {
+  it('should create a new efetividade', async () => {
     const res = await server.inject({
       method: 'POST',
-      url: '/sumarios',
+      url: '/efetividades',
       payload: {
         data: new Date().toISOString(),
-        conteudo: 'Revisão de conteúdos da aula anterior.',
-        cursoID: cursoId,
+        horasTrabalhadas: 5,
         professorID: professorId
       }
     })
 
     expect(res.statusCode).toBe(201)
     const body = JSON.parse(res.payload)
-    expect(body).toHaveProperty('sumarioID')
-    sumarioId = body.sumarioID
+    expect(body).toHaveProperty('efetividadeID')
+    efetividadeId = body.efetividadeID
   })
 
-  it('should list all sumarios', async () => {
+  it('should list all efetividades', async () => {
     const res = await server.inject({
       method: 'GET',
-      url: '/sumarios'
+      url: '/efetividades'
     })
 
     expect(res.statusCode).toBe(200)
-    const sumarios = JSON.parse(res.payload)
-    expect(Array.isArray(sumarios)).toBe(true)
+    const efetividades = JSON.parse(res.payload)
+    expect(Array.isArray(efetividades)).toBe(true)
   })
 
-  it('should get a sumario by ID', async () => {
+  it('should get an efetividade by ID', async () => {
     const res = await server.inject({
       method: 'GET',
-      url: `/sumarios/${sumarioId}`
+      url: `/efetividades/${efetividadeId}`
     })
 
     expect(res.statusCode).toBe(200)
-    const sumario = JSON.parse(res.payload)
-    expect(sumario.sumarioID).toBe(sumarioId)
+    const efetividade = JSON.parse(res.payload)
+    expect(efetividade.efetividadeID).toBe(efetividadeId)
   })
 
-  it('should update a sumario', async () => {
+  it('should update an efetividade', async () => {
     const res = await server.inject({
       method: 'PUT',
-      url: `/sumarios/${sumarioId}`,
+      url: `/efetividades/${efetividadeId}`,
       payload: {
-        conteudo: 'Conteúdo atualizado: nova matéria adicionada.'
+        horasTrabalhadas: 6
       }
     })
 
     expect(res.statusCode).toBe(200)
   })
 
-  it('should delete a sumario', async () => {
+  it('should delete an efetividade', async () => {
     const res = await server.inject({
       method: 'DELETE',
-      url: `/sumarios/${sumarioId}`
+      url: `/efetividades/${efetividadeId}`
     })
 
     expect(res.statusCode).toBe(204)

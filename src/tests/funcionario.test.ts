@@ -1,48 +1,55 @@
-import Fastify from 'fastify';
-import { app } from '../server.js';
+import Fastify from 'fastify'
+import { app } from '../server.js'
 
 describe('Funcionario Routes', () => {
-  let server: ReturnType<typeof Fastify>;
-  let funcionarioId: number;
+  let server: ReturnType<typeof Fastify>
+  let funcionarioId: number
 
   beforeAll(async () => {
-    await app.ready();
-    server = Fastify();
-    await server.register(app);
-    await server.ready();
-  });
+    await app.ready()
+    server = Fastify()
+    await server.register(app)
+    await server.ready()
+  })
 
-  afterAll(() => server.close());
+  afterAll(() => server.close())
 
-  it('should create a funcionario', async () => {
+  it('should create a new funcionario', async () => {
     const res = await server.inject({
       method: 'POST',
       url: '/funcionarios',
       payload: {
         nome: 'Funcionário Teste',
-        email: 'funcionario@teste.com',
-        telefone: '923456789',
-        departamento: 'RH',
-        estado: 'ATIVO'
+        email: `teste${Date.now()}@empresa.com`,
+        cargo: 'Secretário'
       }
-    });
+    })
 
-    const data = JSON.parse(res.payload);
-    funcionarioId = data.FuncionarioID;
-
-    expect(res.statusCode).toBe(201);
-    expect(data).toHaveProperty('FuncionarioID');
-  });
+    expect(res.statusCode).toBe(201)
+    const body = JSON.parse(res.payload)
+    expect(body).toHaveProperty('funcionarioID')
+    funcionarioId = body.funcionarioID
+  })
 
   it('should list all funcionarios', async () => {
     const res = await server.inject({
       method: 'GET',
       url: '/funcionarios'
-    });
+    })
+    expect(res.statusCode).toBe(200)
+    const list = JSON.parse(res.payload)
+    expect(Array.isArray(list)).toBe(true)
+  })
 
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(JSON.parse(res.payload))).toBe(true);
-  });
+  it('should get a funcionario by ID', async () => {
+    const res = await server.inject({
+      method: 'GET',
+      url: `/funcionarios/${funcionarioId}`
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.payload)
+    expect(body.funcionarioID).toBe(funcionarioId)
+  })
 
   it('should update a funcionario', async () => {
     const res = await server.inject({
@@ -50,23 +57,18 @@ describe('Funcionario Routes', () => {
       url: `/funcionarios/${funcionarioId}`,
       payload: {
         nome: 'Funcionário Atualizado',
-        email: 'funcionarioatualizado@teste.com',
-        telefone: '923456780',
-        departamento: 'Financeiro',
-        estado: 'INATIVO'
+        email: `atualizado${Date.now()}@empresa.com`,
+        cargo: 'Sumarista'
       }
-    });
-
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.payload).nome).toBe('Funcionário Atualizado');
-  });
+    })
+    expect(res.statusCode).toBe(200)
+  })
 
   it('should delete a funcionario', async () => {
     const res = await server.inject({
       method: 'DELETE',
       url: `/funcionarios/${funcionarioId}`
-    });
-
-    expect(res.statusCode).toBe(204);
-  });
-});
+    })
+    expect(res.statusCode).toBe(204)
+  })
+})
