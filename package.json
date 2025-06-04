@@ -1,5 +1,5 @@
 {
-  "name": "@swcs/backend",
+  "name": "swcs/backend",
   "version": "1.0.1",
   "type": "commonjs",
   "main": "server.ts",
