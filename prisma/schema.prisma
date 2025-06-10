@@ -11,6 +11,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Novo modelo schema.prisma para o controlo de Token
+model RefreshToken {
+  TokenID     Int      @id @default(autoincrement())
+  token       String   @unique
+  UsuarioID   Int
+  Usuario     Usuario  @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: Cascade)
+  ExpiresAt   DateTime
+  CreatedAt   DateTime @default(now())
+
+  @@index([UsuarioID])
+}
+
+model PasswordReset {
+  PasswordResetID Int      @id @default(autoincrement())
+  Token          String   @unique
+  UsuarioID      Int
+  Usuario        Usuario  @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: Cascade)
+  ExpiresAt      DateTime
+  Used           Boolean  @default(false)
+  CreatedAt      DateTime @default(now())
+
+  @@index([UsuarioID])
+}
+
 enum Estado {
   PRESENTE
   FALTA
@@ -51,6 +75,9 @@ model Usuario {
   Permissoes    UsuarioPermissao[]
   Professor     Professor?
   Funcionario   Funcionario?
+
+  RefreshTokens    RefreshToken[]
+  PasswordResets   PasswordReset[]
 }
 
 model Curso {
