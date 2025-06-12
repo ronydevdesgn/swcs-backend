@@ -1,21 +1,83 @@
 import { FastifyInstance } from 'fastify';
-import { createPresencaSchema } from '../schemas/presencas.schema.js';
-import { autenticar } from '../middlewares/authMiddleware.js';
-import { criarPresenca, listarPresencas } from '../controllers/presencas.controller.js';
+import {
+  presencaSchema,
+  updatePresencaSchema,
+  idParamSchema,
+  presencaResponseSchema
+} from '../schemas/presencas.schema';
+import {
+  registrarPresenca,
+  listarPresencas,
+  buscarPresencasProfessor,
+  atualizarPresenca
+} from '../controllers/presencas.controller';
+import { autenticar } from '../middlewares/authMiddleware';
 
 export default async function presencasRoutes(app: FastifyInstance) {
+  // Aplica autenticação em todas as rotas
   app.addHook('onRequest', autenticar);
 
-  app.post('/', { schema: { body: createPresencaSchema } }, criarPresenca);
-  app.get('/', listarPresencas);
-}
-// Compare(ração) este trecho de src/controllers/presencas.controller.ts:
-// #src\Routers\turmas.routes.ts(app: FastifyInstance) {
-//   app.addHook('onRequest', autenticar);
+  app.post('/', {
+    schema: {
+      body: presencaSchema,
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            mensagem: { type: 'string' },
+            data: presencaResponseSchema
+          }
+        }
+      }
+    }
+  }, registrarPresenca);
 
-//   app.post('/', { schema: { body: createTurmaSchema } }, criarTurma);
-//   app.get('/', listarTurmas);
-//   app.get('/:id', getTurmaById);
-//   app.put('/:id', { schema: { body: createTurmaSchema } }, atualizarTurma);
-//   app.delete('/:id', deletarTurma);
-// }
+  app.get('/', {
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: presencaResponseSchema
+            }
+          }
+        }
+      }
+    }
+  }, listarPresencas);
+
+  app.get('/professor/:id', {
+    schema: {
+      params: idParamSchema,
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: presencaResponseSchema
+            }
+          }
+        }
+      }
+    }
+  }, buscarPresencasProfessor);
+
+  app.put('/:id', {
+    schema: {
+      params: idParamSchema,
+      body: updatePresencaSchema,
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            mensagem: { type: 'string' },
+            data: presencaResponseSchema
+          }
+        }
+      }
+    }
+  }, atualizarPresenca);
+}

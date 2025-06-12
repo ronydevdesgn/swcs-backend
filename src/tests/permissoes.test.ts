@@ -1,5 +1,5 @@
 import Fastify from 'fastify'
-import { app } from '../server.js'
+import { app } from '../server'
 
 describe('Permissao Routes', () => {
   let server: ReturnType<typeof Fastify>

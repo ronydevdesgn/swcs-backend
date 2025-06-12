@@ -1,4 +1,3 @@
-import { Estado } from '@prisma/client';
 import { z } from 'zod';
 
 /** 
@@ -7,43 +6,38 @@ import { z } from 'zod';
 * @param Status O status da presença (Presente, Faltou ou Justificado) 
 * @param ProfessorID O identificador exclusivo do professor associado à presença 
 */
-export const createPresencaSchema = z.object({
-  Data: z.string(),
-  Estado: z.enum(['Presente', 'Falta']),
-  ProfessorID: z.number(),
+export const presencaSchema = z.object({
+  Data: z.string()
+    .datetime('Data inválida'),
+  ProfessorID: z.number()
+    .positive('ID do professor deve ser positivo'),
+  Estado: z.enum(['PRESENTE', 'FALTA'], {
+    errorMap: () => ({ message: 'Estado deve ser PRESENTE ou FALTA' })
+  })
 });
 
-export const getPresencaSchema = z.object({
-  id: z.number(),
+export const updatePresencaSchema = presencaSchema.partial();
+
+export const idParamSchema = z.object({
+  id: z.string().transform((val) => Number(val))
 });
 
-export const listPresencaSchema = z.object({
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(10),
-});
+export const presencaResponseSchema = {
+  type: 'object',
+  properties: {
+    Data: { type: 'string', format: 'date-time' },
+    Estado: { type: 'string', enum: ['PRESENTE', 'FALTA'] },
+    ProfessorID: { type: 'number' },
+    Professor: {
+      type: 'object',
+      properties: {
+        Nome: { type: 'string' },
+        Departamento: { type: 'string' }
+      }
+    }
+  }
+};
 
-/** 
-* Esquema de validação para atualizar uma presença existente
-* @param id O identificador único da presença a ser atualizada
-* @param Data A nova data da presença (opcional)
-* @param Estado O novo status da presença (Presente, Faltou ou Justificado) (opcional)
-* @param ProfessorID O novo identificador do professor associado à presença (opcional)
-*/
-export const updatePresencaSchema = z.object({
-  id: z.number(),
-  Data: z.string().optional(),
-  Estado: z.enum(['Presente', 'Faltou', 'Justificada']).optional(),
-  ProfessorID: z.number().optional(),
-});
-
-/**
-* Esquema para recuperar presenças de um professor específico com paginação
-* @param ProfessorID O identificador único do professor
-* @param page O número da página para resultados paginados (padrão: 1)
-* @param limit O número máximo de resultados por página (padrão: 10, máx.: 100)
-*/
-export const getPresencaByProfessorSchema = z.object({
-  ProfessorID: z.number(),
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(10),
-});
+export type CreatePresencaInput = z.infer<typeof presencaSchema>;
+export type UpdatePresencaInput = z.infer<typeof updatePresencaSchema>;
+export type IdParam = z.infer<typeof idParamSchema>;

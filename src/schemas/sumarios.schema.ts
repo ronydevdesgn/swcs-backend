@@ -1,35 +1,31 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-/**
-* Esquema para criar uma nova entrada Sumario (resumo)
-* Data - Data do resumo (formato de data ISO recomendado)
-* Conteudo - Conteúdo do resumo (mínimo de 5 caracteres)
-* CursoID - Identificador do curso associado
-* ProfessorID - Identificador do professor associado
-*/
+// Base schema for common fields
+const sumarioBase = {
+  Conteudo: z.string().min(3, "Conteúdo deve ter no mínimo 3 caracteres"),
+  Data: z.string().datetime("Data inválida"),
+  CursoID: z.number().positive("ID do curso deve ser positivo"),
+  ProfessorID: z.number().positive("ID do professor deve ser positivo"),
+};
+
+// Schema for creating a new sumário
 export const createSumarioSchema = z.object({
-  Data: z.string(), // Considera ISO date ou validar com refine
-  Conteudo: z.string().min(5),
-  CursoID: z.number(),
-  ProfessorID: z.number(),
-}).partial();
-
-// Script para criar um esquema para atualizar um sumário existente
-export const updateSumarioSchema = createSumarioSchema.extend({
-  id: z.number(),
-}).partial();
-
-// Esquema para listar sumários com paginação
-// export const listSumarioSchema = z.object({
-//   page: z.number().min(1).default(1),
-//   limit: z.number().min(1).max(100).default(10),
-// });
-
-// Esquema para obter um sumário específico por ID
-export const getSumarioSchema = z.object({
-  id: z.number(),
+  ...sumarioBase,
 });
 
-export const deleteSumarioSchema = z.object({
-  id: z.number(),
+// Schema for updating an existing sumário
+export const updateSumarioSchema = z
+  .object({
+    ...sumarioBase,
+  })
+  .partial();
+
+// Schema for ID parameter
+export const idParamSchema = z.object({
+  id: z.string().transform((val) => Number(val)),
 });
+
+// Types based on the schemas
+export type CreateSumarioInput = z.infer<typeof createSumarioSchema>;
+export type UpdateSumarioInput = z.infer<typeof updateSumarioSchema>;
+export type IdParam = z.infer<typeof idParamSchema>;

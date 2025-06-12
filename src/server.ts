@@ -2,7 +2,8 @@ import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import swagger from './plugins/swagger';
 import prismaPlugin from './plugins/prisma';
-// import do type-provider-zod
+import cors from '@fastify/cors';
+//import { errorResponseSchema } from './schemas/shared-schema';
 import {
   validatorCompiler,
   serializerCompiler,
@@ -64,11 +65,17 @@ app.register(efetividadesRoutes, { prefix: '/efetividades' })
 
 /** Configuração do CORS */
 app.addHook('onRequest', (request, reply, done) => {
-  reply.header('Access-Control-Allow-Origin', 'http://localhost:5173') // Removido a barra final
+  reply.header('Access-Control-Allow-Origin', 'http://localhost:5173')
   reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   done()
 })
+//OU
+// Register plugins
+app.register(cors, {
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true
+});
 
 /** Tratamento de erros 404 do Fastify
  Isso é necessário para que o Fastify retorne um erro 404 personalizado
@@ -84,11 +91,14 @@ app.setNotFoundHandler((request, reply) => {
 
 app.setErrorHandler((error, request, reply) => {
   app.log.error(error);
-  reply.status(error.statusCode || 500).send({
-    statusCode: error.statusCode || 500,
-    error: error.name,
+  const statusCode = error.validation ? 400 : (error.statusCode || 500);
+  const errorResponse = {
+    statusCode,
+    error: error.validation ? 'Validation Error' : error.name,
     message: error.message || 'Erro interno do servidor',
-  });
+    validation: error.validation
+  };
+  reply.status(statusCode).send(errorResponse);
 });
 
 const start = async () => {
@@ -116,7 +126,6 @@ const start = async () => {
     process.exit(1)
   }
 }
-
 start()
 
 export default app;

@@ -1,40 +1,32 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
-export const criarFuncionarioSchema = z.object({
-  id: z.string().uuid(),
-  Nome: z.string(),
-  Email: z.string().email(),
-  Senha: z.string().min(6),
-})
+const funcionarioBase = {
+  Nome: z.string()
+    .min(3, 'Nome deve ter no mínimo 3 caracteres')
+    .max(100, 'Nome muito longo'),
+  Email: z.string()
+    .email('Email inválido')
+    .max(100, 'Email muito longo'),
+  Cargo: z.string()
+    .min(2, 'Cargo deve ter no mínimo 2 caracteres')
+    .max(50, 'Cargo muito longo')
+};
 
-export const atualizarFuncionarioSchema = z.object({
-  id: z.string().uuid().optional(),
-  Nome: z.string().optional(),
-  Email: z.string().email().optional(),
-  Senha: z.string().min(6).optional(),
-})
-export const listarFuncionariosSchema = z.object({
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(10),
-})
+export const createFuncionarioSchema = z.object({
+  ...funcionarioBase,
+  Senha: z.string()
+    .min(6, 'Senha deve ter no mínimo 6 caracteres')
+    .max(100, 'Senha muito longa')
+});
 
-/**
-* Esquema Zod para validar a exclusão de um funcionário
-* Requer um UUID válido para identificar o funcionário específico a ser excluído
-*/
-export const deletarFuncionarioSchema = z.object({
-  id: z.string().uuid(),
-  // Nome: z.string().optional(),
-})
-// export const pegarFuncionarioSchema = z.object({
-//   id: z.string().uuid(),
-//   Nome: z.string().optional(),
-//   Email: z.string().email().optional(),
-//   Senha: z.string().min(6).optional(),
-// }).strict().refine(data => {
+export const updateFuncionarioSchema = z.object({
+  ...funcionarioBase
+}).partial();
 
-//   return true;
-// }, {
-//   message: "Custom validation failed",
-//   path: ["custom"],
-// }); // Custom error message for the entire
+export const idParamSchema = z.object({
+  id: z.string().transform((val) => Number(val))
+});
+
+export type CreateFuncionarioInput = z.infer<typeof createFuncionarioSchema>;
+export type UpdateFuncionarioInput = z.infer<typeof updateFuncionarioSchema>;
+export type IdParam = z.infer<typeof idParamSchema>;

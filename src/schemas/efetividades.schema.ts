@@ -1,43 +1,29 @@
 import { z } from 'zod';
 
-export const createEfetividadeSchema = z.object({
-  Data: z.string(),
-  HorasTrabalhadas: z.number().positive(),
-  ProfessorID: z.number(),
+export const efetividadeSchema = z.object({
+  Data: z.string()
+    .datetime('Data inválida'),
+  HorasTrabalhadas: z.number()
+    .int('Horas trabalhadas deve ser um número inteiro')
+    .min(0, 'Horas trabalhadas não pode ser negativo')
+    .max(24, 'Horas trabalhadas não pode exceder 24'),
+  ProfessorID: z.number()
+    .positive('ID do professor deve ser positivo')
 });
 
-export const updateEfetividadeSchema = createEfetividadeSchema.partial();
+export const updateEfetividadeSchema = efetividadeSchema.partial();
 
-// Esquema para obter uma efetividade por ID
-export const getEfetividadeSchema = z.object({
-  id: z.number(),
-  Data: z.string(),
-  HorasTrabalhadas: z.number().positive(),
-  ProfessorID: z.number(),
+export const idParamSchema = z.object({
+  id: z.string().transform((val) => Number(val))
 });
 
-// Listar efetividades com paginação
-// page: número da página (mínimo 1, padrão 1)
-export const listEfetividadeSchema = z.object({
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(10),
+// Schema para filtrar por período
+export const periodoSchema = z.object({
+  dataInicio: z.string().datetime('Data inicial inválida'),
+  dataFim: z.string().datetime('Data final inválida')
 });
 
-// Listar efetividades por professor
-export const getEfetividadeByProfessorSchema = z.object({
-  id: z.number(),
-});
-
-/**
-* Esquema para deletar uma efetividade
-* @param id O identificador único da efetividade a ser deletada.
-* @param Data A nova data da efetividade (opcional).
-* @param HorasTrabalhadas O novo número de horas trabalhadas (opcional).
-* @param ProfessorID O novo identificador do professor associado à efetividade (opcional).
-*/
-export const deleteEfetividadeSchema = z.object({
-  id: z.number(),
-  Data: z.string().optional(),
-  HorasTrabalhadas: z.number().positive().optional(),
-  ProfessorID: z.number().optional(),
-});
+export type CreateEfetividadeInput = z.infer<typeof efetividadeSchema>;
+export type UpdateEfetividadeInput = z.infer<typeof updateEfetividadeSchema>;
+export type IdParam = z.infer<typeof idParamSchema>;
+export type PeriodoInput = z.infer<typeof periodoSchema>;
