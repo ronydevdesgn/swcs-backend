@@ -16,17 +16,9 @@ export async function criarCurso(
 
     // Usar transação para garantir consistência
     const curso = await prisma.$transaction(async (tx) => {
-      // Verificar se o professor existe e está ativo
+      // Verificar se o professor existe
       const professor = await tx.professor.findUnique({
         where: { ProfessorID },
-        include: {
-          Usuario: {
-            select: {
-              Email: true,
-              Tipo: true,
-            },
-          },
-        },
       });
 
       if (!professor) {
@@ -50,22 +42,10 @@ export async function criarCurso(
         data: {
           Nome,
           Descricao,
-          Professor: {
-            connect: { ProfessorID },
-          },
+          ProfessorID,
         },
         include: {
-          Professor: {
-            select: {
-              Nome: true,
-              Departamento: true,
-              Usuario: {
-                select: {
-                  Email: true,
-                },
-              },
-            },
-          },
+          Professor: true,
         },
       });
     });
@@ -106,45 +86,27 @@ export async function listarCursos(req: FastifyRequest, reply: FastifyReply) {
       departamento?: string;
     };
 
-    // Construir query dinâmica
-    const where = {
-      ...(search && {
-        OR: [
-          { Nome: { contains: search, mode: "insensitive" } },
-          { Descricao: { contains: search, mode: "insensitive" } },
-        ],
-      }),
-      ...(departamento && {
-        Professor: {
-          Departamento: { equals: departamento, mode: "insensitive" },
-        },
-      }),
-    };
-
     const cursos = await prisma.curso.findMany({
-      where,
+      where: {
+        OR: search
+          ? [
+              { Nome: { contains: search, mode: "insensitive" } },
+              { Descricao: { contains: search, mode: "insensitive" } },
+            ]
+          : undefined,
+        Professor: departamento
+          ? {
+              Departamento: { equals: departamento, mode: "insensitive" },
+            }
+          : undefined,
+      },
       include: {
-        Professor: {
-          select: {
-            Nome: true,
-            Departamento: true,
-            Usuario: {
-              select: {
-                Email: true,
-              },
-            },
-          },
-        },
+        Professor: true,
         Sumarios: {
-          select: {
-            SumarioID: true,
-            Data: true,
-            Conteudo: true,
-          },
+          take: 5,
           orderBy: {
             Data: "desc",
           },
-          take: 5, // Últimos 5 sumários
         },
         _count: {
           select: {
@@ -185,27 +147,10 @@ export async function buscarCurso(
     const curso = await prisma.curso.findUnique({
       where: { CursoID: id },
       include: {
-        Professor: {
-          select: {
-            Nome: true,
-            Departamento: true,
-            Usuario: {
-              select: {
-                Email: true,
-              },
-            },
-          },
-        },
+        Professor: true,
         Sumarios: {
           orderBy: {
             Data: "desc",
-          },
-          include: {
-            Professor: {
-              select: {
-                Nome: true,
-              },
-            },
           },
         },
         _count: {
@@ -288,24 +233,10 @@ export async function atualizarCurso(
         data: {
           Nome: dados.Nome,
           Descricao: dados.Descricao,
-          Professor: dados.ProfessorID
-            ? {
-                connect: { ProfessorID: dados.ProfessorID },
-              }
-            : undefined,
+          ProfessorID: dados.ProfessorID,
         },
         include: {
-          Professor: {
-            select: {
-              Nome: true,
-              Departamento: true,
-              Usuario: {
-                select: {
-                  Email: true,
-                },
-              },
-            },
-          },
+          Professor: true,
         },
       });
     });

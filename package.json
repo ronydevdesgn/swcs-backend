@@ -1,8 +1,8 @@
 {
-  "name": "swcs/backend",
+  "name": "swcs-backend",
   "version": "1.0.1",
-  "type": "commonjs",
-  "main": "server.ts",
+  "type": "module",
+  "main": "dist/server.mjs",
   "scripts": {
     "start": "node dist/server.mjs",
     "build": "tsup src --format esm",
