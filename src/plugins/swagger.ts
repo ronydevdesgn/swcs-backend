@@ -4,7 +4,8 @@ import swaggerUi from '@fastify/swagger-ui';
 
 export default fp(async function (fastify) {
   await fastify.register(swagger, {
-    swagger: {
+    openapi: {
+      openapi: '3.0.0',
       info: {
         title: 'SWCS API Documentation',
         description: 'Sistema Web de Controlo de Sumários - API Documentation',
@@ -14,28 +15,35 @@ export default fp(async function (fastify) {
           email: 'support@swcs.com'
         }
       },
-      host: 'localhost:3000',
-      schemes: ['http'],
-      consumes: ['application/json'],
-      produces: ['application/json'],
-      tags: [
-         { name: 'auth', description: 'Autenticação' },
-        { name: 'usuarios', description: 'Autenticação' },
-        { name: 'professores', description: 'Autenticação' },
-        { name: 'funcionarios', description: 'Autenticação' },
-        { name: 'permissoes', description: 'Autenticação' },
-        { name: 'cursos', description: 'Autenticação' },
-        { name: 'sumarios', description: 'Autenticação' },
-        { name: 'presencas', description: 'Autenticação' },
-        { name: 'efetividades', description: 'Autenticação' }
-      ],
-      securityDefinitions: {
-        bearerAuth: {
-          type: 'apiKey',
-          name: 'Authorization',
-          in: 'header'
+      servers: [
+        {
+          url: 'http://localhost:3000',
+          description: 'Development server'
         }
-      }
+      ],
+      tags: [
+        { name: 'auth', description: 'Autenticação e gerenciamento de tokens' },
+        { name: 'usuarios', description: 'Gerenciamento de usuários do sistema' },
+        { name: 'professores', description: 'Gerenciamento de professores' },
+        { name: 'funcionarios', description: 'Gerenciamento de funcionários' },
+        { name: 'permissoes', description: 'Controle de permissões de acesso' },
+        { name: 'cursos', description: 'Gerenciamento de cursos' },
+        { name: 'sumarios', description: 'Controle de sumários das aulas' },
+        { name: 'presencas', description: 'Registro de presenças' },
+        { name: 'efetividades', description: 'Controle de efetividade dos professores' }
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        }
+      },
+      security: [{
+        bearerAuth: []
+      }]
     }
   });
 
