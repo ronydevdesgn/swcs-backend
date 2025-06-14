@@ -4,7 +4,9 @@ import swaggerUi from '@fastify/swagger-ui';
 
 export default fp(async function (fastify) {
   await fastify.register(swagger, {
+    mode: 'dynamic',
     swagger: {
+      swagger: '2.0',
       info: {
         title: 'SWCS API Documentation',
         description: 'Sistema Web de Controlo de Sumários - API Documentation',

@@ -37,10 +37,21 @@ async function main() {
   // Criar curso
   const curso = await prisma.curso.upsert({
     where: { CursoID: 1 },
-    update: {},
+    update: {
+      Professor: {
+        connect: {
+          ProfessorID: professor.ProfessorID
+        }
+      }
+    },
     create: {
       Nome: "Álgebra Linear",
       Descricao: "Curso introdutório de Álgebra Linear",
+      Professor: {
+        connect: {
+          ProfessorID: professor.ProfessorID
+        }
+      }
     },
   })
 
