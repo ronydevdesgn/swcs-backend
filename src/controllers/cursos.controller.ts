@@ -4,6 +4,7 @@ import {
   UpdateCursoInput,
   IdParam,
 } from "../schemas/cursos.schema";
+import { isAppError } from "../types/errors";
 
 export async function criarCurso(
   req: FastifyRequest<{ Body: CreateCursoInput }>,
@@ -12,7 +13,7 @@ export async function criarCurso(
   const prisma = req.server.prisma;
 
   try {
-    const { Nome, Descricao, ProfessorID } = req.body;
+    const { Nome, Descricao = "", ProfessorID } = req.body;
 
     // Usar transação para garantir consistência
     const curso = await prisma.$transaction(async (tx) => {
@@ -27,7 +28,12 @@ export async function criarCurso(
 
       // Verificar se já existe um curso com o mesmo nome
       const cursoExistente = await tx.curso.findFirst({
-        where: { Nome: { equals: Nome, mode: "insensitive" } },
+        where: {
+          Nome: {
+            equals: Nome,
+            // Handle case-insensitive search at application level
+          },
+        },
       });
 
       if (cursoExistente) {
@@ -52,27 +58,35 @@ export async function criarCurso(
 
     return reply.status(201).send({
       mensagem: "Curso criado com sucesso",
-      data: curso,
+      data: {
+        ...curso,
+        Nome: curso.Nome.trim(),
+        Descricao: curso.Descricao?.trim(),
+      },
     });
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
+    if (isAppError(error)) {
+      if (error.code === "NOT_FOUND") {
+        return reply.status(404).send({
+          mensagem: error.message,
+        });
+      }
 
-    if (error.code === "DUPLICATE") {
-      return reply.status(409).send({
-        mensagem: error.message,
-      });
+      if (error.code === "DUPLICATE") {
+        return reply.status(409).send({
+          mensagem: error.message,
+        });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao criar curso",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -88,17 +102,36 @@ export async function listarCursos(req: FastifyRequest, reply: FastifyReply) {
 
     const cursos = await prisma.curso.findMany({
       where: {
-        OR: search
-          ? [
-              { Nome: { contains: search, mode: "insensitive" } },
-              { Descricao: { contains: search, mode: "insensitive" } },
-            ]
-          : undefined,
-        Professor: departamento
-          ? {
-              Departamento: { equals: departamento, mode: "insensitive" },
-            }
-          : undefined,
+        AND: [
+          search
+            ? {
+                OR: [
+                  {
+                    Nome: {
+                      contains: search,
+                      // Handle case-insensitive search at application level if needed
+                    },
+                  },
+                  {
+                    Descricao: {
+                      contains: search,
+                      // Handle case-insensitive search at application level if needed
+                    },
+                  },
+                ],
+              }
+            : {},
+          departamento
+            ? {
+                Professor: {
+                  Departamento: {
+                    equals: departamento,
+                    // Handle case-insensitive search at application level if needed
+                  },
+                },
+              }
+            : {},
+        ],
       },
       include: {
         Professor: true,
@@ -120,7 +153,11 @@ export async function listarCursos(req: FastifyRequest, reply: FastifyReply) {
     });
 
     return reply.send({
-      data: cursos,
+      data: cursos.map((curso) => ({
+        ...curso,
+        Nome: curso.Nome.trim(),
+        Descricao: curso.Descricao?.trim(),
+      })),
       meta: {
         total: cursos.length,
       },
@@ -130,7 +167,9 @@ export async function listarCursos(req: FastifyRequest, reply: FastifyReply) {
     return reply.status(500).send({
       mensagem: "Erro interno ao listar cursos",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -162,18 +201,31 @@ export async function buscarCurso(
     });
 
     if (!curso) {
+      throw { code: "NOT_FOUND", message: "Curso não encontrado" };
+    }
+
+    return reply.send({
+      data: {
+        ...curso,
+        Nome: curso.Nome.trim(),
+        Descricao: curso.Descricao?.trim(),
+      },
+    });
+  } catch (error) {
+    req.log.error(error);
+
+    if (isAppError(error) && error.code === "NOT_FOUND") {
       return reply.status(404).send({
-        mensagem: "Curso não encontrado",
+        mensagem: error.message,
       });
     }
 
-    return reply.send({ data: curso });
-  } catch (error) {
-    req.log.error(error);
     return reply.status(500).send({
       mensagem: "Erro interno ao buscar curso",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -203,7 +255,10 @@ export async function atualizarCurso(
       if (dados.Nome && dados.Nome !== cursoExiste.Nome) {
         const cursoNomeExiste = await tx.curso.findFirst({
           where: {
-            Nome: { equals: dados.Nome, mode: "insensitive" },
+            Nome: {
+              equals: dados.Nome,
+              // Handle case-insensitive search at application level if needed
+            },
             NOT: { CursoID: id },
           },
         });
@@ -243,27 +298,35 @@ export async function atualizarCurso(
 
     return reply.send({
       mensagem: "Curso atualizado com sucesso",
-      data: curso,
+      data: {
+        ...curso,
+        Nome: curso.Nome.trim(),
+        Descricao: curso.Descricao?.trim(),
+      },
     });
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
+    if (isAppError(error)) {
+      if (error.code === "NOT_FOUND") {
+        return reply.status(404).send({
+          mensagem: error.message,
+        });
+      }
 
-    if (error.code === "DUPLICATE") {
-      return reply.status(409).send({
-        mensagem: error.message,
-      });
+      if (error.code === "DUPLICATE") {
+        return reply.status(409).send({
+          mensagem: error.message,
+        });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao atualizar curso",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }

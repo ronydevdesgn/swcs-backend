@@ -5,7 +5,8 @@ import {
   IdParam,
 } from "../schemas/funcionario.schema";
 import { hashSenha } from "../utils/hash";
-import { TipoUsuario } from "@prisma/client";
+import { TipoUsuario, Prisma } from "@prisma/client";
+import { AppError, isAppError } from "../types/errors";
 
 // Regex para validação de email
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -21,9 +22,7 @@ export async function criarFuncionario(
 
     // Validar formato do email
     if (!EMAIL_REGEX.test(Email)) {
-      return reply.status(400).send({
-        mensagem: "Formato de email inválido",
-      });
+      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
     }
 
     // Usar transação para garantir consistência
@@ -34,30 +33,19 @@ export async function criarFuncionario(
       });
 
       if (emailExiste) {
-        throw { code: "DUPLICATE_EMAIL", message: "Email já está em uso" };
+        throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
       }
 
-      // Criar o funcionário
-      const novoFuncionario = await tx.funcionario.create({
-        data: {
-          Nome,
-          Cargo,
-        },
-      });
-
-      // Hash da senha e criar usuário
+      // Hash da senha
       const senhaHash = await hashSenha(Senha);
-      await tx.usuario.create({
+
+      // Criar o usuário primeiro
+      const novoUsuario = await tx.usuario.create({
         data: {
           Nome,
           Email,
           SenhaHash: senhaHash,
           Tipo: TipoUsuario.FUNCIONARIO,
-          Funcionario: {
-            connect: {
-              FuncionarioID: novoFuncionario.FuncionarioID,
-            },
-          },
           Permissoes: {
             create: [
               { PermissaoID: 1 }, // Permissões padrão do funcionário
@@ -67,7 +55,33 @@ export async function criarFuncionario(
         },
       });
 
-      return novoFuncionario;
+      // Criar o funcionário vinculado ao usuário
+      return await tx.funcionario.create({
+        data: {
+          Nome,
+          Email,
+          Cargo,
+          UsuarioID: novoUsuario.UsuarioID,
+        },
+        include: {
+          Usuario: {
+            select: {
+              Email: true,
+              Tipo: true,
+              Permissoes: {
+                select: {
+                  Permissao: {
+                    select: {
+                      PermissaoID: true,
+                      Descricao: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
     });
 
     return reply.status(201).send({
@@ -77,39 +91,57 @@ export async function criarFuncionario(
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "DUPLICATE_EMAIL") {
-      return reply.status(409).send({
-        mensagem: error.message,
-      });
+    if (isAppError(error)) {
+      if (error.code === "VALIDATION_ERROR") {
+        return reply.status(400).send({
+          mensagem: error.message,
+        });
+      }
+
+      if (error.code === "DUPLICATE_EMAIL") {
+        return reply.status(409).send({
+          mensagem: error.message,
+        });
+      }
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return reply.status(409).send({
+          mensagem: "Email já está em uso",
+        });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao criar funcionário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
 
 export async function listarFuncionarios(
-  req: FastifyRequest,
+  req: FastifyRequest<{ Querystring: { search?: string; cargo?: string } }>,
   reply: FastifyReply
 ) {
   const prisma = req.server.prisma;
 
   try {
-    const { search, cargo } = req.query as { search?: string; cargo?: string };
+    const { search, cargo } = req.query;
 
     // Construir query dinâmica
-    const where = {
+    const where: Prisma.FuncionarioWhereInput = {
       ...(search && {
         OR: [
-          { Nome: { contains: search, mode: "insensitive" } },
-          { Usuario: { Email: { contains: search, mode: "insensitive" } } },
+          { Nome: { contains: search } },
+          { Usuario: { Email: { contains: search } } },
         ],
       }),
       ...(cargo && {
-        Cargo: { equals: cargo, mode: "insensitive" },
+        Cargo: cargo,
       }),
     };
 
@@ -154,7 +186,9 @@ export async function listarFuncionarios(
     return reply.status(500).send({
       mensagem: "Erro interno ao listar funcionários",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -185,18 +219,25 @@ export async function buscarFuncionario(
     });
 
     if (!funcionario) {
-      return reply.status(404).send({
-        mensagem: "Funcionário não encontrado",
-      });
+      throw new AppError("NOT_FOUND", "Funcionário não encontrado");
     }
 
     return reply.send({ data: funcionario });
   } catch (error) {
     req.log.error(error);
+
+    if (isAppError(error) && error.code === "NOT_FOUND") {
+      return reply.status(404).send({
+        mensagem: error.message,
+      });
+    }
+
     return reply.status(500).send({
       mensagem: "Erro interno ao buscar funcionário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -213,9 +254,7 @@ export async function atualizarFuncionario(
 
     // Validar email se fornecido
     if (dados.Email && !EMAIL_REGEX.test(dados.Email)) {
-      return reply.status(400).send({
-        mensagem: "Formato de email inválido",
-      });
+      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
     }
 
     // Usar transação para garantir consistência
@@ -227,7 +266,7 @@ export async function atualizarFuncionario(
       });
 
       if (!funcionarioExiste) {
-        throw { code: "NOT_FOUND", message: "Funcionário não encontrado" };
+        throw new AppError("NOT_FOUND", "Funcionário não encontrado");
       }
 
       // Verificar email único se estiver sendo alterado
@@ -237,7 +276,7 @@ export async function atualizarFuncionario(
         });
 
         if (emailExiste) {
-          throw { code: "DUPLICATE_EMAIL", message: "Email já está em uso" };
+          throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
         }
       }
 
@@ -271,22 +310,37 @@ export async function atualizarFuncionario(
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
+    if (isAppError(error)) {
+      if (error.code === "NOT_FOUND") {
+        return reply.status(404).send({
+          mensagem: error.message,
+        });
+      }
+
+      if (
+        error.code === "DUPLICATE_EMAIL" ||
+        error.code === "VALIDATION_ERROR"
+      ) {
+        return reply.status(409).send({
+          mensagem: error.message,
+        });
+      }
     }
 
-    if (error.code === "DUPLICATE_EMAIL") {
-      return reply.status(409).send({
-        mensagem: error.message,
-      });
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return reply.status(409).send({
+          mensagem: "Email já está em uso",
+        });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao atualizar funcionário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }

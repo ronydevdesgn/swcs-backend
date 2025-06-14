@@ -4,6 +4,8 @@ import {
   UpdateSumarioInput,
   IdParam,
 } from "../schemas/sumarios.schema";
+import { AppError } from "../types/errors";
+import { Prisma } from "@prisma/client";
 
 const MIN_CONTEUDO_LENGTH = 10;
 const MAX_CONTEUDO_LENGTH = 2000;
@@ -19,15 +21,17 @@ export async function criarSumario(
 
     // Validar conteúdo
     if (Conteudo.length < MIN_CONTEUDO_LENGTH) {
-      return reply.status(400).send({
-        mensagem: `O conteúdo deve ter no mínimo ${MIN_CONTEUDO_LENGTH} caracteres`,
-      });
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `O conteúdo deve ter no mínimo ${MIN_CONTEUDO_LENGTH} caracteres`
+      );
     }
 
     if (Conteudo.length > MAX_CONTEUDO_LENGTH) {
-      return reply.status(400).send({
-        mensagem: `O conteúdo deve ter no máximo ${MAX_CONTEUDO_LENGTH} caracteres`,
-      });
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `O conteúdo deve ter no máximo ${MAX_CONTEUDO_LENGTH} caracteres`
+      );
     }
 
     // Validar data
@@ -36,9 +40,10 @@ export async function criarSumario(
     hoje.setHours(23, 59, 59, 999);
 
     if (dataSumario > hoje) {
-      return reply.status(400).send({
-        mensagem: "Não é possível criar sumários para datas futuras",
-      });
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "Não é possível criar sumários para datas futuras"
+      );
     }
 
     // Usar transação para garantir consistência
@@ -70,11 +75,11 @@ export async function criarSumario(
       ]);
 
       if (!curso) {
-        throw { code: "NOT_FOUND", message: "Curso não encontrado" };
+        throw new AppError("NOT_FOUND", "Curso não encontrado");
       }
 
       if (!professor) {
-        throw { code: "NOT_FOUND", message: "Professor não encontrado" };
+        throw new AppError("NOT_FOUND", "Professor não encontrado");
       }
 
       // Verificar se o professor está associado ao curso
@@ -82,10 +87,10 @@ export async function criarSumario(
         (c) => c.CursoID === CursoID
       );
       if (!professorNoCurso) {
-        throw {
-          code: "UNAUTHORIZED",
-          message: "Professor não está associado a este curso",
-        };
+        throw new AppError(
+          "UNAUTHORIZED",
+          "Professor não está associado a este curso"
+        );
       }
 
       // Verificar se já existe sumário para esta data e curso
@@ -97,10 +102,10 @@ export async function criarSumario(
       });
 
       if (sumarioExistente) {
-        throw {
-          code: "DUPLICATE",
-          message: "Já existe um sumário para este curso nesta data",
-        };
+        throw new AppError(
+          "DUPLICATE",
+          "Já existe um sumário para este curso nesta data"
+        );
       }
 
       // Criar o sumário
@@ -125,68 +130,76 @@ export async function criarSumario(
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "NOT_FOUND") {
-      return reply.status(404).send({ mensagem: error.message });
-    }
+    if (error instanceof AppError) {
+      if (error.code === "NOT_FOUND") {
+        return reply.status(404).send({ mensagem: error.message });
+      }
 
-    if (error.code === "UNAUTHORIZED") {
-      return reply.status(403).send({ mensagem: error.message });
-    }
+      if (error.code === "UNAUTHORIZED") {
+        return reply.status(403).send({ mensagem: error.message });
+      }
 
-    if (error.code === "DUPLICATE") {
-      return reply.status(409).send({ mensagem: error.message });
+      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
+        return reply.status(409).send({ mensagem: error.message });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao criar sumário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
 
-export async function listarSumarios(req: FastifyRequest, reply: FastifyReply) {
-  const prisma = req.server.prisma;
-
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      cursoId,
-      professorId,
-      dataInicio,
-      dataFim,
-    } = req.query as {
-      page?: number;
-      limit?: number;
+export async function listarSumarios(
+  req: FastifyRequest<{
+    Querystring: {
+      page?: string;
+      limit?: string;
       search?: string;
       cursoId?: string;
       professorId?: string;
       dataInicio?: string;
       dataFim?: string;
     };
+  }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+
+  try {
+    const {
+      page = "1",
+      limit = "10",
+      search,
+      cursoId,
+      professorId,
+      dataInicio,
+      dataFim,
+    } = req.query;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
 
     // Construir filtros
-    const where: any = {};
-
-    if (search) {
-      where.Conteudo = { contains: search, mode: "insensitive" };
-    }
-
-    if (cursoId) {
-      where.CursoID = parseInt(cursoId);
-    }
-
-    if (professorId) {
-      where.ProfessorID = parseInt(professorId);
-    }
-
-    if (dataInicio || dataFim) {
-      where.Data = {};
-      if (dataInicio) where.Data.gte = new Date(dataInicio);
-      if (dataFim) where.Data.lte = new Date(dataFim);
-    }
+    const where: Prisma.SumarioWhereInput = {
+      ...(search && {
+        Conteudo: { contains: search },
+      }),
+      ...(cursoId && { CursoID: parseInt(cursoId, 10) }),
+      ...(professorId && { ProfessorID: parseInt(professorId, 10) }),
+      ...(dataInicio || dataFim
+        ? {
+            Data: {
+              ...(dataInicio && { gte: new Date(dataInicio) }),
+              ...(dataFim && { lte: new Date(dataFim) }),
+            },
+          }
+        : {}),
+    };
 
     // Buscar sumários paginados e contar total
     const [sumarios, total] = await prisma.$transaction([
@@ -209,23 +222,23 @@ export async function listarSumarios(req: FastifyRequest, reply: FastifyReply) {
         orderBy: {
           Data: "desc",
         },
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
       }),
       prisma.sumario.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limitNum);
 
     return reply.send({
       data: sumarios,
       meta: {
         total,
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1,
       },
     });
   } catch (error) {
@@ -233,7 +246,9 @@ export async function listarSumarios(req: FastifyRequest, reply: FastifyReply) {
     return reply.status(500).send({
       mensagem: "Erro interno ao listar sumários",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -277,16 +292,23 @@ export async function buscarSumario(
     });
 
     if (!sumario) {
-      return reply.status(404).send({ mensagem: "Sumário não encontrado" });
+      throw new AppError("NOT_FOUND", "Sumário não encontrado");
     }
 
     return reply.send({ data: sumario });
   } catch (error) {
     req.log.error(error);
+
+    if (error instanceof AppError && error.code === "NOT_FOUND") {
+      return reply.status(404).send({ mensagem: error.message });
+    }
+
     return reply.status(500).send({
       mensagem: "Erro interno ao buscar sumário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -304,15 +326,17 @@ export async function atualizarSumario(
     // Validar conteúdo se fornecido
     if (dados.Conteudo) {
       if (dados.Conteudo.length < MIN_CONTEUDO_LENGTH) {
-        return reply.status(400).send({
-          mensagem: `O conteúdo deve ter no mínimo ${MIN_CONTEUDO_LENGTH} caracteres`,
-        });
+        throw new AppError(
+          "VALIDATION_ERROR",
+          `O conteúdo deve ter no mínimo ${MIN_CONTEUDO_LENGTH} caracteres`
+        );
       }
 
       if (dados.Conteudo.length > MAX_CONTEUDO_LENGTH) {
-        return reply.status(400).send({
-          mensagem: `O conteúdo deve ter no máximo ${MAX_CONTEUDO_LENGTH} caracteres`,
-        });
+        throw new AppError(
+          "VALIDATION_ERROR",
+          `O conteúdo deve ter no máximo ${MAX_CONTEUDO_LENGTH} caracteres`
+        );
       }
     }
 
@@ -323,9 +347,10 @@ export async function atualizarSumario(
       hoje.setHours(23, 59, 59, 999);
 
       if (dataSumario > hoje) {
-        return reply.status(400).send({
-          mensagem: "Não é possível definir datas futuras para sumários",
-        });
+        throw new AppError(
+          "VALIDATION_ERROR",
+          "Não é possível definir datas futuras para sumários"
+        );
       }
     }
 
@@ -344,7 +369,7 @@ export async function atualizarSumario(
       });
 
       if (!sumarioExiste) {
-        throw { code: "NOT_FOUND", message: "Sumário não encontrado" };
+        throw new AppError("NOT_FOUND", "Sumário não encontrado");
       }
 
       // Se houver mudança de curso ou professor, fazer validações
@@ -371,12 +396,12 @@ export async function atualizarSumario(
         ]);
 
         if (dados.CursoID && !curso) {
-          throw { code: "NOT_FOUND", message: "Curso não encontrado" };
+          throw new AppError("NOT_FOUND", "Curso não encontrado");
         }
 
         if (dados.ProfessorID) {
           if (!professor) {
-            throw { code: "NOT_FOUND", message: "Professor não encontrado" };
+            throw new AppError("NOT_FOUND", "Professor não encontrado");
           }
 
           // Verificar se o professor está associado ao curso
@@ -384,10 +409,10 @@ export async function atualizarSumario(
             (c) => c.CursoID === cursoId
           );
           if (!professorNoCurso) {
-            throw {
-              code: "UNAUTHORIZED",
-              message: "Professor não está associado a este curso",
-            };
+            throw new AppError(
+              "UNAUTHORIZED",
+              "Professor não está associado a este curso"
+            );
           }
         }
 
@@ -404,10 +429,10 @@ export async function atualizarSumario(
           });
 
           if (sumarioExistente) {
-            throw {
-              code: "DUPLICATE",
-              message: "Já existe um sumário para este curso nesta data",
-            };
+            throw new AppError(
+              "DUPLICATE",
+              "Já existe um sumário para este curso nesta data"
+            );
           }
         }
       }
@@ -445,22 +470,26 @@ export async function atualizarSumario(
   } catch (error) {
     req.log.error(error);
 
-    if (error.code === "NOT_FOUND") {
-      return reply.status(404).send({ mensagem: error.message });
-    }
+    if (error instanceof AppError) {
+      if (error.code === "NOT_FOUND") {
+        return reply.status(404).send({ mensagem: error.message });
+      }
 
-    if (error.code === "UNAUTHORIZED") {
-      return reply.status(403).send({ mensagem: error.message });
-    }
+      if (error.code === "UNAUTHORIZED") {
+        return reply.status(403).send({ mensagem: error.message });
+      }
 
-    if (error.code === "DUPLICATE") {
-      return reply.status(409).send({ mensagem: error.message });
+      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
+        return reply.status(409).send({ mensagem: error.message });
+      }
     }
 
     return reply.status(500).send({
       mensagem: "Erro interno ao atualizar sumário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
@@ -487,7 +516,7 @@ export async function deletarSumario(
     });
 
     if (!sumario) {
-      return reply.status(404).send({ mensagem: "Sumário não encontrado" });
+      throw new AppError("NOT_FOUND", "Sumário não encontrado");
     }
 
     // Excluir o sumário
@@ -505,10 +534,17 @@ export async function deletarSumario(
     });
   } catch (error) {
     req.log.error(error);
+
+    if (error instanceof AppError && error.code === "NOT_FOUND") {
+      return reply.status(404).send({ mensagem: error.message });
+    }
+
     return reply.status(500).send({
       mensagem: "Erro interno ao deletar sumário",
       detalhes:
-        process.env.NODE_ENV === "development" ? error.message : undefined,
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 }
