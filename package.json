@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "ronydevdesgn",
