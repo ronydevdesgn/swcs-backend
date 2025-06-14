@@ -1,20 +1,23 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { 
-  LoginInput, 
-  PasswordResetRequestInput, 
-  PasswordResetInput, 
-  RefreshTokenInput 
-} from '../schemas/auth.schema';
-import { compararSenha, hashSenha } from '../utils/hash';
-import { gerarToken, verificarToken, gerarRefreshToken } from '../utils/jwt';
-import { randomBytes } from 'crypto';
-import { TipoUsuario } from '@prisma/client';
-
+import { FastifyReply, FastifyRequest } from "fastify";
+import {
+  LoginInput,
+  PasswordResetRequestInput,
+  PasswordResetInput,
+  RefreshTokenInput,
+} from "../schemas/auth.schema";
+import { compararSenha, hashSenha } from "../utils/hash";
+import { gerarToken, verificarToken, gerarRefreshToken } from "../utils/jwt";
+import { randomBytes } from "crypto";
+import { TipoUsuario } from "@prisma/client";
 
 interface TokenPayload {
   id: number;
   tipo: string;
   email: string;
+}
+
+interface FastifyRequestWithUser extends FastifyRequest {
+  user?: AuthenticatedUser;
 }
 
 interface AuthenticatedUser {
@@ -34,30 +37,27 @@ export async function loginHandler(
 
     const usuario = await prisma.usuario.findFirst({
       where: {
-        AND: [
-          { Email: email },
-          { Tipo: tipo }
-        ]
+        AND: [{ Email: email }, { Tipo: tipo }],
       },
       include: {
         Permissoes: {
           include: {
-            Permissao: true
-          }
-        }
-      }
+            Permissao: true,
+          },
+        },
+      },
     });
 
     if (!usuario) {
       return reply.status(401).send({
-        mensagem: 'Credenciais inválidas'
+        mensagem: "Credenciais inválidas",
       });
     }
 
     const senhaValida = await compararSenha(senha, usuario.SenhaHash);
     if (!senhaValida) {
       return reply.status(401).send({
-        mensagem: 'Credenciais inválidas'
+        mensagem: "Credenciais inválidas",
       });
     }
 
@@ -65,7 +65,7 @@ export async function loginHandler(
       id: usuario.UsuarioID,
       email: usuario.Email,
       tipo: usuario.Tipo,
-      nome: usuario.Nome
+      nome: usuario.Nome,
     };
 
     const accessToken = await gerarToken(payload);
@@ -76,11 +76,11 @@ export async function loginHandler(
       data: {
         token: refreshToken,
         UsuarioID: usuario.UsuarioID,
-        ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
-      }
+        ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+      },
     });
 
-    const permissoes = usuario.Permissoes.map(p => p.Permissao.Descricao);
+    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
 
     return reply.send({
       usuario: {
@@ -88,15 +88,15 @@ export async function loginHandler(
         nome: usuario.Nome,
         email: usuario.Email,
         tipo: usuario.Tipo,
-        permissoes
+        permissoes,
       },
       accessToken,
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno no servidor'
+      mensagem: "Erro interno no servidor",
     });
   }
 }
@@ -113,25 +113,25 @@ export async function refreshTokenHandler(
       where: {
         token: refreshToken,
         ExpiresAt: {
-          gt: new Date()
-        }
+          gt: new Date(),
+        },
       },
       include: {
         Usuario: {
           include: {
             Permissoes: {
               include: {
-                Permissao: true
-              }
-            }
-          }
-        }
-      }
+                Permissao: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!storedToken) {
       return reply.status(401).send({
-        mensagem: 'Refresh token inválido ou expirado'
+        mensagem: "Refresh token inválido ou expirado",
       });
     }
 
@@ -140,7 +140,7 @@ export async function refreshTokenHandler(
       id: usuario.UsuarioID,
       email: usuario.Email,
       tipo: usuario.Tipo,
-      nome: usuario.Nome
+      nome: usuario.Nome,
     };
 
     const newAccessToken = await gerarToken(payload);
@@ -149,18 +149,18 @@ export async function refreshTokenHandler(
     // Atualizar refresh token
     await prisma.$transaction([
       prisma.refreshToken.delete({
-        where: { TokenID: storedToken.TokenID }
+        where: { TokenID: storedToken.TokenID },
       }),
       prisma.refreshToken.create({
         data: {
           token: newRefreshToken,
           UsuarioID: usuario.UsuarioID,
-          ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        }
-      })
+          ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      }),
     ]);
 
-    const permissoes = usuario.Permissoes.map(p => p.Permissao.Descricao);
+    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
 
     return reply.send({
       usuario: {
@@ -168,15 +168,15 @@ export async function refreshTokenHandler(
         nome: usuario.Nome,
         email: usuario.Email,
         tipo: usuario.Tipo,
-        permissoes
+        permissoes,
       },
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno no servidor'
+      mensagem: "Erro interno no servidor",
     });
   }
 }
@@ -191,18 +191,19 @@ export async function requestPasswordResetHandler(
 
     // Verificar se o usuário existe
     const usuario = await prisma.usuario.findUnique({
-      where: { Email: email }
+      where: { Email: email },
     });
 
     if (!usuario) {
       // Retornar 200 mesmo se o email não existir por segurança
-      return reply.send({ 
-        mensagem: 'Se o email existir, você receberá as instruções de recuperação' 
+      return reply.send({
+        mensagem:
+          "Se o email existir, você receberá as instruções de recuperação",
       });
     }
 
     // Gerar token de reset
-    const resetToken = randomBytes(32).toString('hex');
+    const resetToken = randomBytes(32).toString("hex");
     const tokenHash = await hashSenha(resetToken);
 
     // Salvar token no banco
@@ -210,20 +211,21 @@ export async function requestPasswordResetHandler(
       data: {
         UsuarioID: usuario.UsuarioID,
         Token: tokenHash,
-        ExpiresAt: new Date(Date.now() + 3600000) // 1 hora
-      }
+        ExpiresAt: new Date(Date.now() + 3600000), // 1 hora
+      },
     });
 
     // TODO: Enviar email com o token
     // Aqui você implementaria o envio do email
 
-    return reply.send({ 
-      mensagem: 'Se o email existir, você receberá as instruções de recuperação' 
+    return reply.send({
+      mensagem:
+        "Se o email existir, você receberá as instruções de recuperação",
     });
   } catch (error) {
     req.log.error(error);
-    return reply.status(500).send({ 
-      mensagem: 'Erro interno no servidor' 
+    return reply.status(500).send({
+      mensagem: "Erro interno no servidor",
     });
   }
 }
@@ -241,14 +243,14 @@ export async function resetPasswordHandler(
       where: {
         Token: token,
         Used: false,
-        ExpiresAt: { gt: new Date() }
+        ExpiresAt: { gt: new Date() },
       },
-      include: { Usuario: true }
+      include: { Usuario: true },
     });
 
     if (!resetRequest) {
-      return reply.status(400).send({ 
-        mensagem: 'Token inválido ou expirado' 
+      return reply.status(400).send({
+        mensagem: "Token inválido ou expirado",
       });
     }
 
@@ -256,59 +258,59 @@ export async function resetPasswordHandler(
     const senhaHash = await hashSenha(novaSenha);
     await prisma.usuario.update({
       where: { UsuarioID: resetRequest.UsuarioID },
-      data: { SenhaHash: senhaHash }
+      data: { SenhaHash: senhaHash },
     });
 
     // Marcar token como usado
     await prisma.passwordReset.update({
       where: { PasswordResetID: resetRequest.PasswordResetID },
-      data: { Used: true }
+      data: { Used: true },
     });
 
-    return reply.send({ 
-      mensagem: 'Senha atualizada com sucesso' 
+    return reply.send({
+      mensagem: "Senha atualizada com sucesso",
     });
   } catch (error) {
     req.log.error(error);
-    return reply.status(500).send({ 
-      mensagem: 'Erro interno no servidor' 
+    return reply.status(500).send({
+      mensagem: "Erro interno no servidor",
     });
   }
 }
 
 export async function logoutHandler(
-  req: FastifyRequest,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return reply.status(401).send({ 
-        mensagem: 'Token não fornecido' 
+      return reply.status(401).send({
+        mensagem: "Token não fornecido",
       });
     }
 
-    const [, token] = authHeader.split(' ');
+    const [, token] = authHeader.split(" ");
     if (!token) {
       return reply.status(401).send({
-        mensagem: 'Token inválido'
+        mensagem: "Token inválido",
       });
     }
 
     // Invalidar refresh token
     await req.server.prisma.refreshToken.deleteMany({
       where: {
-        UsuarioID: (req.user as AuthenticatedUser).id
-      }
+        UsuarioID: (req.user as AuthenticatedUser).id,
+      },
     });
 
     return reply.send({
-      mensagem: 'Logout realizado com sucesso'
+      mensagem: "Logout realizado com sucesso",
     });
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno no servidor'
+      mensagem: "Erro interno no servidor",
     });
   }
 }
