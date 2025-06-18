@@ -5,7 +5,8 @@ import swaggerUi from "@fastify/swagger-ui";
 export default fp(
   async function (fastify) {
     await fastify.register(swagger, {
-      openapi: {
+      mode: "dynamic",
+      swagger: {
         swagger: "2.0",
         info: {
           title: "SWCS API Documentation",
@@ -68,8 +69,11 @@ export default fp(
       },
       transformSpecificationClone: true,
     });
-  {
-    name: "swagger",
-    dependencies: [],
+
+    {
+      name: "swagger",
+      dependencies: [],
+    }
   }
+
 );
