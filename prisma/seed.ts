@@ -1,5 +1,5 @@
-import { PrismaClient, Estado, TipoUsuario } from '@prisma/client'
-const prisma = new PrismaClient()
+import { PrismaClient, Estado, TipoUsuario } from "@prisma/client";
+const prisma = new PrismaClient();
 
 async function main() {
   // Criar permissões iniciais
@@ -10,7 +10,7 @@ async function main() {
       { Descricao: "Visualizar Efetividades" },
     ],
     skipDuplicates: true,
-  })
+  });
 
   // Criar funcionário (sumarista)
   const funcionario = await prisma.funcionario.upsert({
@@ -21,7 +21,7 @@ async function main() {
       Email: "sumarista@instituicao.com",
       Cargo: "Sumarista",
     },
-  })
+  });
 
   // Criar professor
   const professor = await prisma.professor.upsert({
@@ -32,7 +32,7 @@ async function main() {
       Departamento: "Matemática",
       CargaHoraria: 20,
     },
-  })
+  });
 
   // Criar curso
   const curso = await prisma.curso.upsert({
@@ -40,20 +40,20 @@ async function main() {
     update: {
       Professor: {
         connect: {
-          ProfessorID: professor.ProfessorID
-        }
-      }
+          ProfessorID: professor.ProfessorID,
+        },
+      },
     },
     create: {
       Nome: "Álgebra Linear",
       Descricao: "Curso introdutório de Álgebra Linear",
       Professor: {
         connect: {
-          ProfessorID: professor.ProfessorID
-        }
-      }
+          ProfessorID: professor.ProfessorID,
+        },
+      },
     },
-  })
+  });
 
   // Criar usuário vinculado ao funcionário
   await prisma.usuario.upsert({
@@ -73,7 +73,7 @@ async function main() {
         create: [{ PermissaoID: 1 }, { PermissaoID: 2 }],
       },
     },
-  })
+  });
 
   // Criar usuário vinculado ao professor
   await prisma.usuario.upsert({
@@ -90,7 +90,7 @@ async function main() {
         },
       },
     },
-  })
+  });
 
   // Criar sumário
   await prisma.sumario.create({
@@ -100,7 +100,7 @@ async function main() {
       CursoID: curso.CursoID,
       ProfessorID: professor.ProfessorID,
     },
-  })
+  });
 
   // Criar presença
   await prisma.presenca.create({
@@ -109,7 +109,7 @@ async function main() {
       Estado: Estado.PRESENTE,
       ProfessorID: professor.ProfessorID,
     },
-  })
+  });
 
   // Criar efetividade
   await prisma.efetividade.create({
@@ -118,16 +118,16 @@ async function main() {
       HorasTrabalhadas: 4,
       ProfessorID: professor.ProfessorID,
     },
-  })
+  });
 
-  console.log('Seed concluído com sucesso.')
+  console.log("Seed concluído com sucesso.");
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });
