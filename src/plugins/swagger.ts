@@ -6,7 +6,7 @@ export default fp(
   async function (fastify) {
     await fastify.register(swagger, {
       openapi: {
-        openapi: "3.1.0",
+        swagger: "2.0",
         info: {
           title: "SWCS API Documentation",
           description: "Sistema Web de Controlo de Sumários - API Documentation",
@@ -16,6 +16,10 @@ export default fp(
             email: "support@swcs.com",
           },
         },
+        host: "localhost:3000",
+        schemes: ["http"],
+        consumes: ["application/json"],
+        produces: ["application/json"],
         servers: [
           {
             url: "http://localhost:3000",
@@ -64,33 +68,7 @@ export default fp(
       },
       transformSpecificationClone: true,
     });
-
-    // Tratamento de erros customizado
-    fastify.setErrorHandler((error, request, reply) => {
-      fastify.log.error(error);
-      
-      if (error.validation) {
-        return reply.status(400).send({
-          error: "Erro de Validação",
-          message: error.message,
-          validation: error.validation,
-        });
-      }
-
-      if (error.statusCode) {
-        return reply.status(error.statusCode).send({
-          error: error.name || "Erro",
-          message: error.message,
-        });
-      }
-
-      return reply.status(500).send({
-        error: "Erro Interno do Servidor",
-        message: "Ocorreu um erro inesperado",
-      });
-    });
-  },
-  { 
+  {
     name: "swagger",
     dependencies: [],
   }
