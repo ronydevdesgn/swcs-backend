@@ -104,13 +104,13 @@ app.setErrorHandler((error, request, reply) => {
 const start = async () => {
   try {
     await app.listen({ 
-      port: 3000,
+      port: 3333,
       host: '0.0.0.0' // Permite conexões de qualquer IP
     })
     
-    console.log(`Servidor está agora ouvindo na rota http://localhost:3000`)
-    console.log(`Documentação Swagger disponível em http://localhost:3000/docs`)
-    
+    console.log(`Servidor está agora ouvindo na rota http://localhost:3333`)
+    console.log(`Documentação Swagger disponível em http://localhost:3333/docs`)
+
   } catch (err) {
     app.log.error(err)
     console.error('Erro ao iniciar o servidor:', err)
@@ -122,7 +122,7 @@ const start = async () => {
       console.error('Erro desconhecido:', err)
     }
 
-    await app.close() // Aguarda o fechamento do servidor
+    await app.close()
     process.exit(1)
   }
 }

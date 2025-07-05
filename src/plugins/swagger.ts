@@ -6,25 +6,22 @@ export default fp(
   async function (fastify) {
     await fastify.register(swagger, {
       mode: "dynamic",
-      swagger: {
-        swagger: "2.0",
+      openapi: {
+        openapi: "3.0.0",
         info: {
           title: "SWCS API Documentation",
-          description: "Sistema Web de Controlo de Sumários - API Documentation",
+          description:
+            "Sistema Web de Controlo de Sumários - API Documentation",
           version: "1.0.1",
           contact: {
             name: "SWCS Team",
             email: "support@swcs.com",
           },
         },
-        host: "localhost:3000",
-        schemes: ["http"],
-        consumes: ["application/json"],
-        produces: ["application/json"],
         servers: [
           {
             url: "http://localhost:3000",
-            description: "Servidor de desenvolvimento",
+            description: "Servidor de desenvolvimento (back-end)",
           },
         ],
         tags: [
@@ -69,11 +66,10 @@ export default fp(
       },
       transformSpecificationClone: true,
     });
-
-    {
-      name: "swagger",
-      dependencies: [],
-    }
+  },
+  
+  {
+    name: "swagger",
+    dependencies: [],
   }
-
 );

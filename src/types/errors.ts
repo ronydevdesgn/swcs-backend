@@ -7,6 +7,7 @@ export type AppErrorCode =
   | "UNAUTHORIZED";
 
 export class AppError extends Error {
+  statusCode: any;
   constructor(
     public code: AppErrorCode,
     message: string,
