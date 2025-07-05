@@ -1,4 +1,4 @@
-import { PrismaClient, Estado, TipoUsuario } from "@prisma/client";
+import { PrismaClient, Estado, TipoUsuario, Departamento, Cargo } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -19,7 +19,7 @@ async function main() {
     create: {
       Nome: "Carlos Sumarista",
       Email: "sumarista@instituicao.com",
-      Cargo: "Sumarista",
+      Cargo: Cargo.SUMARISTA,
     },
   });
 
@@ -29,7 +29,7 @@ async function main() {
     update: {},
     create: {
       Nome: "Ana Professora",
-      Departamento: "Matemática",
+      Departamento: Departamento.INFORMATICA,
       CargaHoraria: 20,
     },
   });
@@ -37,21 +37,10 @@ async function main() {
   // Criar curso
   const curso = await prisma.curso.upsert({
     where: { CursoID: 1 },
-    update: {
-      Professor: {
-        connect: {
-          ProfessorID: professor.ProfessorID,
-        },
-      },
-    },
+    update: {},
     create: {
       Nome: "Álgebra Linear",
-      Descricao: "Curso introdutório de Álgebra Linear",
-      Professor: {
-        connect: {
-          ProfessorID: professor.ProfessorID,
-        },
-      },
+      Descricao: "Curso introdutório de Álgebra Linear"
     },
   });
 
@@ -102,12 +91,21 @@ async function main() {
     },
   });
 
+  // Criar relação Professor-Curso
+  await prisma.professorCurso.create({
+    data: {
+      ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
+    },
+  });
+
   // Criar presença
   await prisma.presenca.create({
     data: {
       Data: new Date(),
       Estado: Estado.PRESENTE,
       ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
     },
   });
 
@@ -117,6 +115,7 @@ async function main() {
       Data: new Date(),
       HorasTrabalhadas: 4,
       ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
     },
   });
 

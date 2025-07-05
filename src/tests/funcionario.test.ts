@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { app } from '../server'
+import { Cargo } from '@prisma/client'
 
 describe('Funcionario Routes', () => {
   let server: ReturnType<typeof Fastify>
@@ -21,7 +22,7 @@ describe('Funcionario Routes', () => {
       payload: {
         nome: 'Funcionário Teste',
         email: `teste${Date.now()}@empresa.com`,
-        cargo: 'Secretário'
+        cargo: Cargo.SECRETARIO
       }
     })
 
@@ -58,7 +59,7 @@ describe('Funcionario Routes', () => {
       payload: {
         nome: 'Funcionário Atualizado',
         email: `atualizado${Date.now()}@empresa.com`,
-        cargo: 'Sumarista'
+        cargo: Cargo.SUMARISTA
       }
     })
     expect(res.statusCode).toBe(200)

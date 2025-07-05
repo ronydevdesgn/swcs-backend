@@ -1,10 +1,12 @@
 import Fastify from 'fastify'
 import { app } from '../server'
+import { Estado } from '@prisma/client'
 
 describe('Presenca Routes', () => {
   let server: ReturnType<typeof Fastify>
   let presencaId: number
   let professorId = 1 // Altere conforme um Professor válido no seu banco
+  let cursoId = 1 // Altere conforme um Curso válido no seu banco
 
   beforeAll(async () => {
     await app.ready()
@@ -21,8 +23,9 @@ describe('Presenca Routes', () => {
       url: '/presencas',
       payload: {
         data: new Date().toISOString(),
-        estado: 'PRESENTE',
-        professorID: professorId
+        estado: Estado.PRESENTE,
+        professorID: professorId,
+        cursoID: cursoId
       }
     })
 
@@ -59,7 +62,7 @@ describe('Presenca Routes', () => {
       method: 'PUT',
       url: `/presencas/${presencaId}`,
       payload: {
-        estado: 'FALTA'
+        estado: Estado.FALTA
       }
     })
 

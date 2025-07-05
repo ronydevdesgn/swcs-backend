@@ -5,6 +5,7 @@ describe('Efetividade Routes', () => {
   let server: ReturnType<typeof Fastify>
   let efetividadeId: number
   let professorId = 1 // Ajuste conforme o ProfessorID existente no seu banco
+  let cursoId = 1 // Ajuste conforme o CursoID existente no seu banco
 
   beforeAll(async () => {
     await app.ready()
@@ -22,7 +23,8 @@ describe('Efetividade Routes', () => {
       payload: {
         data: new Date().toISOString(),
         horasTrabalhadas: 5,
-        professorID: professorId
+        professorID: professorId,
+        cursoID: cursoId
       }
     })
 

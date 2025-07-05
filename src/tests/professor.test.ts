@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { app } from '../server'
+import { Departamento } from '@prisma/client'
 
 describe('Professor Routes', () => {
   let server: ReturnType<typeof Fastify>
@@ -20,7 +21,7 @@ describe('Professor Routes', () => {
       url: '/professores',
       payload: {
         nome: 'Prof. Teste',
-        departamento: 'Ciência da Computação',
+        departamento: Departamento.INFORMATICA,
         cargaHoraria: 20
       }
     })
@@ -57,7 +58,7 @@ describe('Professor Routes', () => {
       url: `/professores/${professorId}`,
       payload: {
         nome: 'Prof. Atualizado',
-        departamento: 'Matemática',
+        departamento: Departamento.INFORMATICA,
         cargaHoraria: 30
       }
     })
