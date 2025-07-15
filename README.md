@@ -6,7 +6,7 @@ Sistema de gestão escolar focado no controle e monitoramento das atividades dos
 
 ## Tecnologias Utilizadas
 
-<p style="font-style:justify;">Neste projecto ou seja para contrução do <b>Back-End</b> usou-se as seguintes tecnologias:</p>
+Neste projecto, para construção do Back-End, foram utilizadas as seguintes tecnologias:
 
 - **Fastify**: Framework web rápido e eficiente
 - **Prisma**: ORM moderno com controle de acesso
@@ -18,58 +18,58 @@ Sistema de gestão escolar focado no controle e monitoramento das atividades dos
 
 ## Estrutura do Projeto
 
-├── <b>src</b><br>
-│ ├── <b>routes</b><br>
-│ │ ├── auth.routes.ts<br>
-│ │ ├── professor.routes.ts<br>
-│ │ ├── funcionario.routes.ts<br>
-│ │ ├── usuario.routes.ts<br>
-│ │ ├── permissoes.routes.ts<br>
-│ │ ├── cursos.routes.ts<br>
-│ │ ├── sumarios.routes.ts<br>
-│ │ ├── presencas.routes.ts<br>
-│ │ └── efetividades.routes.ts<br>
-│ ├── <b>controllers</b><br>
-│ │ ├── auth.controller.ts<br>
-│ │ ├── professor.controller.ts<br>
-│ │ ├── funcionario.controller.ts<br>
-│ │ ├── usuario.controller.ts<br>
-│ │ ├── permissoes.controller.ts<br>
-│ │ ├── cursos.controller.ts<br>
-│ │ ├── sumarios.controller.ts<br>
-│ │ ├── presencas.controller.ts<br>
-│ │ └── efetividades.controller.ts<br>
-│ ├── <b>schemas</b><br>
-│ │ ├── auth.schema.ts<br>
-│ │ ├── professor.schema.ts<br>
-│ │ ├── funcionario.schema.ts<br>
-│ │ ├── usuario.schema.ts<br>
-│ │ ├── permissoes.schema.ts<br>
-│ │ ├── cursos.schema.ts<br>
-│ │ ├── sumarios.schema.ts<br>
-│ │ ├── presencas.schema.ts<br>
-│ │ └── efetividades.schema.ts<br>
-│ ├── <b>middlewares</b><br>
-│ │ └── authMiddleware.ts<br>
-│ ├── <b>plugins</b><br>
-│ │ ├── prisma.ts<br>
-│ │ └── swagger.ts<br>
-│ ├── <b>utils</b><br>
-│ │ ├── jwt.ts<br>
-│ │ └── hash.ts<br>
-│ ├── <b>tests</b><br>
-│ │ ├── auth.test.ts<br>
-│ │ ├── funcionario.test.ts<br>
-│ │ ├── usuario.test.ts<br>
-│ │ ├── professor.test.ts<br>
-│ │ ├── permissoes.test.ts<br>
-│ │ ├── cursos.test.ts<br>
-│ │ ├── sumarios.test.ts<br>
-│ │ ├── presencas.test.ts<br>
-│ │ └── efetividades.test.ts<br>
-│ └── <b>server.ts</b><br>
-
-</p>
+```
+├── src
+│   ├── routes
+│   │   ├── auth.routes.ts
+│   │   ├── professor.routes.ts
+│   │   ├── funcionario.routes.ts
+│   │   ├── usuario.routes.ts
+│   │   ├── permissoes.routes.ts
+│   │   ├── cursos.routes.ts
+│   │   ├── sumarios.routes.ts
+│   │   ├── presencas.routes.ts
+│   │   └── efetividades.routes.ts
+│   ├── controllers
+│   │   ├── auth.controller.ts
+│   │   ├── professor.controller.ts
+│   │   ├── funcionario.controller.ts
+│   │   ├── usuario.controller.ts
+│   │   ├── permissoes.controller.ts
+│   │   ├── cursos.controller.ts
+│   │   ├── sumarios.controller.ts
+│   │   ├── presencas.controller.ts
+│   │   └── efetividades.controller.ts
+│   ├── schemas
+│   │   ├── auth.schema.ts
+│   │   ├── professor.schema.ts
+│   │   ├── funcionario.schema.ts
+│   │   ├── usuario.schema.ts
+│   │   ├── permissoes.schema.ts
+│   │   ├── cursos.schema.ts
+│   │   ├── sumarios.schema.ts
+│   │   ├── presencas.schema.ts
+│   │   └── efetividades.schema.ts
+│   ├── middlewares
+│   │   └── authMiddleware.ts
+│   ├── plugins
+│   │   ├── prisma.ts
+│   │   └── swagger.ts
+│   ├── utils
+│   │   ├── jwt.ts
+│   │   └── hash.ts
+│   ├── tests
+│   │   ├── auth.test.ts
+│   │   ├── funcionario.test.ts
+│   │   ├── usuario.test.ts
+│   │   ├── professor.test.ts
+│   │   ├── permissoes.test.ts
+│   │   ├── cursos.test.ts
+│   │   ├── sumarios.test.ts
+│   │   ├── presencas.test.ts
+│   │   └── efetividades.test.ts
+│   └── server.ts
+```
 
 ## Como executar o projeto
 
@@ -104,7 +104,7 @@ cp .env.example .env
 Edite o arquivo `.env` com suas configurações:
 
 ```
-DATABASE_URL="postgresql://user:password@localhost:5432/swcs"
+DATABASE_URL="mysql://user:password@localhost:5432/swcs-database"
 JWT_SECRET="seu-segredo-aqui"
 REFRESH_TOKEN_SECRET="seu-refresh-token-segredo"
 ```
@@ -112,14 +112,9 @@ REFRESH_TOKEN_SECRET="seu-refresh-token-segredo"
 4. **Configure o banco de dados**
 
 ```bash
-# Gere o cliente Prisma
 npx prisma generate
-
-# Execute as migrações
 npx prisma migrate dev
-
-# (Opcional) Popule o banco com dados iniciais
-npx prisma db seed
+npx prisma db seed # opcional
 ```
 
 5. **Execute o projeto**
@@ -127,7 +122,6 @@ npx prisma db seed
 ```bash
 # Desenvolvimento
 npm run dev
-
 # Produção
 npm run build
 npm start
@@ -137,42 +131,42 @@ npm start
 
 A documentação da API está disponível em:
 
-- Swagger UI: `http://localhost:3000/docs`
-- JSON Schema: `http://localhost:3000/docs/json`
+- Swagger UI: http://localhost:3000/docs
+- JSON Schema: http://localhost:3000/docs/json
 
 ## Endpoints Principais
 
 ### Autenticação
 
-- `POST /auth/login` - Login de usuário
-- `POST /auth/refresh` - Refresh token
-- `POST /auth/logout` - Logout
-- `POST /auth/reset-password` - Solicitar reset de senha
+- POST /auth/login - Login de usuário
+- POST /auth/refresh - Refresh token
+- POST /auth/logout - Logout
+- POST /auth/reset-password - Solicitar reset de senha
 
 ### Professores
 
-- `GET /professores` - Listar professores
-- `POST /professores` - Cadastrar professor
-- `GET /professores/:id` - Obter professor
-- `PUT /professores/:id` - Atualizar professor
+- GET /professores - Listar professores
+- POST /professores - Cadastrar professor
+- GET /professores/:id - Obter professor
+- PUT /professores/:id - Atualizar professor
 
 ### Cursos
 
-- `GET /cursos` - Listar cursos
-- `POST /cursos` - Criar curso
-- `GET /cursos/:id` - Obter curso
-- `PUT /cursos/:id` - Atualizar curso
+- GET /cursos - Listar cursos
+- POST /cursos - Criar curso
+- GET /cursos/:id - Obter curso
+- PUT /cursos/:id - Atualizar curso
 
 ### Sumários e Presenças
 
-- `GET /sumarios` - Listar sumários
-- `POST /sumarios` - Criar sumário
-- `POST /presencas/batch` - Registrar presenças em lote
-- `GET /efetividades/stats` - Estatísticas de efetividade
+- GET /sumarios - Listar sumários
+- POST /sumarios - Criar sumário
+- POST /presencas/batch - Registrar presenças em lote
+- GET /efetividades/stats - Estatísticas de efetividade
 
 ## Tratamento de Erros
 
-O sistema utiliza uma estrutura padronizada de erros através da classe `AppError`:
+O sistema utiliza uma estrutura padronizada de erros através da classe AppError:
 
 ```typescript
 {
@@ -182,76 +176,45 @@ O sistema utiliza uma estrutura padronizada de erros através da classe `AppErro
 }
 ```
 
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-A API possui as seguintes rotas:
-
-- POST /login: Autentica um usuário e retorna um token JWT.
-- POST /professor: Cria um novo professor.
-- GET /professor: Retorna todos os professores.
-- GET /professor/:id: Retorna um professor específico.
-- PUT /professor/:id: Atualiza um professor específico.
-- DELETE /profess
-  or/:id: Remove um professor específico.
-- POST /funcionario
-- GET /funcionario
-- GET /funcionario/:id
-- PUT /funcionario/:id
-- DELETE /funcionario/:id
-- POST /usuario
-- GET /usuario
-- GET /usuario/:id
-- PUT /usuario/:id
-- DELETE /usuario/:id
-- POST /permissoes
-- GET /permissoes
-- GET /permissoes/:id
-- PUT /permissoes/:id
-- DELETE /permissoes/:id
-- POST /cursos
-- GET /cursos
-- GET /cursos/:id
-- PUT /cursos/:id
-- DELETE /cursos/:id
-- POST /sumarios
-- GET /sumarios
-- GET /sumarios/:id
-- PUT /sumarios/:id
-- DELETE /sumarios/:id
-- POST /presencas
-- GET /presencas
-- GET /presencas
-- GET /presencas/:id
-- PUT /presencas/:id
-- DELETE /presencas/:id
-- POST /efetividades
-- GET /efetividades
-- GET /efetividades/:id
-- PUT /efetividades/:id
-- DELETE /efetividades/:id
-
-## Documentação da API
-
-A documentação da API está disponível em http://localhost:3000/docs.
-
 ## Testes
 
-Os testes unitários estão localizados em /tests.
+Os testes unitários estão localizados em `/tests`.
+Execute os testes com:
+
+```bash
+npm test
+```
+
+### Cobertura de Testes
+
+- ✅ Auth
+- ✅ Usuários
+- ✅ Professores
+- ✅ Funcionários
+- ✅ Cursos
+- ✅ Sumários
+- ✅ Presenças
+- ✅ Efetividades
 
 ## Contribuição
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir uma issue ou enviar um pull request.
 
+1. Faça o fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/NomeDaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
+4. Push para a branch (`git push origin feature/NomeDaFeature`)
+5. Abra um Pull Request
+
 ## Licença
 
-Este projecto está licenciado sob a licença MIT.
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ### Autor
 
 <a href="https://github.com/ronydevdesgn">
  <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/82418215?v=4" width="100px;" alt=""/>
 
-### OBSERVAÇÃO
+### Observação
 
- <p>Este projecto é apenas um exemplo de como criar uma API RESTful com Fastify, Prisma, Zod, JWT e Swagger. Ele não é um projeto completo e não deve ser usado em um ambiente de produção sem modificações.</p>
+Este projecto é apenas um exemplo de como criar uma API RESTful com Fastify, Prisma, Zod, JWT e Swagger. Ele não é um projeto completo e não deve ser usado em um ambiente de produção sem modificações.
