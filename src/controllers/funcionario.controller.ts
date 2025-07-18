@@ -5,7 +5,7 @@ import {
   IdParam,
 } from "../schemas/funcionario.schema";
 import { hashSenha } from "../utils/hash";
-import { TipoUsuario, Prisma } from "@prisma/client";
+import { TipoUsuario, Prisma, Cargo } from "@prisma/client";
 import { AppError, isAppError } from "../types/errors";
 
 // Regex para validação de email
@@ -39,6 +39,11 @@ export async function criarFuncionario(
       // Hash da senha
       const senhaHash = await hashSenha(Senha);
 
+      // Validar Cargo
+      if (!Object.values(Cargo).includes(Cargo as Cargo)) {
+        throw new AppError("VALIDATION_ERROR", "Cargo inválido");
+      }
+
       // Criar o usuário primeiro
       const novoUsuario = await tx.usuario.create({
         data: {
@@ -60,7 +65,7 @@ export async function criarFuncionario(
         data: {
           Nome,
           Email,
-          Cargo,
+          Cargo: Cargo as Cargo,
           UsuarioID: novoUsuario.UsuarioID,
         },
         include: {
@@ -133,17 +138,19 @@ export async function listarFuncionarios(
     const { search, cargo } = req.query;
 
     // Construir query dinâmica
-    const where: Prisma.FuncionarioWhereInput = {
-      ...(search && {
-        OR: [
-          { Nome: { contains: search } },
-          { Usuario: { Email: { contains: search } } },
-        ],
-      }),
-      ...(cargo && {
-        Cargo: cargo,
-      }),
-    };
+    let where: Prisma.FuncionarioWhereInput = {};
+    if (search) {
+      where.OR = [
+        { Nome: { contains: search } },
+        { Usuario: { Email: { contains: search } } },
+      ];
+    }
+    if (cargo) {
+      if (!Object.values(Cargo).includes(cargo as Cargo)) {
+        return reply.status(400).send({ mensagem: "Cargo inválido" });
+      }
+      where.Cargo = cargo as Cargo;
+    }
 
     const funcionarios = await prisma.funcionario.findMany({
       where,
@@ -285,7 +292,11 @@ export async function atualizarFuncionario(
         where: { FuncionarioID: id },
         data: {
           Nome: dados.Nome,
-          Cargo: dados.Cargo,
+          Cargo: dados.Cargo
+            ? Object.values(Cargo).includes(dados.Cargo as Cargo)
+              ? (dados.Cargo as Cargo)
+              : undefined
+            : undefined,
         },
       });
 
