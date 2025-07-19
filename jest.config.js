@@ -7,7 +7,7 @@
 * @see https://jestjs.io/docs/configuration
 * @see https://www.npmjs.com/package/ts-jest
 */
-export default {
+module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
@@ -26,4 +26,10 @@ export default {
   maxWorkers: 1, // Executar testes sequencialmente para evitar conflitos de porta
   forceExit: true, // Forçar saída após os testes
   detectOpenHandles: true, // Detectar handles abertos
+  extensionsToTreatAsEsm: ['.ts'],
+  globals: {
+    'ts-jest': {
+      useESM: true,
+    },
+  },
 };

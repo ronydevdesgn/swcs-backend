@@ -1,152 +1,81 @@
 // src/tests/testHelpers.ts
 import { app } from "../server";
 import { PrismaClient } from "@prisma/client";
-import { sign } from "../utils/jwt";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-export interface TestUser {
-  id: number;
-  email: string;
-  tipo: string;
-  permissions?: string[];
-}
-
-export async function createTestUser(): Promise<TestUser> {
-  // Criar um usuário de teste
-  const user = await prisma.usuario.create({
-    data: {
-      Nome: "Test User",
-      Email: `test${Date.now()}@example.com`,
-      SenhaHash: "$2b$10$test.hash.for.testing",
-      Tipo: "FUNCIONARIO",
-    },
-  });
-
-  return {
-    id: user.UsuarioID,
-    email: user.Email,
-    tipo: user.Tipo,
-  };
-}
-
-export async function generateTestToken(user?: TestUser): Promise<string> {
-  const testUser = user || (await createTestUser());
-
-  const token = sign({
-    id: testUser.id,
-    email: testUser.email,
-    tipo: testUser.tipo,
-  });
-
-  return token;
-}
-
-export async function makeAuthenticatedRequest(
-  method: string,
-  url: string,
-  payload?: any
-) {
-  const token = await generateTestToken();
-
-  return app.inject({
-    method,
-    url,
-    payload,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-}
-
-export async function cleanupTestData() {
-  try {
-    // Limpar dados de teste em ordem para evitar problemas de foreign key
-    await prisma.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 0");
-
-    const tables = [
-      "RefreshToken",
-      "PasswordReset",
-      "UsuarioPermissao",
-      "Permissao",
-      "Efetividade",
-      "Presenca",
-      "Sumario",
-      "ProfessorCurso",
-      "Professor",
-      "Funcionario",
-      "Usuario",
-      "Curso",
-    ];
-
-    for (const table of tables) {
-      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${table}`);
-    }
-
-    await prisma.$executeRawUnsafe("SET FOREIGN_KEY_CHECKS = 1");
-  } catch (error) {
-    console.error("Erro ao limpar dados de teste:", error);
-  }
-}
+// Token de teste para autenticação
+const TEST_TOKEN = jwt.sign(
+  {
+    userId: 1,
+    tipo: "FUNCIONARIO",
+    email: "test@example.com",
+  },
+  "test-secret-key",
+  { expiresIn: "1d" }
+);
 
 export async function createTestProfessor() {
   const professor = await prisma.professor.create({
     data: {
-      Nome: "Professor Teste",
-      Departamento: "INFORMATICA",
-      CargaHoraria: 20,
+      nome: `Professor Teste ${Date.now()}`,
+      email: `professor${Date.now()}@test.com`,
+      senha: "senha123",
+      departamento: "INFORMATICA",
+      cargaHoraria: 20,
     },
   });
-
-  const user = await prisma.usuario.create({
-    data: {
-      Nome: "Professor Teste",
-      Email: `professor${Date.now()}@example.com`,
-      SenhaHash: "$2b$10$test.hash.for.testing",
-      Tipo: "PROFESSOR",
-      Professor: {
-        connect: {
-          ProfessorID: professor.ProfessorID,
-        },
-      },
-    },
-  });
-
-  return { professor, user };
+  return { professor };
 }
 
 export async function createTestCurso() {
-  return await prisma.curso.create({
+  const curso = await prisma.curso.create({
     data: {
-      Nome: "Curso Teste",
-      Descricao: "Descrição do curso teste",
+      nome: `Curso Teste ${Date.now()}`,
+      descricao: "Curso para testes",
+      cargaHoraria: 40,
+      departamento: "INFORMATICA",
     },
   });
+  return curso;
 }
 
 export async function createTestFuncionario() {
   const funcionario = await prisma.funcionario.create({
     data: {
-      Nome: "Funcionário Teste",
-      Email: `funcionario${Date.now()}@example.com`,
-      Cargo: "SECRETARIO",
+      nome: `Funcionário Teste ${Date.now()}`,
+      email: `funcionario${Date.now()}@test.com`,
+      senha: "senha123",
+      cargo: "SECRETARIO",
     },
   });
+  return { funcionario };
+}
 
-  const user = await prisma.usuario.create({
-    data: {
-      Nome: "Funcionário Teste",
-      Email: `funcionario${Date.now()}@example.com`,
-      SenhaHash: "$2b$10$test.hash.for.testing",
-      Tipo: "FUNCIONARIO",
-      Funcionario: {
-        connect: {
-          FuncionarioID: funcionario.FuncionarioID,
-        },
-      },
+export async function makeAuthenticatedRequest(
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  url: string,
+  payload?: any
+) {
+  return app.inject({
+    method,
+    url,
+    payload,
+    headers: {
+      Authorization: `Bearer ${TEST_TOKEN}`,
     },
   });
+}
 
-  return { funcionario, user };
+export async function cleanupTestData() {
+  // Limpar dados de teste em ordem reversa para evitar problemas de foreign key
+  await prisma.efetividade.deleteMany({});
+  await prisma.presenca.deleteMany({});
+  await prisma.sumario.deleteMany({});
+  await prisma.professor.deleteMany({});
+  await prisma.funcionario.deleteMany({});
+  await prisma.curso.deleteMany({});
+  await prisma.permissao.deleteMany({});
+  await prisma.usuario.deleteMany({});
 }
