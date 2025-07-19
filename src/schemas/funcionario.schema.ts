@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Cargo } from '@prisma/client';
 
 const funcionarioBase = {
   Nome: z.string()
@@ -7,9 +8,9 @@ const funcionarioBase = {
   Email: z.string()
     .email('Email inválido')
     .max(100, 'Email muito longo'),
-  Cargo: z.string()
-    .min(2, 'Cargo deve ter no mínimo 2 caracteres')
-    .max(50, 'Cargo muito longo')
+  Cargo: z.nativeEnum(Cargo, {
+    errorMap: () => ({ message: 'Cargo inválido' }),
+  }),
 };
 
 export const createFuncionarioSchema = z.object({

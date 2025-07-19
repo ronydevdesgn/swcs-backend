@@ -8,9 +8,22 @@
 * @see https://www.npmjs.com/package/ts-jest
 */
 export default {
-  testEnvironment: "node",
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    "^.+\.tsx?$": ["ts-jest",{}],
+    '^.+\\.ts$': 'ts-jest',
   },
-  testMatch: ['**/src/tests/**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/server.ts',
+    '!src/tests/**/*.ts',
+  ],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  testTimeout: 30000, // 30 segundos de timeout
+  maxWorkers: 1, // Executar testes sequencialmente para evitar conflitos de porta
+  forceExit: true, // Forçar saída após os testes
+  detectOpenHandles: true, // Detectar handles abertos
 };
