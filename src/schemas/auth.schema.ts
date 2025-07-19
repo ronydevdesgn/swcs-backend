@@ -40,34 +40,27 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string()
 });
 
-// Esquemas de resposta para a documentação do swagger
-export const loginResponseSchema = {
-  200: {
-    type: 'object',
-    properties: {
-      accessToken: { type: 'string' },
-      refreshToken: { type: 'string' },
-      user: {
-        type: 'object',
-        properties: {
-          id: { type: 'number' },
-          email: { type: 'string' },
-          tipo: { type: 'string' },
-          nome: { type: 'string' }
-        }
-      }
-    }
-  },
-  401: {
-    type: 'object',
-    properties: {
-      mensagem: { type: 'string' }
-    }
-  }
-};
+// Esquemas de resposta usando Zod
+export const loginResponseSchema = z.object({
+  usuario: z.object({
+    id: z.number(),
+    nome: z.string(),
+    email: z.string(),
+    tipo: z.nativeEnum(TipoUsuario),
+    permissoes: z.array(z.string())
+  }),
+  accessToken: z.string(),
+  refreshToken: z.string()
+});
+
+export const errorResponseSchema = z.object({
+  mensagem: z.string()
+});
 
 // Types
 export type LoginInput = z.infer<typeof loginSchema>;
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
 export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+export type ErrorResponse = z.infer<typeof errorResponseSchema>;

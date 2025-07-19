@@ -7,7 +7,7 @@
 * @see https://jestjs.io/docs/configuration
 * @see https://www.npmjs.com/package/ts-jest
 */
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],

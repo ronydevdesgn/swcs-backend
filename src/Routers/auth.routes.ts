@@ -11,7 +11,8 @@ import {
   refreshTokenSchema,
   passwordResetRequestSchema,
   passwordResetSchema,
-  loginResponseSchema
+  loginResponseSchema,
+  errorResponseSchema
 } from "../schemas/auth.schema";
 import { autenticar } from "../middlewares/authMiddleware";
 
@@ -20,7 +21,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
   fastify.post("/login", {
     schema: {
       body: loginSchema,
-      response: loginResponseSchema
+      response: {
+        200: loginResponseSchema,
+        401: errorResponseSchema,
+        500: errorResponseSchema
+      }
     }
   }, loginHandler);
 
@@ -29,13 +34,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: refreshTokenSchema,
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            accessToken: { type: 'string' },
-            refreshToken: { type: 'string' }
-          }
-        }
+        200: loginResponseSchema,
+        401: errorResponseSchema,
+        500: errorResponseSchema
       }
     }
   }, refreshTokenHandler);
@@ -45,12 +46,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: passwordResetRequestSchema,
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' }
-          }
-        }
+        200: errorResponseSchema,
+        500: errorResponseSchema
       }
     }
   }, requestPasswordResetHandler);
@@ -60,12 +57,9 @@ export default async function authRoutes(fastify: FastifyInstance) {
     schema: {
       body: passwordResetSchema,
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' }
-          }
-        }
+        200: errorResponseSchema,
+        400: errorResponseSchema,
+        500: errorResponseSchema
       }
     }
   }, resetPasswordHandler);
@@ -75,12 +69,8 @@ export default async function authRoutes(fastify: FastifyInstance) {
     onRequest: [autenticar],
     schema: {
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' }
-          }
-        }
+        200: errorResponseSchema,
+        500: errorResponseSchema
       }
     }
   }, logoutHandler);

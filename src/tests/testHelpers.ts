@@ -1,16 +1,17 @@
 // src/tests/testHelpers.ts
 import { app } from "../server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TipoUsuario } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-// Token de teste para autenticação
+// Token de teste fixo para autenticação
 const TEST_TOKEN = jwt.sign(
   {
     userId: 1,
     tipo: "FUNCIONARIO",
     email: "test@example.com",
+    nome: "Usuário Teste",
   },
   "test-secret-key",
   { expiresIn: "1d" }
@@ -19,11 +20,9 @@ const TEST_TOKEN = jwt.sign(
 export async function createTestProfessor() {
   const professor = await prisma.professor.create({
     data: {
-      nome: `Professor Teste ${Date.now()}`,
-      email: `professor${Date.now()}@test.com`,
-      senha: "senha123",
-      departamento: "INFORMATICA",
-      cargaHoraria: 20,
+      Nome: `Professor Teste ${Date.now()}`,
+      Departamento: "INFORMATICA",
+      CargaHoraria: 20,
     },
   });
   return { professor };
@@ -32,10 +31,8 @@ export async function createTestProfessor() {
 export async function createTestCurso() {
   const curso = await prisma.curso.create({
     data: {
-      nome: `Curso Teste ${Date.now()}`,
-      descricao: "Curso para testes",
-      cargaHoraria: 40,
-      departamento: "INFORMATICA",
+      Nome: `Curso Teste ${Date.now()}`,
+      Descricao: "Curso para testes",
     },
   });
   return curso;
@@ -44,10 +41,9 @@ export async function createTestCurso() {
 export async function createTestFuncionario() {
   const funcionario = await prisma.funcionario.create({
     data: {
-      nome: `Funcionário Teste ${Date.now()}`,
-      email: `funcionario${Date.now()}@test.com`,
-      senha: "senha123",
-      cargo: "SECRETARIO",
+      Nome: `Funcionário Teste ${Date.now()}`,
+      Email: `funcionario${Date.now()}@test.com`,
+      Cargo: "SECRETARIO",
     },
   });
   return { funcionario };
