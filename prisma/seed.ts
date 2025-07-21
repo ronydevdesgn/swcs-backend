@@ -1,4 +1,11 @@
-import { PrismaClient, Estado, TipoUsuario, Departamento, Cargo } from "@prisma/client";
+import {
+  PrismaClient,
+  Estado,
+  TipoUsuario,
+  Departamento,
+  Cargo,
+} from "@prisma/client";
+import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -40,7 +47,7 @@ async function main() {
     update: {},
     create: {
       Nome: "Álgebra Linear",
-      Descricao: "Curso introdutório de Álgebra Linear"
+      Descricao: "Curso introdutório de Álgebra Linear",
     },
   });
 
@@ -51,7 +58,7 @@ async function main() {
     create: {
       Nome: "Carlos Sumarista",
       Email: "sumarista@instituicao.com",
-      SenhaHash: "senha_hash_fake",
+      SenhaHash: await bcrypt.hash("senha123", 10),
       Tipo: TipoUsuario.FUNCIONARIO,
       Funcionario: {
         connect: {
@@ -71,7 +78,7 @@ async function main() {
     create: {
       Nome: "Ana Professora",
       Email: "prof@instituicao.com",
-      SenhaHash: "senha_hash_fake",
+      SenhaHash: await bcrypt.hash("senha123", 10),
       Tipo: TipoUsuario.PROFESSOR,
       Professor: {
         connect: {
