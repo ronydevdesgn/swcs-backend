@@ -1,11 +1,11 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { 
-  CreateProfessorInput, 
-  UpdateProfessorInput, 
-  IdParam 
-} from '../schemas/professor.schema';
-import { hashSenha } from '../utils/hash';
-import { TipoUsuario } from '@prisma/client';
+import { FastifyRequest, FastifyReply } from "fastify";
+import {
+  CreateProfessorInput,
+  UpdateProfessorInput,
+  IdParam,
+} from "../schemas/professor.schema";
+import { hashSenha } from "../utils/hash";
+import { TipoUsuario, Departamento } from "@prisma/client";
 
 interface ProfessorData {
   Nome: string;
@@ -19,30 +19,34 @@ export async function criarProfessor(
   reply: FastifyReply
 ) {
   const prisma = req.server.prisma;
-  
+
   try {
     const { Nome, Email, Senha, Departamento, CargaHoraria } = req.body;
 
     // Verificar email único
     const emailExiste = await prisma.usuario.findUnique({
-      where: { Email }
+      where: { Email },
     });
 
     if (emailExiste) {
       return reply.status(409).send({
-        mensagem: 'Email já está em uso'
+        mensagem: "Email já está em uso",
       });
     }
 
     // Criar professor e usuário em uma transação
     const result = await prisma.$transaction(async (tx) => {
       // Criar professor
+      // Validar Departamento
+      if (!Object.values(Departamento).includes(Departamento as Departamento)) {
+        throw new Error("Departamento inválido");
+      }
       const professor = await tx.professor.create({
         data: {
           Nome,
-          Departamento,
-          CargaHoraria
-        }
+          Departamento: Departamento as Departamento,
+          CargaHoraria,
+        },
       });
 
       // Hash da senha
@@ -57,30 +61,29 @@ export async function criarProfessor(
           Tipo: TipoUsuario.PROFESSOR,
           Professor: {
             connect: {
-              ProfessorID: professor.ProfessorID
-            }
+              ProfessorID: professor.ProfessorID,
+            },
           },
           Permissoes: {
             create: [
               { PermissaoID: 1 }, // Registrar Sumário
-              { PermissaoID: 2 }  // Gerir Presenças
-            ]
-          }
-        }
+              { PermissaoID: 2 }, // Gerir Presenças
+            ],
+          },
+        },
       });
 
       return professor;
     });
 
     return reply.status(201).send({
-      mensagem: 'Professor criado com sucesso',
-      data: result
+      mensagem: "Professor criado com sucesso",
+      data: result,
     });
-
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno ao criar professor'
+      mensagem: "Erro interno ao criar professor",
     });
   }
 }
@@ -97,36 +100,40 @@ export async function listarProfessores(
             Email: true,
             Permissoes: {
               include: {
-                Permissao: true
-              }
-            }
-          }
+                Permissao: true,
+              },
+            },
+          },
         },
         Cursos: {
           select: {
             CursoID: true,
-            Nome: true
-          }
+            Curso: {
+              select: {
+                Nome: true,
+              },
+            },
+          },
         },
         Sumarios: {
           select: {
             SumarioID: true,
             Data: true,
-            Conteudo: true
+            Conteudo: true,
           },
           orderBy: {
-            Data: 'desc'
+            Data: "desc",
           },
-          take: 5 // Últimos 5 sumários
-        }
-      }
+          take: 5, // Últimos 5 sumários
+        },
+      },
     });
 
     return reply.send({ data: professores });
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno ao listar professores'
+      mensagem: "Erro interno ao listar professores",
     });
   }
 }
@@ -137,7 +144,7 @@ export async function buscarProfessor(
 ) {
   try {
     const { id } = req.params;
-    
+
     const professor = await req.server.prisma.professor.findUnique({
       where: { ProfessorID: id },
       include: {
@@ -146,35 +153,35 @@ export async function buscarProfessor(
             Email: true,
             Permissoes: {
               include: {
-                Permissao: true
-              }
-            }
-          }
+                Permissao: true,
+              },
+            },
+          },
         },
         Cursos: true,
         Sumarios: {
           orderBy: {
-            Data: 'desc'
-          }
+            Data: "desc",
+          },
         },
         Presencas: {
           orderBy: {
-            Data: 'desc'
+            Data: "desc",
           },
-          take: 30 // Últimos 30 dias
+          take: 30, // Últimos 30 dias
         },
         Efetividades: {
           orderBy: {
-            Data: 'desc'
+            Data: "desc",
           },
-          take: 30 // Últimos 30 dias
-        }
-      }
+          take: 30, // Últimos 30 dias
+        },
+      },
     });
 
     if (!professor) {
       return reply.status(404).send({
-        mensagem: 'Professor não encontrado'
+        mensagem: "Professor não encontrado",
       });
     }
 
@@ -182,7 +189,7 @@ export async function buscarProfessor(
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno ao buscar professor'
+      mensagem: "Erro interno ao buscar professor",
     });
   }
 }
@@ -192,7 +199,7 @@ export async function atualizarProfessor(
   reply: FastifyReply
 ) {
   const prisma = req.server.prisma;
-  
+
   try {
     const { id } = req.params;
     const dados = req.body;
@@ -201,25 +208,25 @@ export async function atualizarProfessor(
     const professorExiste = await prisma.professor.findUnique({
       where: { ProfessorID: id },
       include: {
-        Usuario: true
-      }
+        Usuario: true,
+      },
     });
 
     if (!professorExiste) {
       return reply.status(404).send({
-        mensagem: 'Professor não encontrado'
+        mensagem: "Professor não encontrado",
       });
     }
 
     // Verificar email único se estiver sendo atualizado
     if (dados.Email && dados.Email !== professorExiste.Usuario?.Email) {
       const emailExiste = await prisma.usuario.findUnique({
-        where: { Email: dados.Email }
+        where: { Email: dados.Email },
       });
 
       if (emailExiste) {
         return reply.status(409).send({
-          mensagem: 'Email já está em uso'
+          mensagem: "Email já está em uso",
         });
       }
     }
@@ -230,9 +237,15 @@ export async function atualizarProfessor(
         where: { ProfessorID: id },
         data: {
           Nome: dados.Nome,
-          Departamento: dados.Departamento,
-          CargaHoraria: dados.CargaHoraria
-        }
+          Departamento: dados.Departamento
+            ? Object.values(Departamento).includes(
+                dados.Departamento as Departamento
+              )
+              ? (dados.Departamento as Departamento)
+              : undefined
+            : undefined,
+          CargaHoraria: dados.CargaHoraria,
+        },
       });
 
       if (dados.Email && professorExiste.Usuario) {
@@ -240,8 +253,8 @@ export async function atualizarProfessor(
           where: { UsuarioID: professorExiste.Usuario.UsuarioID },
           data: {
             Email: dados.Email,
-            Nome: dados.Nome
-          }
+            Nome: dados.Nome,
+          },
         });
       }
 
@@ -249,14 +262,13 @@ export async function atualizarProfessor(
     });
 
     return reply.send({
-      mensagem: 'Professor atualizado com sucesso',
-      data: result
+      mensagem: "Professor atualizado com sucesso",
+      data: result,
     });
-
   } catch (error) {
     req.log.error(error);
     return reply.status(500).send({
-      mensagem: 'Erro interno ao atualizar professor'
+      mensagem: "Erro interno ao atualizar professor",
     });
   }
 }

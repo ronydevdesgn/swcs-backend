@@ -4,6 +4,7 @@ import {
   UsuarioPermissaoInput,
   IdParam,
 } from "../schemas/permissoes.schema";
+import { Prisma } from "@prisma/client";
 
 export async function criarPermissao(
   req: FastifyRequest<{ Body: CreatePermissaoInput }>,
@@ -48,7 +49,12 @@ export async function atribuirPermissaoUsuario(
       mensagem: "Permissão atribuída com sucesso",
     });
   } catch (error) {
-    if (error.code === "P2002") {
+    if (
+      error &&
+      typeof error === "object" &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       return reply.status(409).send({
         mensagem: "Usuário já possui esta permissão",
       });

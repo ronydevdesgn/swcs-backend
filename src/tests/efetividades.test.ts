@@ -1,77 +1,83 @@
-import Fastify from 'fastify'
-import { app } from '../server'
+import { app } from "../server";
+import {
+  makeAuthenticatedRequest,
+  createTestProfessor,
+  createTestCurso,
+} from "./testHelpers";
 
-describe('Efetividade Routes', () => {
-  let server: ReturnType<typeof Fastify>
-  let efetividadeId: number
-  let professorId = 1 // Ajuste conforme o ProfessorID existente no seu banco
+describe("Efetividade Routes", () => {
+  let efetividadeId: number;
+  let professorId: number;
+  let cursoId: number;
 
   beforeAll(async () => {
-    await app.ready()
-    server = Fastify()
-    await server.register(app)
-    await server.ready()
-  })
+    await app.ready();
 
-  afterAll(() => server.close())
+    // Criar dados de teste necessários
+    const { professor } = await createTestProfessor();
+    const curso = await createTestCurso();
+    professorId = professor.ProfessorID;
+    cursoId = curso.CursoID;
+  });
 
-  it('should create a new efetividade', async () => {
-    const res = await server.inject({
-      method: 'POST',
-      url: '/efetividades',
-      payload: {
-        data: new Date().toISOString(),
-        horasTrabalhadas: 5,
-        professorID: professorId
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it("should create a new efetividade", async () => {
+    const res = await makeAuthenticatedRequest("POST", "/efetividades", {
+      data: new Date().toISOString(),
+      horasTrabalhadas: 5,
+      professorID: professorId,
+      cursoID: cursoId,
+    });
+
+    expect(res.statusCode).toBe(201);
+    const body = JSON.parse(res.payload);
+    expect(body).toHaveProperty("data");
+    expect(body.data).toHaveProperty("EfetividadeID");
+    efetividadeId = body.data.EfetividadeID;
+  });
+
+  it("should list all efetividades", async () => {
+    const res = await makeAuthenticatedRequest("GET", "/efetividades");
+
+    expect(res.statusCode).toBe(200);
+    const response = JSON.parse(res.payload);
+    expect(response).toHaveProperty("data");
+    expect(Array.isArray(response.data)).toBe(true);
+  });
+
+  it("should get an efetividade by ID", async () => {
+    const res = await makeAuthenticatedRequest(
+      "GET",
+      `/efetividades/${efetividadeId}`
+    );
+
+    expect(res.statusCode).toBe(200);
+    const response = JSON.parse(res.payload);
+    expect(response).toHaveProperty("data");
+    expect(response.data.EfetividadeID).toBe(efetividadeId);
+  });
+
+  it("should update an efetividade", async () => {
+    const res = await makeAuthenticatedRequest(
+      "PUT",
+      `/efetividades/${efetividadeId}`,
+      {
+        horasTrabalhadas: 6,
       }
-    })
+    );
 
-    expect(res.statusCode).toBe(201)
-    const body = JSON.parse(res.payload)
-    expect(body).toHaveProperty('efetividadeID')
-    efetividadeId = body.efetividadeID
-  })
+    expect(res.statusCode).toBe(200);
+  });
 
-  it('should list all efetividades', async () => {
-    const res = await server.inject({
-      method: 'GET',
-      url: '/efetividades'
-    })
+  it("should delete an efetividade", async () => {
+    const res = await makeAuthenticatedRequest(
+      "DELETE",
+      `/efetividades/${efetividadeId}`
+    );
 
-    expect(res.statusCode).toBe(200)
-    const efetividades = JSON.parse(res.payload)
-    expect(Array.isArray(efetividades)).toBe(true)
-  })
-
-  it('should get an efetividade by ID', async () => {
-    const res = await server.inject({
-      method: 'GET',
-      url: `/efetividades/${efetividadeId}`
-    })
-
-    expect(res.statusCode).toBe(200)
-    const efetividade = JSON.parse(res.payload)
-    expect(efetividade.efetividadeID).toBe(efetividadeId)
-  })
-
-  it('should update an efetividade', async () => {
-    const res = await server.inject({
-      method: 'PUT',
-      url: `/efetividades/${efetividadeId}`,
-      payload: {
-        horasTrabalhadas: 6
-      }
-    })
-
-    expect(res.statusCode).toBe(200)
-  })
-
-  it('should delete an efetividade', async () => {
-    const res = await server.inject({
-      method: 'DELETE',
-      url: `/efetividades/${efetividadeId}`
-    })
-
-    expect(res.statusCode).toBe(204)
-  })
-})
+    expect(res.statusCode).toBe(200);
+  });
+});

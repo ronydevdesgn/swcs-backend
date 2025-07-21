@@ -1,12 +1,13 @@
 import { z } from 'zod';
+import { Departamento } from '@prisma/client';
 
 const professorBase = {
   Nome: z.string()
     .min(3, 'Nome deve ter no mínimo 3 caracteres')
     .max(100, 'Nome muito longo'),
-  Departamento: z.string()
-    .min(2, 'Departamento deve ter no mínimo 2 caracteres')
-    .max(100, 'Departamento muito longo'),
+  Departamento: z.nativeEnum(Departamento, {
+    errorMap: () => ({ message: 'Departamento inválido' }),
+  }),
   CargaHoraria: z.number()
     .int('Carga horária deve ser um número inteiro')
     .min(1, 'Carga horária deve ser maior que 0')

@@ -54,9 +54,14 @@ export async function criarSumario(
           where: { CursoID },
           select: {
             Nome: true,
-            Professor: {
+            Professores: {
               select: {
-                ProfessorID: true,
+                Professor: {
+                  select: {
+                    Nome: true,
+                    Departamento: true,
+                  },
+                },
               },
             },
           },
@@ -210,12 +215,27 @@ export async function listarSumarios(
             select: {
               Nome: true,
               Descricao: true,
+              Professores: {
+                select: {
+                  Professor: {
+                    select: {
+                      Nome: true,
+                      Departamento: true,
+                    },
+                  },
+                },
+              },
             },
           },
           Professor: {
             select: {
               Nome: true,
               Departamento: true,
+              Usuario: {
+                select: {
+                  Email: true,
+                },
+              },
             },
           },
         },
@@ -269,10 +289,14 @@ export async function buscarSumario(
           select: {
             Nome: true,
             Descricao: true,
-            Professor: {
+            Professores: {
               select: {
-                Nome: true,
-                Departamento: true,
+                Professor: {
+                  select: {
+                    Nome: true,
+                    Departamento: true,
+                  },
+                },
               },
             },
           },

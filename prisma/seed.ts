@@ -1,4 +1,12 @@
-import { PrismaClient, Estado, TipoUsuario } from "@prisma/client";
+import {
+  PrismaClient,
+  Estado,
+  TipoUsuario,
+  Departamento,
+  Cargo,
+} from "@prisma/client";
+import bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -19,7 +27,7 @@ async function main() {
     create: {
       Nome: "Carlos Sumarista",
       Email: "sumarista@instituicao.com",
-      Cargo: "Sumarista",
+      Cargo: Cargo.SUMARISTA,
     },
   });
 
@@ -29,7 +37,7 @@ async function main() {
     update: {},
     create: {
       Nome: "Ana Professora",
-      Departamento: "Matemática",
+      Departamento: Departamento.INFORMATICA,
       CargaHoraria: 20,
     },
   });
@@ -41,11 +49,6 @@ async function main() {
     create: {
       Nome: "Álgebra Linear",
       Descricao: "Curso introdutório de Álgebra Linear",
-      Professor: {
-        connect: {
-          ProfessorID: professor.ProfessorID,
-        },
-      },
     },
   });
 
@@ -56,7 +59,7 @@ async function main() {
     create: {
       Nome: "Carlos Sumarista",
       Email: "sumarista@instituicao.com",
-      SenhaHash: "senha_hash_fake",
+      SenhaHash: await bcrypt.hash("senha123", 10),
       Tipo: TipoUsuario.FUNCIONARIO,
       Funcionario: {
         connect: {
@@ -76,7 +79,7 @@ async function main() {
     create: {
       Nome: "Ana Professora",
       Email: "prof@instituicao.com",
-      SenhaHash: "senha_hash_fake",
+      SenhaHash: await bcrypt.hash("senha123", 10),
       Tipo: TipoUsuario.PROFESSOR,
       Professor: {
         connect: {
@@ -96,12 +99,21 @@ async function main() {
     },
   });
 
+  // Criar relação Professor-Curso
+  await prisma.professorCurso.create({
+    data: {
+      ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
+    },
+  });
+
   // Criar presença
   await prisma.presenca.create({
     data: {
       Data: new Date(),
       Estado: Estado.PRESENTE,
       ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
     },
   });
 
@@ -111,6 +123,7 @@ async function main() {
       Data: new Date(),
       HorasTrabalhadas: 4,
       ProfessorID: professor.ProfessorID,
+      CursoID: curso.CursoID,
     },
   });
 

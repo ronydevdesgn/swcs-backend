@@ -45,33 +45,49 @@ enum TipoUsuario {
   PROFESSOR
 }
 
+enum Departamento {
+  INFORMATICA
+  OUTROS
+}
+
+enum Cargo {
+  SUMARISTA
+  SECRETARIO
+  ADMINISTRATIVO
+  OUTROS
+}
+
 model Professor {
-  ProfessorID  Int           @id @default(autoincrement())
-  Nome         String        @db.VarChar(100)
-  Departamento String        @db.VarChar(100)
-  CargaHoraria Int
-  Cursos       Curso[]
-  Sumarios     Sumario[]     @relation("ProfessorSumarios")
+  ProfessorID  Int              @id @default(autoincrement())
+  Nome         String           @db.VarChar(100)
+  Departamento Departamento
+  CargaHoraria Int              @db.Int
+  Cursos       ProfessorCurso[]
+  Sumarios     Sumario[]        @relation("ProfessorSumarios")
   Presencas    Presenca[]
   Efetividades Efetividade[]
-  Usuario      Usuario?      @relation(fields: [UsuarioID], references: [UsuarioID])
-  UsuarioID    Int?          @unique
+  Usuario      Usuario?         @relation(fields: [UsuarioID], references: [UsuarioID])
+  UsuarioID    Int?             @unique
+  CreatedAt    DateTime         @default(now())
+  UpdatedAt    DateTime         @default(now()) @updatedAt
 }
 
 model Funcionario {
   FuncionarioID Int      @id @default(autoincrement())
   Nome          String   @db.VarChar(100)
   Email         String   @unique @db.VarChar(100)
-  Cargo         String   @db.VarChar(100) // Ex: "Sumarista", "Secretário"
+  Cargo         Cargo
   Usuario       Usuario? @relation(fields: [UsuarioID], references: [UsuarioID])
   UsuarioID     Int?     @unique
+  CreatedAt     DateTime @default(now())
+  UpdatedAt     DateTime @default(now()) @updatedAt
 }
 
 model Usuario {
   UsuarioID   Int                @id @default(autoincrement())
   Nome        String             @db.VarChar(100)
   Email       String             @unique @db.VarChar(100)
-  SenhaHash   String             @db.VarChar(100)
+  SenhaHash   String             @db.VarChar(255)
   Tipo        TipoUsuario
   Permissoes  UsuarioPermissao[]
   Professor   Professor?
@@ -79,17 +95,20 @@ model Usuario {
 
   RefreshTokens  RefreshToken[]
   PasswordResets PasswordReset[]
+  CreatedAt      DateTime        @default(now())
+  UpdatedAt      DateTime        @default(now()) @updatedAt
 }
 
 model Curso {
-  CursoID     Int       @id @default(autoincrement())
-  Nome        String    @db.VarChar(100)
-  Descricao   String    @db.Text
-  ProfessorID Int
-  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID])
+  CursoID     Int              @id @default(autoincrement())
+  Nome        String           @db.VarChar(100)
+  Descricao   String           @db.Text
+  Professores ProfessorCurso[]
   Sumarios    Sumario[]
-
-  @@index([ProfessorID])
+  CreatedAt   DateTime         @default(now())
+  UpdatedAt   DateTime         @default(now()) @updatedAt
+  Presenca    Presenca[]
+  Efetividade Efetividade[]
 }
 
 model Sumario {
@@ -98,11 +117,26 @@ model Sumario {
   Conteudo    String    @db.Text
   CursoID     Int
   ProfessorID Int
-  Curso       Curso     @relation(fields: [CursoID], references: [CursoID])
-  Professor   Professor @relation("ProfessorSumarios", fields: [ProfessorID], references: [ProfessorID])
+  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Cascade)
+  Professor   Professor @relation("ProfessorSumarios", fields: [ProfessorID], references: [ProfessorID], onDelete: Cascade)
+  CreatedAt   DateTime  @default(now())
+  UpdatedAt   DateTime  @default(now()) @updatedAt
 
   @@index([CursoID])
   @@index([ProfessorID])
+  @@index([Data])
+}
+
+model ProfessorCurso {
+  ProfessorID Int
+  CursoID     Int
+  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Cascade)
+  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Cascade)
+  CreatedAt   DateTime  @default(now())
+
+  @@id([ProfessorID, CursoID])
+  @@index([ProfessorID])
+  @@index([CursoID])
 }
 
 model Presenca {
@@ -110,19 +144,31 @@ model Presenca {
   Data        DateTime
   Estado      Estado
   ProfessorID Int
-  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID])
+  CursoID     Int       @default(1)
+  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Restrict)
+  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Restrict)
+  CreatedAt   DateTime  @default(now())
+  UpdatedAt   DateTime  @updatedAt
 
   @@index([ProfessorID])
+  @@index([CursoID])
+  @@index([Data])
 }
 
 model Efetividade {
   EfetividadeID    Int       @id @default(autoincrement())
   Data             DateTime
-  HorasTrabalhadas Int
+  HorasTrabalhadas Int       @db.Int
   ProfessorID      Int
-  Professor        Professor @relation(fields: [ProfessorID], references: [ProfessorID])
+  CursoID          Int       @default(1)
+  Professor        Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Restrict)
+  Curso            Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Restrict)
+  CreatedAt        DateTime  @default(now())
+  UpdatedAt        DateTime  @updatedAt
 
   @@index([ProfessorID])
+  @@index([CursoID])
+  @@index([Data])
 }
 
 model Permissao {
