@@ -61,21 +61,12 @@ app.register(sumariosRoutes, { prefix: "/sumarios" });
 app.register(presencasRoutes, { prefix: "/presencas" });
 app.register(efetividadesRoutes, { prefix: "/efetividades" });
 
-/** Configuração do CORS */
-app.addHook("onRequest", (request, reply, done) => {
-  reply.header("Access-Control-Allow-Origin", "http://localhost:5173");
-  reply.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
-  );
-  reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  done();
-});
-//OU
 // Register plugins
 app.register(cors, {
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:3333"],
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 });
 
 /** Tratamento de erros 404 do Fastify
@@ -103,7 +94,8 @@ app.setErrorHandler((error, request, reply) => {
 });
 
 // Só inicia o servidor se for chamado diretamente (não em testes)
-if (require.main === module) {
+const isMainModule = process.argv[1] && process.argv[1].endsWith("server.ts");
+if (isMainModule) {
   const start = async () => {
     try {
       await app.listen({

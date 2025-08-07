@@ -20,7 +20,7 @@ export default fp(
         },
         servers: [
           {
-            url: "http://localhost:3000",
+            url: "http://localhost:3333",
             description: "Servidor de desenvolvimento (back-end)",
           },
         ],
@@ -44,11 +44,17 @@ export default fp(
             },
           },
         },
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
+        // Configuração global para não exigir autenticação em todas as rotas
+        security: [],
+      },
+      // Configuração adicional para evitar problemas com Zod
+      swagger: {
+        info: {
+          title: "SWCS API Documentation",
+          description:
+            "Sistema Web de Controlo de Sumários - API Documentation",
+          version: "1.0.1",
+        },
       },
     });
 
@@ -60,14 +66,9 @@ export default fp(
         displayRequestDuration: true,
       },
       staticCSP: true,
-      transformStaticCSP: (header) => header,
-      transformSpecification: (swaggerObject, request, reply) => {
-        return swaggerObject;
-      },
-      transformSpecificationClone: true,
     });
   },
-  
+
   {
     name: "swagger",
     dependencies: [],
