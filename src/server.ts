@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import dotenv from "dotenv";
-import swagger from "./plugins/swagger";
+import swaggerPlugin from "./plugins/swagger";
 import prismaPlugin from "./plugins/prisma";
 import cors from "@fastify/cors";
 import {
@@ -28,12 +28,14 @@ export const app = Fastify({ logger: true })
   // habilita o TypeProvider que faz converter Zod→JSONSchema
   .withTypeProvider<ZodTypeProvider>();
 
+// Habilita/Desabilita Swagger conforme ambiente (desabilitado por padrão)
+const enableSwagger = process.env.SWAGGER_ENABLED === "true";
+
 // ROTA PADRÃO
 app.get("/", async (request, reply) => {
-  return {
+  const base = {
     message: "SWCS BACKEND API IS RUNNING",
     status: "server running",
-    docs: "/docs",
     version: "1.0.1",
     endpoints: {
       auth: "/auth",
@@ -46,11 +48,32 @@ app.get("/", async (request, reply) => {
       presencas: "/presencas",
       efetividades: "/efetividades",
     },
-  };
+  } as Record<string, unknown>;
+
+  if (enableSwagger) {
+    base.docs = "/docs";
+  }
+
+  return base;
 });
 
+// Register plugins in correct order
 app.register(prismaPlugin);
-app.register(swagger);
+app.register(cors, {
+  origin: ["http://localhost:5173", "http://localhost:3333"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+});
+
+// Register Swagger after Zod configuration (condicional)
+if (enableSwagger) {
+  app.register(swaggerPlugin);
+} else {
+  app.log.info("Swagger disabled by configuration");
+}
+
+// Register routes
 app.register(authRoutes, { prefix: "/auth" });
 app.register(professorRoutes, { prefix: "/professores" });
 app.register(funcionarioRoutes, { prefix: "/funcionarios" });
@@ -60,14 +83,6 @@ app.register(cursosRoutes, { prefix: "/cursos" });
 app.register(sumariosRoutes, { prefix: "/sumarios" });
 app.register(presencasRoutes, { prefix: "/presencas" });
 app.register(efetividadesRoutes, { prefix: "/efetividades" });
-
-// Register plugins
-app.register(cors, {
-  origin: ["http://localhost:5173", "http://localhost:3333"],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-});
 
 /** Tratamento de erros 404 do Fastify
  Isso é necessário para que o Fastify retorne um erro 404 personalizado
@@ -104,9 +119,11 @@ if (isMainModule) {
       });
 
       console.log(`Servidor está agora ouvindo na rota http://localhost:3333`);
-      console.log(
-        `Documentação Swagger disponível em http://localhost:3333/docs`
-      );
+      if (enableSwagger) {
+        console.log(
+          `Documentação Swagger disponível em http://localhost:3333/docs`
+        );
+      }
     } catch (err) {
       app.log.error(err);
       console.error("Erro ao iniciar o servidor:", err);
