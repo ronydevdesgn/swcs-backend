@@ -17,8 +17,14 @@ export class Database {
       Database.instance = new PrismaClient({
         log: process.env.NODE_ENV === 'development' 
           ? ['query', 'info', 'warn', 'error']
-          : ['warn', 'error'], // Menos logs em produção
+          : ['warn', 'error'],
         errorFormat: 'pretty',
+        // Configurações otimizadas para MySQL
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL
+          }
+        }
       });
     }
     return Database.instance;

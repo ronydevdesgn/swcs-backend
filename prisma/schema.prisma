@@ -11,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Novo modelo schema.prisma para o controlo de Token
+// Modelo para controlo de Token de Refresh
 model RefreshToken {
   TokenID   Int      @id @default(autoincrement())
   token     String   @unique
@@ -21,6 +21,7 @@ model RefreshToken {
   CreatedAt DateTime @default(now())
 
   @@index([UsuarioID])
+  @@index([ExpiresAt])
 }
 
 model PasswordReset {
@@ -33,6 +34,8 @@ model PasswordReset {
   CreatedAt       DateTime @default(now())
 
   @@index([UsuarioID])
+  @@index([ExpiresAt])
+  @@index([Token, Used])
 }
 
 enum Estado {
@@ -70,6 +73,9 @@ model Professor {
   UsuarioID    Int?             @unique
   CreatedAt    DateTime         @default(now())
   UpdatedAt    DateTime         @default(now()) @updatedAt
+
+  @@index([Departamento])
+  @@index([Nome])
 }
 
 model Funcionario {
@@ -81,6 +87,9 @@ model Funcionario {
   UsuarioID     Int?     @unique
   CreatedAt     DateTime @default(now())
   UpdatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([Cargo])
+  @@index([Nome])
 }
 
 model Usuario {
@@ -97,6 +106,9 @@ model Usuario {
   PasswordResets PasswordReset[]
   CreatedAt      DateTime        @default(now())
   UpdatedAt      DateTime        @default(now()) @updatedAt
+
+  @@index([Tipo])
+  @@index([Nome])
 }
 
 model Curso {
@@ -109,6 +121,8 @@ model Curso {
   UpdatedAt   DateTime         @default(now()) @updatedAt
   Presenca    Presenca[]
   Efetividade Efetividade[]
+
+  @@index([Nome])
 }
 
 model Sumario {
@@ -125,6 +139,7 @@ model Sumario {
   @@index([CursoID])
   @@index([ProfessorID])
   @@index([Data])
+  @@index([Data, CursoID])
 }
 
 model ProfessorCurso {
@@ -153,6 +168,8 @@ model Presenca {
   @@index([ProfessorID])
   @@index([CursoID])
   @@index([Data])
+  @@index([Data, ProfessorID]) // Índice composto para relatórios de presença
+  @@index([Estado]) // Índice para filtros por estado
 }
 
 model Efetividade {
@@ -169,12 +186,15 @@ model Efetividade {
   @@index([ProfessorID])
   @@index([CursoID])
   @@index([Data])
+  @@index([Data, ProfessorID]) // Índice composto para relatórios
 }
 
 model Permissao {
   PermissaoID Int                @id @default(autoincrement())
   Descricao   String             @db.VarChar(100)
   Usuarios    UsuarioPermissao[]
+
+  @@index([Descricao])
 }
 
 model UsuarioPermissao {
