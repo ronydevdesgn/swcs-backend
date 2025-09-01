@@ -7,6 +7,7 @@ import {
 } from "../schemas/presencas.schema";
 import { Estado, Prisma } from "@prisma/client";
 import { AppError } from "../types/errors";
+import { sendError } from "../utils/http";
 
 export async function registrarPresenca(
   req: FastifyRequest<{ Body: CreatePresencaInput }>,
@@ -19,10 +20,12 @@ export async function registrarPresenca(
 
     // Validar data
     const dataPresenca = new Date(Data);
+    const dataPresencaSemHora = new Date(dataPresenca);
+    dataPresencaSemHora.setHours(0, 0, 0, 0);
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    if (dataPresenca > hoje) {
+    if (dataPresencaSemHora.getTime() > hoje.getTime()) {
       throw new AppError(
         "VALIDATION_ERROR",
         "Não é possível registrar presença para datas futuras"
@@ -103,13 +106,7 @@ export async function registrarPresenca(
       }
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao registrar presença",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao registrar presença");
   }
 }
 
@@ -213,13 +210,7 @@ export async function registrarPresencasEmLote(
       }
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao registrar presenças em lote",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao registrar presenças em lote");
   }
 }
 
@@ -300,13 +291,7 @@ export async function listarPresencas(
     });
   } catch (error) {
     req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar presenças",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao listar presenças");
   }
 }
 
@@ -424,13 +409,11 @@ export async function buscarPresencasProfessor(
       });
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar presenças do professor",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao buscar presenças do professor"
+    );
   }
 }
 
@@ -528,12 +511,6 @@ export async function atualizarPresenca(
       }
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar presença",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao atualizar presença");
   }
 }

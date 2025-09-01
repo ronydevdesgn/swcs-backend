@@ -66,9 +66,13 @@ export async function makeAuthenticatedRequest(
 
 export async function cleanupTestData() {
   // Limpar dados de teste em ordem reversa para evitar problemas de foreign key
+  await prisma.usuarioPermissao.deleteMany({});
+  await prisma.refreshToken.deleteMany({});
+  await prisma.passwordReset.deleteMany({});
   await prisma.efetividade.deleteMany({});
   await prisma.presenca.deleteMany({});
   await prisma.sumario.deleteMany({});
+  await prisma.professorCurso.deleteMany({});
   await prisma.professor.deleteMany({});
   await prisma.funcionario.deleteMany({});
   await prisma.curso.deleteMany({});

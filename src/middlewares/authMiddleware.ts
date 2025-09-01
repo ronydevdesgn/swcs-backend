@@ -25,18 +25,40 @@ export async function autenticar(
     }
 
     const [, token] = authHeader.split(" ");
-    const payload = verificarToken(token);
-    if (typeof payload !== "object" || !payload || !("id" in payload)) {
+    const payload = verificarToken(token) as JwtPayload & {
+      id?: number;
+      userId?: number;
+      tipo?: string;
+      email?: string;
+    };
+    if (typeof payload !== "object" || !payload) {
       return reply.status(401).send({ error: "Token inválido" });
     }
-    req.user = payload as AuthenticatedUser;
+    const normalizedUser: AuthenticatedUser = {
+      ...(payload as JwtPayload),
+      id: (payload.id ?? payload.userId) as number,
+      tipo: (payload as any).tipo,
+      email: (payload as any).email,
+    };
+    if (!normalizedUser.id) {
+      return reply.status(401).send({ error: "Token inválido" });
+    }
+    req.user = normalizedUser;
 
-    // Add role checking
-    const userPermissions = await req.server.prisma.usuarioPermissao.findMany({
-      where: { UsuarioID: req.user.id },
-      include: { Permissao: true },
-    });
-    req.user.permissions = userPermissions.map((p) => p.Permissao.Descricao);
+    // Carregar permissões (não bloquear autenticação em caso de inconsistências)
+    try {
+      const userPermissions = await req.server.prisma.usuarioPermissao.findMany(
+        {
+          where: { UsuarioID: req.user.id },
+          select: { Permissao: { select: { Descricao: true } } },
+        }
+      );
+      req.user.permissions = userPermissions
+        .map((p) => p.Permissao?.Descricao)
+        .filter((d): d is string => typeof d === "string");
+    } catch (_) {
+      req.user.permissions = [];
+    }
   } catch (e) {
     return reply.status(401).send({ error: "Token inválido" });
   }

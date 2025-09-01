@@ -19,45 +19,14 @@ export default async function professorRoutes(app: FastifyInstance) {
   app.post('/', {
     schema: {
       body: createProfessorSchema,
-      response: {
-        201: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' },
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, criarProfessor);
 
-  app.get('/', {
-    schema: {
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            data: {
-              type: 'array',
-              items: { type: 'object' }
-            }
-          }
-        }
-      }
-    }
-  }, listarProfessores);
+  app.get('/', {}, listarProfessores);
 
   app.get('/:id', {
     schema: {
       params: idParamSchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, buscarProfessor);
 
@@ -65,15 +34,6 @@ export default async function professorRoutes(app: FastifyInstance) {
     schema: {
       params: idParamSchema,
       body: updateProfessorSchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' },
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, atualizarProfessor);
 }

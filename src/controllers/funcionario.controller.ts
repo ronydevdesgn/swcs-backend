@@ -40,7 +40,7 @@ export async function criarFuncionario(
       const senhaHash = await hashSenha(Senha);
 
       // Validar Cargo
-      if (!Object.values(Cargo).includes(Cargo as Cargo)) {
+      if (!Object.values(Cargo).includes(Cargo as unknown as Cargo)) {
         throw new AppError("VALIDATION_ERROR", "Cargo inválido");
       }
 
@@ -65,7 +65,7 @@ export async function criarFuncionario(
         data: {
           Nome,
           Email,
-          Cargo: Cargo as Cargo,
+          Cargo: Cargo as unknown as Cargo,
           UsuarioID: novoUsuario.UsuarioID,
         },
         include: {
