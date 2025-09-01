@@ -1,220 +1,175 @@
-# SWCS - Sistema de Gestão Escolar (Backend)
+# SWCS — Sistema de Gestão Escolar (Backend)
 
-## Descrição do Projeto
+## Descrição
 
-Sistema de gestão escolar focado no controle e monitoramento das atividades dos professores, incluindo gestão de sumários, presenças e conformidade com o programa curricular planejado.
+API backend para gestão escolar — controle de professores, cursos, sumários, presenças e efetividades. Projetado com Fastify, Prisma e Zod para validação e testes automatizados com Jest.
 
-## Tecnologias Utilizadas
+## Status
 
-Neste projecto, para construção do Back-End, foram utilizadas as seguintes tecnologias:
+Projeto de exemplo / não pronto para produção sem ajustes de segurança e configuração.
 
-- **Fastify**: Framework web rápido e eficiente
-- **Prisma**: ORM moderno com controle de acesso
-- **Zod**: Validação de schemas com TypeScript
-- **JWT**: Autenticação e autorização
-- **Swagger**: Documentação da API
-- **Jest**: Framework de testes
-- **TypeScript**: Linguagem de programação tipada
+## Principais tecnologias
 
-## Estrutura do Projeto
+- Fastify (servidor) — [`app`](src/server.ts)
+- Prisma (ORM) — [src/plugins/prisma.ts](src/plugins/prisma.ts)
+- Zod (validação de schemas)
+- JWT (autenticação) — [src/utils/jwt.ts](src/utils/jwt.ts)
+- Swagger (documentação) — [src/plugins/swagger.ts](src/plugins/swagger.ts)
+- Jest (testes)
 
-```
-├── src
-│   ├── routes
-│   │   ├── auth.routes.ts
-│   │   ├── professor.routes.ts
-│   │   ├── funcionario.routes.ts
-│   │   ├── usuario.routes.ts
-│   │   ├── permissoes.routes.ts
-│   │   ├── cursos.routes.ts
-│   │   ├── sumarios.routes.ts
-│   │   ├── presencas.routes.ts
-│   │   └── efetividades.routes.ts
-│   ├── controllers
-│   │   ├── auth.controller.ts
-│   │   ├── professor.controller.ts
-│   │   ├── funcionario.controller.ts
-│   │   ├── usuario.controller.ts
-│   │   ├── permissoes.controller.ts
-│   │   ├── cursos.controller.ts
-│   │   ├── sumarios.controller.ts
-│   │   ├── presencas.controller.ts
-│   │   └── efetividades.controller.ts
-│   ├── schemas
-│   │   ├── auth.schema.ts
-│   │   ├── professor.schema.ts
-│   │   ├── funcionario.schema.ts
-│   │   ├── usuario.schema.ts
-│   │   ├── permissoes.schema.ts
-│   │   ├── cursos.schema.ts
-│   │   ├── sumarios.schema.ts
-│   │   ├── presencas.schema.ts
-│   │   └── efetividades.schema.ts
-│   ├── middlewares
-│   │   └── authMiddleware.ts
-│   ├── plugins
-│   │   ├── prisma.ts
-│   │   └── swagger.ts
-│   ├── utils
-│   │   ├── jwt.ts
-│   │   └── hash.ts
-│   ├── tests
-│   │   ├── auth.test.ts
-│   │   ├── funcionario.test.ts
-│   │   ├── usuario.test.ts
-│   │   ├── professor.test.ts
-│   │   ├── permissoes.test.ts
-│   │   ├── cursos.test.ts
-│   │   ├── sumarios.test.ts
-│   │   ├── presencas.test.ts
-│   │   └── efetividades.test.ts
-│   └── server.ts
-```
+## Estrutura resumida
 
-## Como executar o projeto
+- Rotas: [src/Routers](src/Routers)
+- Controladores: [src/controllers](src/controllers)
+- Schemas (Zod/JSON Schema): [src/schemas](src/schemas)
+- Middlewares: [src/middlewares](src/middlewares)
+- Plugins: [src/plugins](src/plugins)
+- Utilitários: [src/utils](src/utils)
+- Testes: [src/tests](src/tests)
 
-### Pré-requisitos
+## Pré-requisitos
 
-- Node.js
+- Node.js (>= 18 recomendado)
 - npm
-- Docker (opcional)
-- Docker Compose (opcional)
+- Banco de dados compatível (CONFIGURAR via DATABASE_URL)
 
-### Instalação
+## Instalação
 
-1. **Clone o repositório**
+1. Clone:
+   git clone https://github.com/seu-usuario/swcs-backend.git
+   cd swcs-backend
 
-```bash
-git clone https://github.com/seu-usuario/swcs-backend.git
-cd swcs-backend
-```
+2. Instale dependências:
+   npm install
 
-2. **Instale as dependências**
+## Configuração de ambiente
 
-```bash
-npm install
-```
-
-3. **Configure as variáveis de ambiente**
-
-```bash
+Copie e ajuste variáveis:
 cp .env.example .env
-```
 
-Edite o arquivo `.env` com suas configurações:
+Variáveis essenciais:
 
-```
-DATABASE_URL="mysql://user:password@localhost:5432/swcs-database"
-JWT_SECRET="seu-segredo-aqui"
-REFRESH_TOKEN_SECRET="seu-refresh-token-segredo"
-```
+- DATABASE_URL (prisma)
+- JWT_SECRET
+- REFRESH_TOKEN_SECRET
+  Outras variáveis opcionais: SWAGGER_ENABLED, TEST_DATABASE_URL, NODE_ENV.
 
-4. **Configure o banco de dados**
+## Banco de dados
 
-```bash
+Gerar client e aplicar migrations:
 npx prisma generate
 npx prisma migrate dev
-npx prisma db seed # opcional
-```
 
-5. **Execute o projeto**
+(Seed opcional)
+npx prisma db seed
 
-```bash
-# Desenvolvimento
-npm run dev
-# Produção
-npm run build
-npm start
-```
+## Executando
 
-## Documentação
+- Desenvolvimento:
+  npm run dev
+- Produção:
+  npm run build
+  npm start
 
-A documentação da API está disponível em:
+Ao iniciar, o servidor expõe `http://localhost:3333` por padrão. A constante exportada [`app`](src/server.ts) é usada nos testes de integração.
 
-- Swagger UI: http://localhost:3000/docs
-- JSON Schema: http://localhost:3000/docs/json
+## Documentação da API
 
-## Endpoints Principais
+- Swagger UI: http://localhost:3333/docs (se habilitado via SWAGGER_ENABLED)
+- JSON OpenAPI: http://localhost:3333/docs/json
 
-### Autenticação
+## Principais endpoints
 
-- POST /auth/login - Login de usuário
-- POST /auth/refresh - Refresh token
-- POST /auth/logout - Logout
-- POST /auth/reset-password - Solicitar reset de senha
+Autenticação
 
-### Professores
+- POST /auth/login
+- POST /auth/refresh
+- POST /auth/logout
+- POST /auth/reset-password
 
-- GET /professores - Listar professores
-- POST /professores - Cadastrar professor
-- GET /professores/:id - Obter professor
-- PUT /professores/:id - Atualizar professor
+Professores
 
-### Cursos
+- GET /professores
+- POST /professores
+- GET /professores/:id
+- PUT /professores/:id
 
-- GET /cursos - Listar cursos
-- POST /cursos - Criar curso
-- GET /cursos/:id - Obter curso
-- PUT /cursos/:id - Atualizar curso
+Cursos
 
-### Sumários e Presenças
+- GET /cursos
+- POST /cursos — cria curso via controller [`criarCurso`](src/controllers/cursos.controller.ts)
+- GET /cursos/:id
+- PUT /cursos/:id
 
-- GET /sumarios - Listar sumários
-- POST /sumarios - Criar sumário
-- POST /presencas/batch - Registrar presenças em lote
-- GET /efetividades/stats - Estatísticas de efetividade
+Sumários
 
-## Tratamento de Erros
+- GET /sumarios
+- POST /sumarios
+- GET /sumarios/:id
+- PUT /sumarios/:id
+- DELETE /sumarios/:id
 
-O sistema utiliza uma estrutura padronizada de erros através da classe AppError:
+Presenças
 
-```typescript
-{
-  code: AppErrorCode; // Código do erro
-  message: string; // Mensagem descritiva
-  statusCode: number; // Código HTTP
-}
-```
+- POST /presencas
+- POST /presencas/batch
+- GET /presencas
+- GET /presencas/:id
+- GET /presencas/professor/:id
+- PUT /presencas/:id
+- DELETE /presencas/:id
+- Gerenciamento em controller: [`registrarPresenca`](src/controllers/presencas.controller.ts)
+
+Efetividades
+
+- POST /efetividades
+- GET /efetividades
+- GET /efetividades/:id
+- PUT /efetividades/:id
+- DELETE /efetividades/:id
+- GET /efetividades/periodo (filtros e estatísticas)
+
+## Validação e normalizações
+
+- Os endpoints usam Zod para validação nos schemas em [src/schemas](src/schemas).
+- O servidor normaliza campos de entrada (por exemplo, campos em caixa baixa → propriedades do modelo) em [src/server.ts].
+
+## Tratamento de erros
+
+O projeto centraliza erros com uma estrutura tipo AppError (código, mensagem, status). O Fastify também tem handler de erro global em [src/server.ts]. Respostas padronizadas ajudam a diferenciar erros de validação, conflito, não encontrado e servidor.
 
 ## Testes
 
-Os testes unitários estão localizados em `/tests`.
-Execute os testes com:
+- Testes unitários/integrados: [src/tests](src/tests)
+- Configuração Jest: [jest.config.js](jest.config.js)
+- Executar:
+  npm test
 
-```bash
-npm test
-```
+## Práticas de segurança / produção
 
-### Cobertura de Testes
+- Definir segredos robustos (JWT_SECRET / REFRESH_TOKEN_SECRET) no ambiente.
+- Habilitar HTTPS/Proxy em produção.
+- Revisar CORS e allowed origins em [src/server.ts].
+- Auditar dependências e remover dados de seed público antes de produção.
 
-- ✅ Auth
-- ✅ Usuários
-- ✅ Professores
-- ✅ Funcionários
-- ✅ Cursos
-- ✅ Sumários
-- ✅ Presenças
-- ✅ Efetividades
+## Notas e recomendações
+
+- A documentação Swagger pode ser habilitada via variável SWAGGER_ENABLED.
+- Ajustar políticas de log e níveis para ambientes de produção (Fastify logger).
+- Revisar e endurecer a geração e verificação de tokens em [src/utils/jwt.ts].
 
 ## Contribuição
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma issue ou enviar um pull request.
-
-1. Faça o fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/NomeDaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/NomeDaFeature`)
-5. Abra um Pull Request
+1. Fork → nova branch feature/
+2. Commit claro e testes
+3. Pull request com descrição
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+MIT — ver [LICENSE](LICENSE).
 
-### Autor
+## Autor
 
 <a href="https://github.com/ronydevdesgn">
  <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/82418215?v=4" width="100px;" alt=""/>
-
-### Observação
-
-Este projecto é apenas um exemplo de como criar uma API RESTful com Fastify, Prisma, Zod, JWT e Swagger. Ele não é um projeto completo e não deve ser usado em um ambiente de produção sem modificações.
+ </a>
