@@ -5,7 +5,6 @@ import swaggerUi from "@fastify/swagger-ui";
 export default fp(
   async function (fastify) {
     await fastify.register(swagger, {
-      mode: "dynamic",
       openapi: {
         openapi: "3.0.0",
         info: {
@@ -14,8 +13,8 @@ export default fp(
             "Sistema Web de Controlo de Sumários - API Documentation",
           version: "1.0.1",
           contact: {
-            name: "SWCS Team",
-            email: "support@swcs.com",
+            name: "SWCS Developer",
+            email: "ronydevdesgn@gmail.com",
           },
         },
         servers: [
@@ -44,49 +43,6 @@ export default fp(
             },
           },
         },
-        security: [],
-      },
-      // Configuração para lidar com schemas Zod
-      transform: ({ schema, url }) => {
-        try {
-          // Função para limpar propriedades problemáticas
-          const cleanObject = (obj: any): any => {
-            if (!obj || typeof obj !== "object") {
-              return obj;
-            }
-
-            if (Array.isArray(obj)) {
-              return obj.map(cleanObject);
-            }
-
-            const cleaned: any = {};
-            for (const [key, value] of Object.entries(obj)) {
-              // Remove propriedades que causam problemas no Swagger
-              if (
-                key === "examples" &&
-                (value === null || value === undefined)
-              ) {
-                continue;
-              }
-              if (
-                key === "errorMessage" ||
-                key === "invalid_type_error" ||
-                key === "required_error"
-              ) {
-                continue;
-              }
-              cleaned[key] = cleanObject(value);
-            }
-            return cleaned;
-          };
-
-          const cleanedSchema = cleanObject(schema);
-          return { schema: cleanedSchema, url };
-        } catch (error) {
-          // Se houver erro na transformação, retorna o schema original
-          console.warn("Erro na transformação do schema:", error);
-          return { schema, url };
-        }
       },
     });
 
@@ -96,13 +52,15 @@ export default fp(
         docExpansion: "list",
         deepLinking: true,
         displayRequestDuration: true,
+        tryItOutEnabled: true,
       },
       staticCSP: true,
+      transformStaticCSP: (header) => header,
     });
   },
-
   {
     name: "swagger",
-    dependencies: [],
+    // Aguarda o Prisma ser carregado primeiro
+    dependencies: ["prisma"],
   }
 );
