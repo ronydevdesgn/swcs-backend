@@ -23,7 +23,7 @@ dotenv.config();
 
 export const app = Fastify({ 
   logger: true,
-  // Adiciona configurações para melhor suporte ao Swagger
+  
   ajv: {
     customOptions: {
       removeAdditional: "all",
