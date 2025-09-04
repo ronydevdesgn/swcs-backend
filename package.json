@@ -14,8 +14,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "db:seed": "tsx prisma/seed.ts"
+    "test:cov": "jest --coverage"
   },
   "keywords": [],
   "author": "ronydevdesgn",
