@@ -20,6 +20,7 @@ export default async function cursoRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
+        tags: ["cursos"],
         body: createCursoSchema,
         response: {
           201: {

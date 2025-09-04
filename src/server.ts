@@ -8,7 +8,6 @@ import {
   serializerCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
-
 import authRoutes from "./Routers/auth.routes";
 import professorRoutes from "./Routers/professor.routes";
 import funcionarioRoutes from "./Routers/funcionario.routes";

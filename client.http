@@ -254,11 +254,11 @@ Authorization: Bearer {{authToken}}
 ###########################################################################
 
 ### Listar usuários
-GET {{baseUrl}}usuario
+GET {{baseUrl}}usuarios
 Authorization: Bearer {{authToken}}
 
 ### Criar usuário
-POST {{baseUrl}}usuario
+POST {{baseUrl}}usuarios
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -270,11 +270,11 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar usuário
-GET {{baseUrl}}usuario/1
+GET {{baseUrl}}usuarios/1
 Authorization: Bearer {{authToken}}
 
 ### Atualizar usuário
-PUT {{baseUrl}}usuario/1
+PUT {{baseUrl}}usuarios/1
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -283,7 +283,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Atualizar senha do usuário
-PUT {{baseUrl}}usuario/1/senha
+PUT {{baseUrl}}usuarios/1/senha
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -322,7 +322,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar permissões de um usuário
-GET {{baseUrl}}permissoes/usuario/1
+GET {{baseUrl}}permissoes/usuarios/1
 Authorization: Bearer {{authToken}}
 
 
@@ -331,11 +331,11 @@ Authorization: Bearer {{authToken}}
 ###########################################################################
 
 ### Listar funcionários
-GET {{baseUrl}}funcionario
+GET {{baseUrl}}funcionarios
 Authorization: Bearer {{authToken}}
 
 ### Criar funcionário
-POST {{baseUrl}}funcionario
+POST {{baseUrl}}funcionarios
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -347,15 +347,14 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar funcionário
-GET {{baseUrl}}funcionario/1
+GET {{baseUrl}}funcionarios/1
 Authorization: Bearer {{authToken}}
 
 ### Atualizar funcionário
-PUT {{baseUrl}}funcionario/1
+PUT {{baseUrl}}funcionarios/1
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
 	"Nome": "Ana Costa"
 }
-
