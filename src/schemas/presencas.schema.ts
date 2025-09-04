@@ -8,11 +8,19 @@ import { Estado } from "@prisma/client";
  * @param ProfessorID O identificador exclusivo do professor associado à presença
  */
 export const presencaSchema = z.object({
-  Data: z.string().datetime("Data inválida"),
-  ProfessorID: z.number().positive("ID do professor deve ser positivo"),
-  Estado: z.nativeEnum(Estado, {
-    errorMap: () => ({ message: "Estado deve ser PRESENTE ou FALTA" }),
-  }),
+  Data: z
+    .string()
+    .datetime("Data inválida")
+    .describe("Data e hora da presença (ISO 8601)"),
+  ProfessorID: z
+    .number()
+    .positive("ID do professor deve ser positivo")
+    .describe("ID numérico do professor"),
+  Estado: z
+    .nativeEnum(Estado, {
+      errorMap: () => ({ message: "Estado deve ser PRESENTE ou FALTA" }),
+    })
+    .describe("Estado da presença: PRESENTE ou FALTA"),
 });
 
 export const batchPresencaSchema = z.object({
@@ -35,7 +43,11 @@ export const updatePresencaSchema = z.object({
 });
 
 export const idParamSchema = z.object({
-  id: z.string().transform((val) => Number(val)),
+  id: z
+    .string()
+    .regex(/^\d+$/, "ID inválido")
+    .transform((val) => Number(val))
+    .describe("Parâmetro id (número)"),
 });
 
 export const presencaResponseSchema = {

@@ -1,0 +1,361 @@
+# Variáveis
+@baseUrl = http://localhost:3333/
+@authToken = 29bd14b49a671c2747978fe6
+
+### Health / Root
+GET {{baseUrl}}
+
+### Auth - Login
+POST {{baseUrl}}auth/login
+Content-Type: application/json
+
+{
+	"email": "admin@example.com",
+	"senha": "senha123",
+	"tipo": "FUNCIONARIO"
+}
+
+### Auth - Refresh token
+POST {{baseUrl}}auth/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "<refresh-token>"
+}
+
+### Auth - Request password reset
+POST {{baseUrl}}auth/forgot-password
+Content-Type: application/json
+
+{
+	"email": "user@example.com"
+}
+
+### Auth - Reset password
+POST {{baseUrl}}auth/reset-password
+Content-Type: application/json
+
+{
+	"token": "<reset-token>",
+	"novaSenha": "novaSenha123",
+	"confirmarSenha": "novaSenha123"
+}
+
+### Auth - Logout (protegido)
+POST {{baseUrl}}auth/logout
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Cursos
+###########################################################################
+
+### Listar cursos
+GET {{baseUrl}}cursos
+
+### Criar curso
+POST {{baseUrl}}cursos
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Introdução à Computação",
+	"Descricao": "Curso introdutório sobre conceitos básicos",
+	"ProfessorID": 1
+}
+
+### Buscar curso por id
+GET {{baseUrl}}cursos/1
+
+### Atualizar curso
+PUT {{baseUrl}}cursos/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Introdução à Computação (Atualizado)",
+	"Descricao": "Descrição atualizada"
+}
+
+### Remover curso
+DELETE {{baseUrl}}cursos/1
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Professores
+###########################################################################
+
+### Listar professores
+GET {{baseUrl}}professores
+
+### Criar professor
+POST {{baseUrl}}professores
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "João Silva",
+	"Email": "joao.silva@example.com",
+	"Senha": "senhaProf123",
+	"Departamento": "CIENCIA_COMPUTACAO",
+	"CargaHoraria": 20
+}
+
+### Buscar professor
+GET {{baseUrl}}professores/1
+
+### Atualizar professor
+PUT {{baseUrl}}professores/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "João S."
+}
+
+
+###########################################################################
+# Sumários
+###########################################################################
+
+### Listar sumários
+GET {{baseUrl}}sumarios
+
+### Criar sumário
+POST {{baseUrl}}sumarios
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Conteudo": "Resumo da aula sobre Fastify",
+	"Data": "2025-09-01T10:00:00.000Z",
+	"CursoID": 1,
+	"ProfessorID": 1
+}
+
+### Buscar sumário
+GET {{baseUrl}}sumarios/1
+
+### Atualizar sumário
+PUT {{baseUrl}}sumarios/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Conteudo": "Conteúdo atualizado do sumário"
+}
+
+### Deletar sumário
+DELETE {{baseUrl}}sumarios/1
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Presenças
+###########################################################################
+
+### Listar presenças
+GET {{baseUrl}}presencas
+Authorization: Bearer {{authToken}}
+
+### Registrar presença
+POST {{baseUrl}}presencas
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Data": "2025-09-01T00:00:00.000Z",
+	"ProfessorID": 1,
+	"Estado": "PRESENTE"
+}
+
+### Registrar presenças em lote
+POST {{baseUrl}}presencas/batch
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"presencas": [
+		{ 
+      "Data": "2025-09-01T00:00:00.000Z", 
+      "ProfessorID": 1, 
+      "Estado": "PRESENTE" 
+      },
+		{ 
+      "Data": "2025-09-01T00:00:00.000Z", 
+      "ProfessorID": 2, 
+      "Estado": "FALTA" 
+      }
+	]
+}
+
+### Buscar presença por id
+GET {{baseUrl}}presencas/1
+Authorization: Bearer {{authToken}}
+
+### Atualizar presença
+PUT {{baseUrl}}presencas/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Estado": "FALTA"
+}
+
+### Remover presença
+DELETE {{baseUrl}}presencas/1
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Efetividades
+###########################################################################
+
+### Listar efetividades
+GET {{baseUrl}}efetividades
+Authorization: Bearer {{authToken}}
+
+### Criar efetividade
+POST {{baseUrl}}efetividades
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Data": "2025-09-01T08:00:00.000Z",
+	"HorasTrabalhadas": 4,
+	"ProfessorID": 1
+}
+
+### Buscar efetividades por período
+GET {{baseUrl}}efetividades/periodo?dataInicio=2025-09-01&dataFim=2025-09-30
+Authorization: Bearer {{authToken}}
+
+### Buscar efetividades de um professor
+GET {{baseUrl}}efetividades/professor/1
+Authorization: Bearer {{authToken}}
+
+### Atualizar efetividade
+PUT {{baseUrl}}efetividades/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"HorasTrabalhadas": 5
+}
+
+### Remover efetividade
+DELETE {{baseUrl}}efetividades/1
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Usuários
+###########################################################################
+
+### Listar usuários
+GET {{baseUrl}}usuario
+Authorization: Bearer {{authToken}}
+
+### Criar usuário
+POST {{baseUrl}}usuario
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Maria",
+	"Email": "maria@example.com",
+	"Senha": "senhaUser123",
+	"Tipo": "FUNCIONARIO"
+}
+
+### Buscar usuário
+GET {{baseUrl}}usuario/1
+Authorization: Bearer {{authToken}}
+
+### Atualizar usuário
+PUT {{baseUrl}}usuario/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Maria Silva"
+}
+
+### Atualizar senha do usuário
+PUT {{baseUrl}}usuario/1/senha
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"senhaAtual": "senhaUser123",
+	"novaSenha": "novaSenhaUser123",
+	"confirmarSenha": "novaSenhaUser123"
+}
+
+
+###########################################################################
+# Permissões
+###########################################################################
+
+### Listar permissões
+GET {{baseUrl}}permissoes
+Authorization: Bearer {{authToken}}
+
+### Criar permissão
+POST {{baseUrl}}permissoes
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Descricao": "Gerenciar usuários"
+}
+
+### Atribuir permissão a usuário
+POST {{baseUrl}}permissoes/atribuir
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"UsuarioID": 1,
+	"PermissaoID": 2
+}
+
+### Buscar permissões de um usuário
+GET {{baseUrl}}permissoes/usuario/1
+Authorization: Bearer {{authToken}}
+
+
+###########################################################################
+# Funcionários
+###########################################################################
+
+### Listar funcionários
+GET {{baseUrl}}funcionario
+Authorization: Bearer {{authToken}}
+
+### Criar funcionário
+POST {{baseUrl}}funcionario
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Ana",
+	"Email": "ana.func@example.com",
+	"Senha": "senhaFunc123",
+	"Cargo": "ADMIN"
+}
+
+### Buscar funcionário
+GET {{baseUrl}}funcionario/1
+Authorization: Bearer {{authToken}}
+
+### Atualizar funcionário
+PUT {{baseUrl}}funcionario/1
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+	"Nome": "Ana Costa"
+}
+

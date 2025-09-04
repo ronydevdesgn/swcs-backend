@@ -8,10 +8,6 @@ const cursoBase = {
     .min(10, 'Descrição deve ter no mínimo 10 caracteres')
     .max(500, 'Descrição muito longa')
     .optional(),
-  // CargaHoraria: z.number()
-  //   .int('Carga horária deve ser um número inteiro')
-  //   .min(1, 'Carga horária deve ser maior que 0')
-  //   .max(200, 'Carga horária não pode exceder 200 horas'),
   ProfessorID: z.number()
     .int('ID do professor deve ser um número inteiro')
     .positive('ID do professor deve ser positivo')

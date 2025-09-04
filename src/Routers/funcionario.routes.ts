@@ -22,17 +22,16 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     {
       schema: {
         body: createFuncionarioSchema,
-        response: {
-          201: {
-            type: "object",
-            properties: {
-              mensagem: { type: "string" },
-              data: { type: "object" },
-            },
-          },
-        },
       },
-      // Listar funcionários
+      // // Listar funcionários
+      // response: {
+      //   201: {
+      //     type: "object",
+      //     properties: {
+      //       mensagem: { type: "string" },
+      //     },
+      //   },
+      // },
     },
     criarFuncionario
   );
@@ -41,19 +40,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
   app.get(
     "/",
     {
-      schema: {
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              data: {
-                type: "array",
-                items: { type: "object" },
-              },
-            },
-          },
-        },
-      },
+      schema: {},
       // Buscar funcionário por ID
     },
     listarFuncionarios
@@ -65,16 +52,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     {
       schema: {
         params: idParamSchema,
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              data: { type: "object" },
-            },
-          },
-        },
       },
-      // Atualizar funcionário
     },
     buscarFuncionario
   );
@@ -86,17 +64,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
       schema: {
         params: idParamSchema,
         body: updateFuncionarioSchema,
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              mensagem: { type: "string" },
-              data: { type: "object" },
-            },
-          },
-        },
       },
-      // Atualizar funcionário
     },
     atualizarFuncionario
   );

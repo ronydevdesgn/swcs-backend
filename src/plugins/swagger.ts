@@ -5,7 +5,6 @@ import swaggerUi from "@fastify/swagger-ui";
 export default fp(
   async function (fastify) {
     await fastify.register(swagger, {
-      mode: "dynamic",
       openapi: {
         openapi: "3.0.0",
         info: {
@@ -14,8 +13,8 @@ export default fp(
             "Sistema Web de Controlo de Sumários - API Documentation",
           version: "1.0.1",
           contact: {
-            name: "SWCS Team",
-            email: "support@swcs.com",
+            name: "SWCS Developer",
+            email: "ronydevdesgn@gmail.com",
           },
         },
         servers: [
@@ -44,8 +43,6 @@ export default fp(
             },
           },
         },
-        // Configuração global para não exigir autenticação em todas as rotas
-        security: [],
       },
     });
 
@@ -55,13 +52,15 @@ export default fp(
         docExpansion: "list",
         deepLinking: true,
         displayRequestDuration: true,
+        tryItOutEnabled: true,
       },
       staticCSP: true,
+      transformStaticCSP: (header) => header,
     });
   },
-
   {
     name: "swagger",
-    dependencies: [],
+    // Aguarda o Prisma ser carregado primeiro
+    dependencies: ["prisma"],
   }
 );

@@ -21,45 +21,14 @@ export default async function sumariosRoutes(app: FastifyInstance) {
   app.post('/', {
     schema: {
       body: createSumarioSchema,
-      response: {
-        201: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' },
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, criarSumario);
 
-  app.get('/', {
-    schema: {
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            data: { 
-              type: 'array',
-              items: { type: 'object' }
-            }
-          }
-        }
-      }
-    }
-  }, listarSumarios);
+  app.get('/', {}, listarSumarios);
 
   app.get('/:id', {
     schema: {
       params: idParamSchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, buscarSumario);
 
@@ -67,30 +36,13 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     schema: {
       params: idParamSchema,
       body: updateSumarioSchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' },
-            data: { type: 'object' }
-          }
-        }
-      }
+      
     }
   }, atualizarSumario);
 
   app.delete('/:id', {
     schema: {
       params: idParamSchema,
-      response: {
-        200: {
-          type: 'object',
-          properties: {
-            mensagem: { type: 'string' },
-            data: { type: 'object' }
-          }
-        }
-      }
     }
   }, deletarSumario);
 }
