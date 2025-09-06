@@ -51,7 +51,7 @@ export async function registrarEfetividade(
       }
 
       // Verificar se já existe registro para esta data
-      const efetividadeExistente = await tx.presenca.findFirst({
+      const efetividadeExistente = await tx.efetividade.findFirst({
         where: {
           Data: dataEfetividade,
           ProfessorID,

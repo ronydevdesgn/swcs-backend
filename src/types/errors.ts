@@ -29,22 +29,42 @@ export enum AppErrorCode {
 // Classe base para erros customizados
 export class AppError extends Error {
   public readonly statusCode: number;
-  public readonly code: AppErrorCode;
+  public readonly code: string;
   public readonly details?: any;
 
+  // Suporta duas formas de construção para compatibilidade:
+  // 1) Nova forma: new AppError(message: string, statusCode?: number, code?: AppErrorCode|string, details?: any)
+  // 2) Forma legada (usada em vários controllers): new AppError(code: string, message: string)
   constructor(
-    message: string,
-    statusCode: number = 500,
-    code: AppErrorCode = AppErrorCode.INTERNAL_SERVER_ERROR,
-    details?: any
+    a: string,
+    b?: number | string,
+    c?: AppErrorCode | string,
+    d?: any
   ) {
+    // Caso legado: (code, message)
+    if (typeof b === "string" && (typeof c === "undefined" || c === null)) {
+      const legacyCode = a;
+      const message = b;
+      super(message);
+      this.name = this.constructor.name;
+      this.statusCode = 400; // default genérico para erros de negócio/validação
+      this.code = legacyCode;
+      this.details = d;
+      Error.captureStackTrace(this, this.constructor);
+      return;
+    }
+
+    // Forma nova: (message, statusCode?, code?, details?)
+    const message = a;
+    const statusCode = typeof b === "number" ? b : 500;
+    const code = (
+      typeof c === "string" ? c : AppErrorCode.INTERNAL_SERVER_ERROR
+    ) as string;
     super(message);
     this.name = this.constructor.name;
     this.statusCode = statusCode;
     this.code = code;
-    this.details = details;
-
-    // Captura o stack trace
+    this.details = d;
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -114,3 +134,8 @@ export const createConflictError = (message?: string) =>
   new ConflictError(message);
 export const createBusinessError = (message: string, code?: AppErrorCode) =>
   new BusinessError(message, code);
+
+// Type guard helper para facilitar checagens nos controllers
+export const isAppError = (err: unknown): err is AppError => {
+  return err instanceof AppError;
+};
