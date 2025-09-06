@@ -6,125 +6,144 @@ import {
   Cargo,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { faker } from "@faker-js/faker";
 const prisma = new PrismaClient();
 
 async function main() {
   // Criar permissões iniciais
+  // Limpar dados existentes (ordem para respeitar FK)
+  await prisma.refreshToken.deleteMany();
+  await prisma.passwordReset.deleteMany();
+  await prisma.usuarioPermissao.deleteMany();
+  await prisma.permissao.deleteMany();
+  await prisma.presenca.deleteMany();
+  await prisma.efetividade.deleteMany();
+  await prisma.sumario.deleteMany();
+  await prisma.professorCurso.deleteMany();
+  await prisma.usuario.deleteMany();
+  await prisma.professor.deleteMany();
+  await prisma.funcionario.deleteMany();
+  await prisma.curso.deleteMany();
+
+  // Criar permissões base
+  const permissoes = [
+    "Registrar Sumário",
+    "Gerir Presenças",
+    "Visualizar Efetividades",
+  ];
+
   await prisma.permissao.createMany({
-    data: [
-      { Descricao: "Registrar Sumário" },
-      { Descricao: "Gerir Presenças" },
-      { Descricao: "Visualizar Efetividades" },
-    ],
-    skipDuplicates: true,
+    data: permissoes.map((p) => ({ Descricao: p })),
   });
 
-  // Criar funcionário (sumarista)
-  const funcionario = await prisma.funcionario.upsert({
-    where: { Email: "sumarista@instituicao.com" },
-    update: {},
-    create: {
-      Nome: "Carlos Sumarista",
-      Email: "sumarista@instituicao.com",
-      Cargo: Cargo.SUMARISTA,
-    },
-  });
+  // Gerar dados falsos com faker
+  const NUM_CURSOS = 5;
+  const NUM_PROFESSORES = 10;
+  const NUM_FUNCIONARIOS = 3;
 
-  // Criar professor
-  const professor = await prisma.professor.upsert({
-    where: { ProfessorID: 1 },
-    update: {},
-    create: {
-      Nome: "Ana Professora",
-      Departamento: Departamento.INFORMATICA,
-      CargaHoraria: 20,
-    },
-  });
-
-  // Criar curso
-  const curso = await prisma.curso.upsert({
-    where: { CursoID: 1 },
-    update: {},
-    create: {
-      Nome: "Álgebra Linear",
-      Descricao: "Curso introdutório de Álgebra Linear",
-    },
-  });
-
-  // Criar usuário vinculado ao funcionário
-  await prisma.usuario.upsert({
-    where: { Email: "sumarista@instituicao.com" },
-    update: {},
-    create: {
-      Nome: "Carlos Sumarista",
-      Email: "sumarista@instituicao.com",
-      SenhaHash: await bcrypt.hash("senha123", 10),
-      Tipo: TipoUsuario.FUNCIONARIO,
-      Funcionario: {
-        connect: {
-          FuncionarioID: funcionario.FuncionarioID,
+  const cursos = [] as any[];
+  for (let i = 0; i < NUM_CURSOS; i++) {
+    cursos.push(
+      await prisma.curso.create({
+        data: {
+          Nome: faker.internet.domainWord() + " " + faker.word.adjective(),
+          Descricao: faker.lorem.sentence(),
         },
-      },
-      Permissoes: {
-        create: [{ PermissaoID: 1 }, { PermissaoID: 2 }],
-      },
-    },
-  });
+      })
+    );
+  }
 
-  // Criar usuário vinculado ao professor
-  await prisma.usuario.upsert({
-    where: { Email: "prof@instituicao.com" },
-    update: {},
-    create: {
-      Nome: "Ana Professora",
-      Email: "prof@instituicao.com",
-      SenhaHash: await bcrypt.hash("senha123", 10),
-      Tipo: TipoUsuario.PROFESSOR,
-      Professor: {
-        connect: {
-          ProfessorID: professor.ProfessorID,
+  const professores = [] as any[];
+  for (let i = 0; i < NUM_PROFESSORES; i++) {
+    professores.push(
+      await prisma.professor.create({
+        data: {
+          Nome: faker.person.fullName(),
+          Departamento: faker.helpers.arrayElement(Object.values(Departamento)),
+          CargaHoraria: faker.number.int({ min: 10, max: 40 }),
         },
+      })
+    );
+  }
+
+  const funcionarios = [] as any[];
+  for (let i = 0; i < NUM_FUNCIONARIOS; i++) {
+    funcionarios.push(
+      await prisma.funcionario.create({
+        data: {
+          Nome: faker.person.fullName(),
+          Email: faker.internet.email().toLowerCase(),
+          Cargo: faker.helpers.arrayElement(Object.values(Cargo)),
+        },
+      })
+    );
+  }
+
+  // Criar usuários para alguns funcionários e professores
+  for (const f of funcionarios) {
+    await prisma.usuario.create({
+      data: {
+        Nome: f.Nome,
+        Email: f.Email,
+        SenhaHash: await bcrypt.hash("senha123", 10),
+        Tipo: TipoUsuario.FUNCIONARIO,
+        Funcionario: { connect: { FuncionarioID: f.FuncionarioID } },
       },
-    },
-  });
+    });
+  }
 
-  // Criar sumário
-  await prisma.sumario.create({
-    data: {
-      Data: new Date(),
-      Conteudo: "Introdução à Álgebra",
-      CursoID: curso.CursoID,
-      ProfessorID: professor.ProfessorID,
-    },
-  });
+  for (const p of professores.slice(0, 6)) {
+    const profUser = await prisma.usuario.create({
+      data: {
+        Nome: p.Nome,
+        Email: faker.internet.email().toLowerCase(),
+        SenhaHash: await bcrypt.hash("senha123", 10),
+        Tipo: TipoUsuario.PROFESSOR,
+        Professor: { connect: { ProfessorID: p.ProfessorID } },
+      },
+    });
 
-  // Criar relação Professor-Curso
-  await prisma.professorCurso.create({
-    data: {
-      ProfessorID: professor.ProfessorID,
-      CursoID: curso.CursoID,
-    },
-  });
+    // Associar professor a um curso aleatório
+    await prisma.professorCurso.createMany({
+      data: [
+        {
+          ProfessorID: p.ProfessorID,
+          CursoID: faker.helpers.arrayElement(cursos).CursoID,
+        },
+      ],
+    });
+  }
 
-  // Criar presença
-  await prisma.presenca.create({
-    data: {
-      Data: new Date(),
-      Estado: Estado.PRESENTE,
-      ProfessorID: professor.ProfessorID,
-      CursoID: curso.CursoID,
-    },
-  });
+  // Criar sumários, presenças e efetividades aleatórias
+  for (const p of professores) {
+    const curso = faker.helpers.arrayElement(cursos);
+    await prisma.sumario.create({
+      data: {
+        Data: faker.date.recent(),
+        Conteudo: faker.lorem.paragraph(),
+        CursoID: curso.CursoID,
+        ProfessorID: p.ProfessorID,
+      },
+    });
 
-  // Criar efetividade
-  await prisma.efetividade.create({
-    data: {
-      Data: new Date(),
-      HorasTrabalhadas: 4,
-      ProfessorID: professor.ProfessorID,
-      CursoID: curso.CursoID,
-    },
-  });
+    await prisma.presenca.create({
+      data: {
+        Data: faker.date.recent(),
+        Estado: faker.helpers.arrayElement(Object.values(Estado)),
+        ProfessorID: p.ProfessorID,
+        CursoID: curso.CursoID,
+      },
+    });
+
+    await prisma.efetividade.create({
+      data: {
+        Data: faker.date.recent(),
+        HorasTrabalhadas: faker.number.int({ min: 1, max: 6 }),
+        ProfessorID: p.ProfessorID,
+        CursoID: curso.CursoID,
+      },
+    });
+  }
 
   console.log("Seed concluído com sucesso.");
 }
