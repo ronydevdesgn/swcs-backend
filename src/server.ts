@@ -141,37 +141,6 @@ app.setNotFoundHandler((request, reply) => {
 // Error handler melhorado com middleware externo
 app.setErrorHandler(errorHandler);
 
-// Maneira anterior de fazer o tratamento de erros diretamente aqui
-// app.setErrorHandler((error, request, reply) => {
-//   app.log.error(error);
-  
-//   // Se for erro de validação Zod
-//   if (error.validation) {
-//     return reply.status(400).send({
-//       statusCode: 400,
-//       error: "Validation Error",
-//       message: "Dados de entrada inválidos",
-//       details: error.validation,
-//     });
-//   }
-
-//   // Se for erro customizado com statusCode
-//   if (error.statusCode) {
-//     return reply.status(error.statusCode).send({
-//       statusCode: error.statusCode,
-//       error: error.name || "Error",
-//       message: error.message,
-//     });
-//   }
-
-//   // Erro interno do servidor
-//   reply.status(500).send({
-//     statusCode: 500,
-//     error: "Internal Server Error",
-//     message: "Erro interno do servidor",
-//   });
-// });
-
 // Função para iniciar o servidor
 
 const start = async () => {

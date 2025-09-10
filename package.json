@@ -19,6 +19,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [],
   "author": "ronydevdesgn",
   "license": "ISC",
@@ -51,8 +54,5 @@
     "tsup": "^8.5.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.2"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

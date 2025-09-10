@@ -1,8 +1,8 @@
-# SWCS — Sistema de Gestão Escolar (Backend)
+# SWCS — Sistema de Gestão de Sumários  (Backend)
 
 ## Descrição
 
-API backend para gestão escolar — controle de professores, cursos, sumários, presenças e efetividades. Projetado com Fastify, Prisma e Zod para validação e testes automatizados com Jest.
+API backend para gestão de sumário — controle de professores, cursos, sumários, presenças e efetividades. Projetado com Fastify, Prisma e Zod para validação e testes automatizados com Jest.
 
 ## Status
 
@@ -16,6 +16,7 @@ Projeto de exemplo / não pronto para produção sem ajustes de segurança e con
 - JWT (autenticação) — [src/utils/jwt.ts](src/utils/jwt.ts)
 - Swagger (documentação) — [src/plugins/swagger.ts](src/plugins/swagger.ts)
 - Jest (testes)
+- Docker (infraestrutura de servidor componetizado)
 
 ## Estrutura resumida
 
@@ -31,7 +32,7 @@ Projeto de exemplo / não pronto para produção sem ajustes de segurança e con
 
 - Node.js (>= 18 recomendado)
 - npm
-- Banco de dados compatível (CONFIGURAR via DATABASE_URL)
+- Banco de dados compatível (CONFIGURAR via DATABASE_URL ou DOCKER-COMPOSE)
 
 ## Instalação
 
