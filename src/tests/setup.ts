@@ -8,7 +8,7 @@ jest.setTimeout(30000);
 // Configurar variáveis de ambiente para testes
 process.env.NODE_ENV = "test";
 process.env.DATABASE_URL =
-  process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
 process.env.JWT_SECRET = "test-secret-key";
 process.env.REFRESH_TOKEN_SECRET = "test-refresh-secret-key";
 

@@ -36,7 +36,7 @@ Projeto de exemplo / não pronto para produção sem ajustes de segurança e con
 ## Instalação
 
 1. Clone:
-   git clone https://github.com/seu-usuario/swcs-backend.git
+   git clone https://github.com/ronydevdesgn/swcs-backend.git
    cd swcs-backend
 
 2. Instale dependências:

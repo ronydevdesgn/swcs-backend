@@ -7,6 +7,7 @@ import {
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { faker } from "@faker-js/faker";
+import { randomUUID } from "node:crypto";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -38,8 +39,8 @@ async function main() {
 
   // Gerar dados falsos com faker
   const NUM_CURSOS = 5;
-  const NUM_PROFESSORES = 10;
-  const NUM_FUNCIONARIOS = 3;
+  const NUM_PROFESSORES = 5;
+  const NUM_FUNCIONARIOS = 5;
 
   const cursos = [] as any[];
   for (let i = 0; i < NUM_CURSOS; i++) {
@@ -85,7 +86,7 @@ async function main() {
       data: {
         Nome: f.Nome,
         Email: f.Email,
-        SenhaHash: await bcrypt.hash("senha123", 10),
+        SenhaHash: await bcrypt.hash(randomUUID(), 5),
         Tipo: TipoUsuario.FUNCIONARIO,
         Funcionario: { connect: { FuncionarioID: f.FuncionarioID } },
       },
@@ -97,7 +98,7 @@ async function main() {
       data: {
         Nome: p.Nome,
         Email: faker.internet.email().toLowerCase(),
-        SenhaHash: await bcrypt.hash("senha123", 10),
+        SenhaHash: await bcrypt.hash(randomUUID(), 5),
         Tipo: TipoUsuario.PROFESSOR,
         Professor: { connect: { ProfessorID: p.ProfessorID } },
       },
