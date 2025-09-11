@@ -10,13 +10,13 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "admin@example.com",
-	"senha": "senha123",
+	"email": "ronydevdesgn@gmail.com",
+	"senha": "946646130Alberto",
 	"tipo": "FUNCIONARIO"
 }
 
 ### Auth - Refresh token
-POST {{baseUrl}}auth/refresh
+POST {{baseUrl}}/auth/refresh
 Content-Type: application/json
 
 {
@@ -28,7 +28,7 @@ POST {{baseUrl}}auth/forgot-password
 Content-Type: application/json
 
 {
-	"email": "user@example.com"
+	"email": "ronydevdesgn@gmail.com"
 }
 
 ### Auth - Reset password

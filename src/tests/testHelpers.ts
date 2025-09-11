@@ -2,13 +2,14 @@
 import { app } from "../server";
 import { PrismaClient, TipoUsuario } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { uuidv4 } from "zod/v4";
 
 const prisma = new PrismaClient();
 
 // Token de teste fixo para autenticação
 const TEST_TOKEN = jwt.sign(
   {
-    userId: 1,
+    userId: uuidv4(),
     tipo: "FUNCIONARIO",
     email: "test@example.com",
     nome: "Usuário Teste",

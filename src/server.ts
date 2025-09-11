@@ -17,6 +17,7 @@ import cursosRoutes from "./Routers/cursos.routes";
 import sumariosRoutes from "./Routers/sumarios.routes";
 import presencasRoutes from "./Routers/presencas.routes";
 import efetividadesRoutes from "./Routers/efetividades.routes";
+import { errorHandler } from "./middlewares/errorHandler";
 
 dotenv.config();
 
@@ -94,7 +95,7 @@ app.get("/", async (request, reply) => {
   return base;
 });
 
-// Register plugins in correct order
+
 await app.register(prismaPlugin);
 
 await app.register(cors, {
@@ -104,7 +105,7 @@ await app.register(cors, {
   allowedHeaders: ["Content-Type", "Authorization"],
 });
 
-// Register routes BEFORE Swagger so it can capture the schemas
+
 await app.register(authRoutes, { prefix: "/auth" });
 await app.register(professorRoutes, { prefix: "/professores" });
 await app.register(funcionarioRoutes, { prefix: "/funcionarios" });
@@ -115,7 +116,7 @@ await app.register(sumariosRoutes, { prefix: "/sumarios" });
 await app.register(presencasRoutes, { prefix: "/presencas" });
 await app.register(efetividadesRoutes, { prefix: "/efetividades" });
 
-// Register Swagger AFTER all routes are registered
+
 if (enableSwagger) {
   try {
     await app.register(swaggerPlugin);
@@ -136,38 +137,11 @@ app.setNotFoundHandler((request, reply) => {
   });
 });
 
-// Error handler melhorado
-app.setErrorHandler((error, request, reply) => {
-  app.log.error(error);
-  
-  // Se for erro de validação Zod
-  if (error.validation) {
-    return reply.status(400).send({
-      statusCode: 400,
-      error: "Validation Error",
-      message: "Dados de entrada inválidos",
-      details: error.validation,
-    });
-  }
-
-  // Se for erro customizado com statusCode
-  if (error.statusCode) {
-    return reply.status(error.statusCode).send({
-      statusCode: error.statusCode,
-      error: error.name || "Error",
-      message: error.message,
-    });
-  }
-
-  // Erro interno do servidor
-  reply.status(500).send({
-    statusCode: 500,
-    error: "Internal Server Error",
-    message: "Erro interno do servidor",
-  });
-});
+// Error handler melhorado com middleware externo
+app.setErrorHandler(errorHandler);
 
 // Função para iniciar o servidor
+
 const start = async () => {
   try {
     await app.ready(); // Aguarda todos os plugins serem carregados
