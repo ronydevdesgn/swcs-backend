@@ -1,11 +1,25 @@
 import { FastifyInstance } from "fastify";
 import {
   efetividadeSchema,
+  updateEfetividadeSchema,
   periodoSchema,
   idParamSchema,
+  professorEfetividadeQuerySchema,
+  createEfetividadeResponseSchema,
+  listEfetividadesResponseSchema,
+  singleEfetividadeResponseSchema,
+  updateEfetividadeResponseSchema,
+  deleteEfetividadeResponseSchema,
+  efetividadesPorPeriodoResponseSchema,
+  efetividadesProfessorResponseSchema,
+  errorResponseSchema,
 } from "../schemas/efetividades.schema";
 import {
   registrarEfetividade,
+  listarEfetividades,
+  buscarEfetividade,
+  atualizarEfetividade,
+  deletarEfetividade,
   buscarEfetividadesPorPeriodo,
   buscarEfetividadesProfessor,
 } from "../controllers/efetividades.controller";
@@ -15,35 +29,23 @@ export default async function efetividadesRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
   app.addHook("onRequest", autenticar);
 
+  // Registrar nova efetividade
   app.post(
     "/",
     {
       schema: {
+        tags: ["efetividades"],
+        summary: "Registrar nova efetividade",
+        description:
+          "Registra a efetividade de um professor para uma data específica",
+        security: [{ bearerAuth: [] }],
         body: efetividadeSchema,
         response: {
-          201: {
-            type: "object",
-            properties: {
-              mensagem: { type: "string" },
-              data: {
-                type: "object",
-                properties: {
-                  EfetividadeID: { type: "number" },
-                  Data: { type: "string", format: "date-time" },
-                  HorasTrabalhadas: { type: "number" },
-                  ProfessorID: { type: "number" },
-                  Professor: {
-                    type: "object",
-                    properties: {
-                      Nome: { type: "string" },
-                      Departamento: { type: "string" },
-                      CargaHoraria: { type: "number" },
-                    },
-                  },
-                },
-              },
-            },
-          },
+          201: createEfetividadeResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
         },
       },
     },
@@ -51,112 +53,123 @@ export default async function efetividadesRoutes(app: FastifyInstance) {
   );
 
   // Listar todas as efetividades
-  app.get("/", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const registros = await prisma.efetividade.findMany({
-      orderBy: { Data: "desc" },
-    });
-    return reply.send({ data: registros });
-  });
-
-  // Buscar por ID
-  app.get("/:id", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const { id } = req.params as { id: number };
-    const registro = await prisma.efetividade.findUnique({
-      where: { EfetividadeID: Number(id) },
-    });
-    if (!registro)
-      return reply.status(404).send({ mensagem: "Efetividade não encontrada" });
-    return reply.send({ data: registro });
-  });
-
-  // Atualizar por ID
-  app.put("/:id", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const { id } = req.params as { id: number };
-    const { HorasTrabalhadas, Data } = req.body as any;
-    try {
-      const atualizado = await prisma.efetividade.update({
-        where: { EfetividadeID: Number(id) },
-        data: {
-          ...(HorasTrabalhadas !== undefined && { HorasTrabalhadas }),
-          ...(Data && { Data: new Date(Data) }),
+  app.get(
+    "/",
+    {
+      schema: {
+        tags: ["efetividades"],
+        summary: "Listar efetividades",
+        description: "Lista todas as efetividades registradas no sistema",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: listEfetividadesResponseSchema,
+          500: errorResponseSchema,
         },
-      });
-      return reply.send({
-        mensagem: "Efetividade atualizada com sucesso",
-        data: atualizado,
-      });
-    } catch (e) {
-      return reply.status(404).send({ mensagem: "Efetividade não encontrada" });
-    }
-  });
+      },
+    },
+    listarEfetividades
+  );
 
-  // Remover por ID
-  app.delete("/:id", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const { id } = req.params as { id: number };
-    try {
-      await prisma.efetividade.delete({ where: { EfetividadeID: Number(id) } });
-      return reply.send({ mensagem: "Efetividade removida com sucesso" });
-    } catch (e) {
-      return reply.status(404).send({ mensagem: "Efetividade não encontrada" });
-    }
-  });
-
+  // Buscar efetividades por período
   app.get(
     "/periodo",
     {
       schema: {
+        tags: ["efetividades"],
+        summary: "Buscar efetividades por período",
+        description:
+          "Retorna as efetividades registradas dentro de um período específico com estatísticas",
+        security: [{ bearerAuth: [] }],
         querystring: periodoSchema,
         response: {
-          200: {
-            type: "object",
-            properties: {
-              data: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    EfetividadeID: { type: "number" },
-                    Data: { type: "string", format: "date-time" },
-                    HorasTrabalhadas: { type: "number" },
-                    ProfessorID: { type: "number" },
-                  },
-                },
-              },
-            },
-          },
+          200: efetividadesPorPeriodoResponseSchema,
+          400: errorResponseSchema,
+          500: errorResponseSchema,
         },
       },
     },
     buscarEfetividadesPorPeriodo
   );
 
+  // Buscar efetividade por ID
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["efetividades"],
+        summary: "Buscar efetividade por ID",
+        description: "Retorna os detalhes de uma efetividade específica",
+        security: [{ bearerAuth: [] }],
+        params: idParamSchema,
+        response: {
+          200: singleEfetividadeResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    buscarEfetividade
+  );
+
+  // Atualizar efetividade
+  app.put(
+    "/:id",
+    {
+      schema: {
+        tags: ["efetividades"],
+        summary: "Atualizar efetividade",
+        description: "Atualiza os dados de uma efetividade existente",
+        security: [{ bearerAuth: [] }],
+        params: idParamSchema,
+        body: updateEfetividadeSchema,
+        response: {
+          200: updateEfetividadeResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    atualizarEfetividade
+  );
+
+  // Remover efetividade
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["efetividades"],
+        summary: "Remover efetividade",
+        description: "Remove uma efetividade do sistema",
+        security: [{ bearerAuth: [] }],
+        params: idParamSchema,
+        response: {
+          200: deleteEfetividadeResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+      },
+    },
+    deletarEfetividade
+  );
+
+  // Buscar efetividades de um professor
   app.get(
     "/professor/:id",
     {
       schema: {
+        tags: ["efetividades"],
+        summary: "Buscar efetividades de um professor",
+        description:
+          "Retorna todas as efetividades de um professor específico com estatísticas",
+        security: [{ bearerAuth: [] }],
         params: idParamSchema,
+        querystring: professorEfetividadeQuerySchema,
         response: {
-          200: {
-            type: "object",
-            properties: {
-              data: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    EfetividadeID: { type: "number" },
-                    Data: { type: "string", format: "date-time" },
-                    HorasTrabalhadas: { type: "number" },
-                    ProfessorID: { type: "number" },
-                  },
-                },
-              },
-            },
-          },
+          200: efetividadesProfessorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
         },
       },
     },

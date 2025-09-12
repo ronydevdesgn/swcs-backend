@@ -12,9 +12,15 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "dev:docker:up": "docker-compose up -d",
+    "dev:docker:down": "docker-compose down",
+    "dev:docker:init": "npm run dev:docker:up && sleep 10 && npm run db:migrate && npm run db:generate && npm run db:seed && npm run db:studio",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "ronydevdesgn",
@@ -35,6 +41,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@tsconfig/node20": "^20.1.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^29.5.14",
@@ -47,8 +54,5 @@
     "tsup": "^8.5.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.2"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

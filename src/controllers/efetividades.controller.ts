@@ -4,27 +4,40 @@ import {
   UpdateEfetividadeInput,
   IdParam,
   PeriodoInput,
+  ProfessorEfetividadeQuery,
 } from "../schemas/efetividades.schema";
-import { AppError } from "../types/errors";
 import { Prisma } from "@prisma/client";
+
+// Helper para respostas de erro padronizadas
+const sendError = (
+  reply: FastifyReply,
+  statusCode: number,
+  message: string,
+  details?: string
+) => {
+  return reply.status(statusCode).send({
+    mensagem: message,
+    detalhes: process.env.NODE_ENV === "development" ? details : undefined,
+  });
+};
 
 export async function registrarEfetividade(
   req: FastifyRequest<{ Body: CreateEfetividadeInput }>,
   reply: FastifyReply
 ) {
-  const prisma = req.server.prisma;
-
   try {
     const { Data, HorasTrabalhadas, ProfessorID } = req.body;
+    const prisma = req.server.prisma;
 
     // Validar data
     const dataEfetividade = new Date(Data);
     const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    hoje.setHours(23, 59, 59, 999); // Permitir até o final do dia atual
 
     if (dataEfetividade > hoje) {
-      throw new AppError(
-        "VALIDATION_ERROR",
+      return sendError(
+        reply,
+        400,
         "Não é possível registrar efetividade para datas futuras"
       );
     }
@@ -47,28 +60,32 @@ export async function registrarEfetividade(
       });
 
       if (!professor) {
-        throw new AppError("NOT_FOUND", "Professor não encontrado");
+        throw new Error("Professor não encontrado");
       }
 
       // Verificar se já existe registro para esta data
-      const efetividadeExistente = await tx.presenca.findFirst({
+      const dataInicio = new Date(dataEfetividade);
+      dataInicio.setHours(0, 0, 0, 0);
+      const dataFim = new Date(dataEfetividade);
+      dataFim.setHours(23, 59, 59, 999);
+
+      const efetividadeExistente = await tx.efetividade.findFirst({
         where: {
-          Data: dataEfetividade,
+          Data: {
+            gte: dataInicio,
+            lte: dataFim,
+          },
           ProfessorID,
         },
       });
 
       if (efetividadeExistente) {
-        throw new AppError(
-          "DUPLICATE",
-          "Já existe registro de efetividade para esta data"
-        );
+        throw new Error("Já existe registro de efetividade para esta data");
       }
 
       // Validar horas trabalhadas
       if (HorasTrabalhadas > professor.CargaHoraria) {
-        throw new AppError(
-          "INVALID_HOURS",
+        throw new Error(
           `As horas trabalhadas não podem exceder a carga horária do professor (${professor.CargaHoraria}h)`
         );
       }
@@ -97,46 +114,281 @@ export async function registrarEfetividade(
       });
     });
 
+    req.log.info(
+      `Efetividade registrada: Professor ID ${ProfessorID}, Data: ${Data}, Horas: ${HorasTrabalhadas}`
+    );
+
     return reply.status(201).send({
       mensagem: "Efetividade registrada com sucesso",
       data: efetividade,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao registrar efetividade:", error);
 
-    if (error instanceof AppError) {
-      if (error.code === "VALIDATION_ERROR") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
 
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "INVALID_HOURS") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
+    if (errorMessage === "Professor não encontrado") {
+      return sendError(reply, 404, errorMessage);
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao registrar efetividade",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+    if (errorMessage === "Já existe registro de efetividade para esta data") {
+      return sendError(reply, 409, errorMessage);
+    }
+
+    if (errorMessage.includes("não podem exceder a carga horária")) {
+      return sendError(reply, 400, errorMessage);
+    }
+
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao registrar efetividade",
+      errorMessage
+    );
+  }
+}
+
+export async function listarEfetividades(
+  req: FastifyRequest,
+  reply: FastifyReply
+) {
+  try {
+    const prisma = req.server.prisma;
+
+    const registros = await prisma.efetividade.findMany({
+      include: {
+        Professor: {
+          select: {
+            Nome: true,
+            Departamento: true,
+            CargaHoraria: true,
+          },
+        },
+      },
+      orderBy: { Data: "desc" },
     });
+
+    return reply.send({
+      data: registros,
+    });
+  } catch (error) {
+    req.log.error("Erro ao listar efetividades:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao listar efetividades",
+      errorMessage
+    );
+  }
+}
+
+export async function buscarEfetividade(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const prisma = req.server.prisma;
+
+    const registro = await prisma.efetividade.findUnique({
+      where: { EfetividadeID: id },
+      include: {
+        Professor: {
+          select: {
+            Nome: true,
+            Departamento: true,
+            CargaHoraria: true,
+          },
+        },
+      },
+    });
+
+    if (!registro) {
+      return sendError(reply, 404, "Efetividade não encontrada");
+    }
+
+    return reply.send({ data: registro });
+  } catch (error) {
+    req.log.error("Erro ao buscar efetividade:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao buscar efetividade",
+      errorMessage
+    );
+  }
+}
+
+export async function atualizarEfetividade(
+  req: FastifyRequest<{ Params: IdParam; Body: UpdateEfetividadeInput }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const dados = req.body;
+    const prisma = req.server.prisma;
+
+    // Usar transação para garantir consistência
+    const efetividade = await prisma.$transaction(async (tx) => {
+      // Verificar se a efetividade existe
+      const efetividadeExiste = await tx.efetividade.findUnique({
+        where: { EfetividadeID: id },
+        include: {
+          Professor: {
+            select: {
+              CargaHoraria: true,
+            },
+          },
+        },
+      });
+
+      if (!efetividadeExiste) {
+        throw new Error("Efetividade não encontrada");
+      }
+
+      // Validar horas trabalhadas se fornecidas
+      if (
+        dados.HorasTrabalhadas !== undefined &&
+        dados.HorasTrabalhadas > efetividadeExiste.Professor.CargaHoraria
+      ) {
+        throw new Error(
+          `As horas trabalhadas não podem exceder a carga horária do professor (${efetividadeExiste.Professor.CargaHoraria}h)`
+        );
+      }
+
+      // Validar data se fornecida
+      if (dados.Data) {
+        const novaData = new Date(dados.Data);
+        const hoje = new Date();
+        hoje.setHours(23, 59, 59, 999);
+
+        if (novaData > hoje) {
+          throw new Error(
+            "Não é possível registrar efetividade para datas futuras"
+          );
+        }
+
+        // Verificar duplicidade de data (excluindo o registro atual)
+        const dataInicio = new Date(novaData);
+        dataInicio.setHours(0, 0, 0, 0);
+        const dataFim = new Date(novaData);
+        dataFim.setHours(23, 59, 59, 999);
+
+        const efetividadeDataExiste = await tx.efetividade.findFirst({
+          where: {
+            Data: {
+              gte: dataInicio,
+              lte: dataFim,
+            },
+            ProfessorID: efetividadeExiste.ProfessorID,
+            NOT: { EfetividadeID: id },
+          },
+        });
+
+        if (efetividadeDataExiste) {
+          throw new Error("Já existe registro de efetividade para esta data");
+        }
+      }
+
+      // Atualizar o registro
+      return await tx.efetividade.update({
+        where: { EfetividadeID: id },
+        data: {
+          ...(dados.Data && { Data: new Date(dados.Data) }),
+          ...(dados.HorasTrabalhadas !== undefined && {
+            HorasTrabalhadas: dados.HorasTrabalhadas,
+          }),
+          ...(dados.ProfessorID && { ProfessorID: dados.ProfessorID }),
+        },
+        include: {
+          Professor: {
+            select: {
+              Nome: true,
+              Departamento: true,
+              CargaHoraria: true,
+            },
+          },
+        },
+      });
+    });
+
+    req.log.info(`Efetividade atualizada: ID ${id}`);
+
+    return reply.send({
+      mensagem: "Efetividade atualizada com sucesso",
+      data: efetividade,
+    });
+  } catch (error) {
+    req.log.error("Erro ao atualizar efetividade:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+
+    if (errorMessage === "Efetividade não encontrada") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    if (
+      errorMessage.includes("não podem exceder a carga horária") ||
+      errorMessage.includes("não é possível registrar efetividade")
+    ) {
+      return sendError(reply, 400, errorMessage);
+    }
+
+    if (errorMessage === "Já existe registro de efetividade para esta data") {
+      return sendError(reply, 409, errorMessage);
+    }
+
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao atualizar efetividade",
+      errorMessage
+    );
+  }
+}
+
+export async function deletarEfetividade(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const prisma = req.server.prisma;
+
+    // Verificar se existe antes de deletar
+    const efetividade = await prisma.efetividade.findUnique({
+      where: { EfetividadeID: id },
+    });
+
+    if (!efetividade) {
+      return sendError(reply, 404, "Efetividade não encontrada");
+    }
+
+    await prisma.efetividade.delete({
+      where: { EfetividadeID: id },
+    });
+
+    req.log.info(`Efetividade deletada: ID ${id}`);
+
+    return reply.send({
+      mensagem: "Efetividade removida com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar efetividade:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao remover efetividade",
+      errorMessage
+    );
   }
 }
 
@@ -144,10 +396,9 @@ export async function buscarEfetividadesPorPeriodo(
   req: FastifyRequest<{ Querystring: PeriodoInput }>,
   reply: FastifyReply
 ) {
-  const prisma = req.server.prisma;
-
   try {
     const { dataInicio, dataFim } = req.query;
+    const prisma = req.server.prisma;
 
     // Validar período
     const inicio = new Date(dataInicio);
@@ -155,17 +406,15 @@ export async function buscarEfetividadesPorPeriodo(
     const hoje = new Date();
 
     if (inicio > fim) {
-      throw new AppError(
-        "VALIDATION_ERROR",
+      return sendError(
+        reply,
+        400,
         "A data inicial deve ser anterior à data final"
       );
     }
 
     if (fim > hoje) {
-      throw new AppError(
-        "VALIDATION_ERROR",
-        "O período não pode incluir datas futuras"
-      );
+      return sendError(reply, 400, "O período não pode incluir datas futuras");
     }
 
     // Buscar efetividades e calcular estatísticas
@@ -195,7 +444,7 @@ export async function buscarEfetividadesPorPeriodo(
       },
     });
 
-    // Calcular estatísticas usando reduce
+    // Calcular estatísticas por professor
     const estatisticasPorProfessor = efetividades.reduce(
       (acc, curr) => {
         const pid = curr.ProfessorID;
@@ -205,7 +454,11 @@ export async function buscarEfetividadesPorPeriodo(
             totalHoras: 0,
             totalDias: 0,
             mediaDiaria: 0,
-            professor: curr.Professor,
+            professor: {
+              Nome: curr.Professor.Nome,
+              Departamento: curr.Professor.Departamento,
+              CargaHoraria: curr.Professor.CargaHoraria,
+            },
           };
         }
         acc[pid].totalHoras += curr.HorasTrabalhadas;
@@ -243,41 +496,29 @@ export async function buscarEfetividadesPorPeriodo(
       },
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "VALIDATION_ERROR") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar efetividades",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    req.log.error("Erro ao buscar efetividades por período:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao buscar efetividades",
+      errorMessage
+    );
   }
 }
 
 export async function buscarEfetividadesProfessor(
   req: FastifyRequest<{
     Params: IdParam;
-    Querystring: {
-      inicio?: string;
-      fim?: string;
-    };
+    Querystring: ProfessorEfetividadeQuery;
   }>,
   reply: FastifyReply
 ) {
-  const prisma = req.server.prisma;
-
   try {
     const { id } = req.params;
     const { inicio, fim } = req.query;
+    const prisma = req.server.prisma;
 
     // Validar professor
     const professor = await prisma.professor.findUnique({
@@ -290,7 +531,7 @@ export async function buscarEfetividadesProfessor(
     });
 
     if (!professor) {
-      throw new AppError("NOT_FOUND", "Professor não encontrado");
+      return sendError(reply, 404, "Professor não encontrado");
     }
 
     // Preparar filtro de data
@@ -349,223 +590,14 @@ export async function buscarEfetividadesProfessor(
       },
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar efetividades do professor",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
-  }
-}
-
-export async function estatisticasPorPeriodo(
-  req: FastifyRequest<{ Body: PeriodoInput }>,
-  reply: FastifyReply
-) {
-  const prisma = req.server.prisma;
-
-  try {
-    const { dataInicio, dataFim } = req.body;
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
-
-    // Buscar efetividades do período
-    const efetividades = await prisma.efetividade.findMany({
-      where: {
-        Data: {
-          gte: inicio,
-          lte: fim,
-        },
-      },
-      include: {
-        Professor: {
-          select: {
-            ProfessorID: true,
-            Nome: true,
-            Departamento: true,
-            CargaHoraria: true,
-          },
-        },
-      },
-    });
-
-    // Calcular estatísticas por professor
-    const estatisticasPorProfessor = efetividades.reduce(
-      (acc, curr) => {
-        const pid = curr.ProfessorID;
-        if (!acc[pid]) {
-          acc[pid] = {
-            professor: curr.Professor,
-            totalHoras: 0,
-            diasRegistrados: 0,
-            mediaDiaria: 0,
-          };
-        }
-        acc[pid].totalHoras += curr.HorasTrabalhadas;
-        acc[pid].diasRegistrados++;
-        acc[pid].mediaDiaria = Number(
-          (acc[pid].totalHoras / acc[pid].diasRegistrados).toFixed(2)
-        );
-        return acc;
-      },
-      {} as Record<
-        number,
-        {
-          professor: {
-            ProfessorID: number;
-            Nome: string;
-            Departamento: string;
-            CargaHoraria: number;
-          };
-          totalHoras: number;
-          diasRegistrados: number;
-          mediaDiaria: number;
-        }
-      >
+    req.log.error("Erro ao buscar efetividades do professor:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Erro desconhecido";
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao buscar efetividades do professor",
+      errorMessage
     );
-
-    // Calcular estatísticas gerais
-    const totalHoras = efetividades.reduce(
-      (sum, ef) => sum + ef.HorasTrabalhadas,
-      0
-    );
-    const totalRegistros = efetividades.length;
-    const mediaHorasDiarias =
-      totalRegistros > 0 ? Number((totalHoras / totalRegistros).toFixed(2)) : 0;
-
-    return reply.send({
-      data: {
-        estatisticasPorProfessor: Object.values(estatisticasPorProfessor),
-        estatisticasGerais: {
-          totalHoras,
-          totalRegistros,
-          mediaHorasDiarias,
-        },
-        periodo: {
-          inicio,
-          fim,
-        },
-      },
-    });
-  } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "VALIDATION_ERROR") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao gerar estatísticas",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
-  }
-}
-
-export async function estatisticasPorProfessor(
-  req: FastifyRequest<{ Params: IdParam; Body: PeriodoInput }>,
-  reply: FastifyReply
-) {
-  const prisma = req.server.prisma;
-
-  try {
-    const { id: ProfessorID } = req.params;
-    const { dataInicio, dataFim } = req.body;
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
-
-    // Verificar se o professor existe
-    const professor = await prisma.professor.findUnique({
-      where: { ProfessorID },
-      select: {
-        Nome: true,
-        Departamento: true,
-        CargaHoraria: true,
-      },
-    });
-
-    if (!professor) {
-      throw new AppError("NOT_FOUND", "Professor não encontrado");
-    }
-
-    // Buscar registros do período
-    const registros = await prisma.efetividade.findMany({
-      where: {
-        ProfessorID,
-        Data: {
-          gte: inicio,
-          lte: fim,
-        },
-      },
-      orderBy: {
-        Data: "asc",
-      },
-      select: {
-        EfetividadeID: true,
-        Data: true,
-        HorasTrabalhadas: true,
-      },
-    });
-
-    // Calcular estatísticas
-    const totalHoras = registros.reduce(
-      (sum, reg) => sum + reg.HorasTrabalhadas,
-      0
-    );
-    const totalRegistros = registros.length;
-    const mediaDiaria =
-      totalRegistros > 0 ? Number((totalHoras / totalRegistros).toFixed(2)) : 0;
-
-    return reply.send({
-      data: {
-        professor: {
-          ...professor,
-          ProfessorID,
-        },
-        estatisticas: {
-          totalHoras,
-          totalRegistros,
-          mediaDiaria,
-        },
-        registros,
-        periodo: {
-          inicio,
-          fim,
-        },
-      },
-    });
-  } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError && error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar estatísticas",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
   }
 }
