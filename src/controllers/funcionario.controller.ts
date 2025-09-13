@@ -7,9 +7,7 @@ import {
 import { hashSenha } from "../utils/hash";
 import { TipoUsuario, Prisma, Cargo } from "@prisma/client";
 import { AppError, isAppError } from "../types/errors";
-
-// Regex para validação de email
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+import { sendError } from "../utils/http";
 
 export async function criarFuncionario(
   req: FastifyRequest<{ Body: CreateFuncionarioInput }>,
@@ -20,10 +18,8 @@ export async function criarFuncionario(
   try {
     const { Nome, Email, Senha, Cargo } = req.body;
 
-    // Validar formato do email
-    if (!EMAIL_REGEX.test(Email)) {
-      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
-    }
+    // Hash da senha
+    const senhaHash = await hashSenha(Senha);
 
     // Usar transação para garantir consistência
     const funcionario = await prisma.$transaction(async (tx) => {
@@ -33,15 +29,7 @@ export async function criarFuncionario(
       });
 
       if (emailExiste) {
-        throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
-      }
-
-      // Hash da senha
-      const senhaHash = await hashSenha(Senha);
-
-      // Validar Cargo
-      if (!Object.values(Cargo).includes(Cargo as unknown as Cargo)) {
-        throw new AppError("VALIDATION_ERROR", "Cargo inválido");
+        return sendError(reply, 409, "Email já está em uso");
       }
 
       // Criar o usuário primeiro
@@ -65,7 +53,7 @@ export async function criarFuncionario(
         data: {
           Nome,
           Email,
-          Cargo: Cargo as unknown as Cargo,
+          Cargo: Cargo,
           UsuarioID: novoUsuario.UsuarioID,
         },
         include: {
@@ -94,37 +82,16 @@ export async function criarFuncionario(
       data: funcionario,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao criar funcionário:", error);
 
-    if (isAppError(error)) {
-      if (error.code === "VALIDATION_ERROR") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE_EMAIL") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
-      }
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao criar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao criar funcionário");
   }
 }
 
@@ -146,9 +113,6 @@ export async function listarFuncionarios(
       ];
     }
     if (cargo) {
-      if (!Object.values(Cargo).includes(cargo as Cargo)) {
-        return reply.status(400).send({ mensagem: "Cargo inválido" });
-      }
       where.Cargo = cargo as Cargo;
     }
 
@@ -189,14 +153,8 @@ export async function listarFuncionarios(
       },
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar funcionários",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    req.log.error("Erro ao listar funcionários:", error);
+    return sendError(reply, 500, "Erro interno ao listar funcionários");
   }
 }
 
@@ -226,26 +184,13 @@ export async function buscarFuncionario(
     });
 
     if (!funcionario) {
-      throw new AppError("NOT_FOUND", "Funcionário não encontrado");
+      return sendError(reply, 404, "Funcionário não encontrado");
     }
 
     return reply.send({ data: funcionario });
   } catch (error) {
-    req.log.error(error);
-
-    if (isAppError(error) && error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    req.log.error("Erro ao buscar funcionário:", error);
+    return sendError(reply, 500, "Erro interno ao buscar funcionário");
   }
 }
 
@@ -259,11 +204,6 @@ export async function atualizarFuncionario(
     const { id } = req.params;
     const dados = req.body;
 
-    // Validar email se fornecido
-    if (dados.Email && !EMAIL_REGEX.test(dados.Email)) {
-      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
-    }
-
     // Usar transação para garantir consistência
     const funcionario = await prisma.$transaction(async (tx) => {
       // Verificar se o funcionário existe
@@ -273,7 +213,7 @@ export async function atualizarFuncionario(
       });
 
       if (!funcionarioExiste) {
-        throw new AppError("NOT_FOUND", "Funcionário não encontrado");
+        return sendError(reply, 404, "Funcionário não encontrado");
       }
 
       // Verificar email único se estiver sendo alterado
@@ -283,7 +223,7 @@ export async function atualizarFuncionario(
         });
 
         if (emailExiste) {
-          throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
+          return sendError(reply, 409, "Email já está em uso");
         }
       }
 
@@ -292,11 +232,7 @@ export async function atualizarFuncionario(
         where: { FuncionarioID: id },
         data: {
           Nome: dados.Nome,
-          Cargo: dados.Cargo
-            ? Object.values(Cargo).includes(dados.Cargo as Cargo)
-              ? (dados.Cargo as Cargo)
-              : undefined
-            : undefined,
+          Cargo: dados.Cargo,
         },
       });
 
@@ -319,39 +255,15 @@ export async function atualizarFuncionario(
       data: funcionario,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao atualizar funcionário:", error);
 
-    if (isAppError(error)) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (
-        error.code === "DUPLICATE_EMAIL" ||
-        error.code === "VALIDATION_ERROR"
-      ) {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
-      }
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao atualizar funcionário");
   }
 }

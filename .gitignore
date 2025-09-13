@@ -5,3 +5,6 @@ dist
 rules-readme.md
 readme-endpoint.md
 PRD.md
+.cursor
+rules-instruction.md
+cursor-instructions.md

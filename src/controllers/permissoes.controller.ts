@@ -5,6 +5,7 @@ import {
   IdParam,
 } from "../schemas/permissoes.schema";
 import { Prisma } from "@prisma/client";
+import { sendError } from "../utils/http";
 
 export async function criarPermissao(
   req: FastifyRequest<{ Body: CreatePermissaoInput }>,
@@ -23,10 +24,14 @@ export async function criarPermissao(
       data: permissao,
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao criar permissão",
-    });
+    req.log.error("Erro ao criar permissão:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Permissão com esta descrição já existe");
+    }
+    return sendError(reply, 500, "Erro interno ao criar permissão");
   }
 }
 
@@ -49,20 +54,14 @@ export async function atribuirPermissaoUsuario(
       mensagem: "Permissão atribuída com sucesso",
     });
   } catch (error) {
+    req.log.error("Erro ao atribuir permissão ao usuário:", error);
     if (
-      error &&
-      typeof error === "object" &&
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return reply.status(409).send({
-        mensagem: "Usuário já possui esta permissão",
-      });
+      return sendError(reply, 409, "Usuário já possui esta permissão");
     }
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atribuir permissão",
-    });
+    return sendError(reply, 500, "Erro interno ao atribuir permissão");
   }
 }
 
@@ -89,10 +88,8 @@ export async function listarPermissoes(
 
     return reply.send({ data: permissoes });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar permissões",
-    });
+    req.log.error("Erro ao listar permissões:", error);
+    return sendError(reply, 500, "Erro interno ao listar permissões");
   }
 }
 
@@ -111,9 +108,11 @@ export async function buscarPermissoesPorUsuario(
 
     return reply.send({ data: permissoes });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar permissões do usuário",
-    });
+    req.log.error("Erro ao buscar permissões por usuário:", error);
+    return sendError(
+      reply,
+      500,
+      "Erro interno ao buscar permissões do usuário"
+    );
   }
 }

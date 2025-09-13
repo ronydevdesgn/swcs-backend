@@ -3,13 +3,25 @@ import {
   presencaSchema,
   updatePresencaSchema,
   idParamSchema,
-  presencaResponseSchema,
+  idParamSchemaSwagger,
+  createPresencaResponseSchema,
+  presencaListResponseSchema,
+  singlePresencaResponseSchema,
+  updatePresencaResponseSchema,
+  deletePresencaResponseSchema,
+  errorResponseSchema,
+  successResponseSchema,
+  batchPresencaSchema,
+  batchPresencaResponseSchema,
 } from "../schemas/presencas.schema";
 import {
   registrarPresenca,
   listarPresencas,
   buscarPresencasProfessor,
   atualizarPresenca,
+  buscarPresencaPorId,
+  deletarPresenca,
+  registrarPresencasEmLote,
 } from "../controllers/presencas.controller";
 import { autenticar } from "../middlewares/authMiddleware";
 
@@ -17,107 +29,192 @@ export default async function presencasRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
   app.addHook("onRequest", autenticar);
 
+  // Registrar presença individual
   app.post(
     "/",
     {
       schema: {
-        tags: ["presencas"],
-        summary: "Registrar presença",
-        description: "Registra uma presença para um professor em uma data",
+        tags: ["Presenças"],
+        summary: "Registrar uma nova presença",
+        description:
+          "Registra uma presença para um professor em uma data e estado específicos.",
         body: presencaSchema,
         response: {
-          201: {
-            type: "object",
-            properties: {
-              mensagem: { type: "string" },
-              data: { type: "object" },
-            },
-          },
-          400: { type: "object", properties: { mensagem: { type: "string" } } },
-          409: { type: "object", properties: { mensagem: { type: "string" } } },
-          500: { type: "object", properties: { mensagem: { type: "string" } } },
+          201: createPresencaResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
         },
+        security: [{ bearerAuth: [] }],
       },
     },
     registrarPresenca
   );
 
+  // Registrar presenças em lote
+  app.post(
+    "/batch",
+    {
+      schema: {
+        tags: ["Presenças"],
+        summary: "Registrar múltiplas presenças em lote",
+        description:
+          "Registra múltiplas presenças de uma vez para diferentes professores ou datas.",
+        body: batchPresencaSchema,
+        response: {
+          201: batchPresencaResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    registrarPresencasEmLote
+  );
+
+  // Listar presenças
   app.get(
     "/",
     {
       schema: {
-        tags: ["presencas"],
-        summary: "Listar presenças",
+        tags: ["Presenças"],
+        summary: "Listar presenças com filtros",
         description:
-          "Lista presenças com filtros por período, estado e professor",
+          "Retorna uma lista de presenças, com opções para filtrar por período, estado e professor.",
+        querystring: z.object({
+          inicio: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de início para o filtro (ISO 8601)"),
+          fim: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de fim para o filtro (ISO 8601)"),
+          estado: z
+            .nativeEnum(Estado)
+            .optional()
+            .describe("Filtrar por estado da presença (PRESENTE ou FALTA)"),
+          professorId: z
+            .string()
+            .regex(/^\d+$/, "ID do professor inválido")
+            .optional()
+            .describe("ID do professor para filtro"),
+        }),
         response: {
-          200: {
-            type: "object",
-            properties: {
-              data: { type: "array", items: presencaResponseSchema },
-              meta: { type: "object" },
-            },
-          },
-          500: { type: "object", properties: { mensagem: { type: "string" } } },
+          200: presencaListResponseSchema,
+          400: errorResponseSchema,
+          500: errorResponseSchema,
         },
+        security: [{ bearerAuth: [] }],
       },
     },
     listarPresencas
   );
 
-  // Buscar por ID
-  app.get("/:id", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const { id } = req.params as { id: number };
-    const registro = await prisma.presenca.findUnique({
-      where: { PresencaID: Number(id) },
-    });
-    if (!registro)
-      return reply.status(404).send({ mensagem: "Presença não encontrada" });
-    return reply.send({ data: registro });
-  });
+  // Buscar presença por ID
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["Presenças"],
+        summary: "Buscar presença por ID",
+        description:
+          "Retorna um registro de presença específico com base no ID fornecido.",
+        params: idParamSchemaSwagger,
+        response: {
+          200: singlePresencaResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    buscarPresencaPorId
+  );
 
+  // Buscar presenças de um professor
   app.get(
     "/professor/:id",
     {
       schema: {
-        params: idParamSchema,
+        tags: ["Presenças"],
+        summary: "Buscar presenças por professor",
+        description:
+          "Retorna todas as presenças de um professor, com opções de filtro por período e estado.",
+        params: idParamSchemaSwagger,
+        querystring: z.object({
+          inicio: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de início para o filtro (ISO 8601)"),
+          fim: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de fim para o filtro (ISO 8601)"),
+          estado: z
+            .nativeEnum(Estado)
+            .optional()
+            .describe("Filtrar por estado da presença (PRESENTE ou FALTA)"),
+        }),
         response: {
-          200: {
-            type: "object",
-            properties: {
-              data: {
-                type: "array",
-                items: presencaResponseSchema,
-              },
-            },
-          },
+          200: presencaListResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
         },
+        security: [{ bearerAuth: [] }],
       },
     },
     buscarPresencasProfessor
   );
 
+  // Atualizar presença
   app.put(
     "/:id",
     {
       schema: {
-        params: idParamSchema,
+        tags: ["Presenças"],
+        summary: "Atualizar uma presença existente",
+        description:
+          "Atualiza as informações de um registro de presença existente.",
+        params: idParamSchemaSwagger,
         body: updatePresencaSchema,
+        response: {
+          200: updatePresencaResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
       },
     },
     atualizarPresenca
   );
 
-  // Remover por ID
-  app.delete("/:id", async (req, reply) => {
-    const prisma = req.server.prisma;
-    const { id } = req.params as { id: number };
-    try {
-      await prisma.presenca.delete({ where: { PresencaID: Number(id) } });
-      return reply.send({ mensagem: "Presença removida com sucesso" });
-    } catch (e) {
-      return reply.status(404).send({ mensagem: "Presença não encontrada" });
-    }
-  });
+  // Remover presença
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["Presenças"],
+        summary: "Remover uma presença",
+        description: "Remove um registro de presença com base no ID fornecido.",
+        params: idParamSchemaSwagger,
+        response: {
+          200: deletePresencaResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    deletarPresenca
+  );
 }

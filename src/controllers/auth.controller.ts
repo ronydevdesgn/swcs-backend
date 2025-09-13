@@ -9,23 +9,11 @@ import { compararSenha, hashSenha } from "../utils/hash";
 import { gerarToken, gerarRefreshToken } from "../utils/jwt";
 import { randomBytes } from "crypto";
 import { TipoUsuario } from "@prisma/client";
-
-// Interfaces melhoradas
-export interface AuthenticatedUser {
-  id: number;
-  email: string;
-  tipo: TipoUsuario;
-  nome: string;
-}
-
-export interface FastifyRequestWithUser extends FastifyRequest {
-  user?: AuthenticatedUser;
-}
-
-// Helper para respostas de erro padronizadas
-const sendError = (reply: FastifyReply, statusCode: number, message: string) => {
-  return reply.status(statusCode).send({ mensagem: message });
-};
+import {
+  AuthenticatedUser,
+  FastifyRequestWithUser,
+  sendError,
+} from "../utils/http";
 
 export async function loginHandler(
   req: FastifyRequest<{ Body: LoginInput }>,
@@ -38,10 +26,7 @@ export async function loginHandler(
     // Buscar usuário com permissões
     const usuario = await prisma.usuario.findFirst({
       where: {
-        AND: [
-          { Email: email }, 
-          { Tipo: tipo }
-        ],
+        AND: [{ Email: email }, { Tipo: tipo }],
       },
       include: {
         Permissoes: {
@@ -97,7 +82,7 @@ export async function loginHandler(
       refreshToken,
     });
   } catch (error) {
-    req.log.error('Erro no login:', error);
+    req.log.error("Erro no login:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
@@ -175,7 +160,7 @@ export async function refreshTokenHandler(
       refreshToken: newRefreshToken,
     });
   } catch (error) {
-    req.log.error('Erro no refresh token:', error);
+    req.log.error("Erro no refresh token:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
@@ -194,7 +179,8 @@ export async function requestPasswordResetHandler(
     });
 
     // Sempre retornar sucesso por segurança (não revelar se email existe)
-    const mensagem = "Se o email existir, você receberá as instruções de recuperação";
+    const mensagem =
+      "Se o email existir, você receberá as instruções de recuperação";
 
     if (!usuario) {
       return reply.send({ mensagem });
@@ -205,9 +191,9 @@ export async function requestPasswordResetHandler(
       where: {
         UsuarioID: usuario.UsuarioID,
         Used: false,
-        ExpiresAt: { gt: new Date() }
+        ExpiresAt: { gt: new Date() },
       },
-      data: { Used: true }
+      data: { Used: true },
     });
 
     // Gerar novo token de reset
@@ -225,12 +211,14 @@ export async function requestPasswordResetHandler(
 
     // TODO: Implementar envio de email
     // await enviarEmailRecuperacao(usuario.Email, resetToken);
-    
-    req.log.info(`Token de reset gerado para usuário ${usuario.Email}: ${resetToken}`);
+
+    req.log.info(
+      `Token de reset gerado para usuário ${usuario.Email}: ${resetToken}`
+    );
 
     return reply.send({ mensagem });
   } catch (error) {
-    req.log.error('Erro na solicitação de reset:', error);
+    req.log.error("Erro na solicitação de reset:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
@@ -287,7 +275,7 @@ export async function resetPasswordHandler(
       mensagem: "Senha atualizada com sucesso",
     });
   } catch (error) {
-    req.log.error('Erro no reset de senha:', error);
+    req.log.error("Erro no reset de senha:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
@@ -317,7 +305,7 @@ export async function logoutHandler(
       mensagem: "Logout realizado com sucesso",
     });
   } catch (error) {
-    req.log.error('Erro no logout:', error);
+    req.log.error("Erro no logout:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }

@@ -26,8 +26,9 @@ export async function registrarPresenca(
     hoje.setHours(0, 0, 0, 0);
 
     if (dataPresencaSemHora.getTime() > hoje.getTime()) {
-      throw new AppError(
-        "VALIDATION_ERROR",
+      return sendError(
+        reply,
+        400,
         "Não é possível registrar presença para datas futuras"
       );
     }
@@ -49,7 +50,7 @@ export async function registrarPresenca(
       });
 
       if (!professor) {
-        throw new AppError("NOT_FOUND", "Professor não encontrado");
+        return sendError(reply, 404, "Professor não encontrado");
       }
 
       // Verificar se já existe registro para esta data
@@ -61,8 +62,9 @@ export async function registrarPresenca(
       });
 
       if (presencaExistente) {
-        throw new AppError(
-          "DUPLICATE",
+        return sendError(
+          reply,
+          409,
           "Já existe registro de presença para esta data"
         );
       }
@@ -90,21 +92,7 @@ export async function registrarPresenca(
       data: presenca,
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
-    }
+    req.log.error("Erro ao registrar presença:", error);
 
     return sendError(reply, 500, "Erro interno ao registrar presença");
   }
@@ -125,8 +113,9 @@ export async function registrarPresencasEmLote(
     for (const presenca of presencas) {
       const dataPresenca = new Date(presenca.Data);
       if (dataPresenca > hoje) {
-        throw new AppError(
-          "VALIDATION_ERROR",
+        return sendError(
+          reply,
+          400,
           `Não é possível registrar presença para a data futura ${presenca.Data}`
         );
       }
@@ -150,10 +139,7 @@ export async function registrarPresencasEmLote(
       });
 
       if (professores.length !== professoresIds.length) {
-        throw new AppError(
-          "NOT_FOUND",
-          "Um ou mais professores não encontrados"
-        );
+        return sendError(reply, 404, "Um ou mais professores não encontrados");
       }
 
       // Verificar registros existentes
@@ -171,8 +157,9 @@ export async function registrarPresencasEmLote(
             (p) => `${p.ProfessorID} - ${p.Data.toISOString().split("T")[0]}`
           )
           .join(", ");
-        throw new AppError(
-          "DUPLICATE",
+        return sendError(
+          reply,
+          409,
           `Já existem registros de presença para: ${registrosDuplicados}`
         );
       }
@@ -194,21 +181,7 @@ export async function registrarPresencasEmLote(
       },
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
-    }
+    req.log.error("Erro ao registrar presenças em lote:", error);
 
     return sendError(reply, 500, "Erro interno ao registrar presenças em lote");
   }
@@ -290,8 +263,31 @@ export async function listarPresencas(
       },
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao listar presenças:", error);
     return sendError(reply, 500, "Erro interno ao listar presenças");
+  }
+}
+
+export async function buscarPresencaPorId(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+
+  try {
+    const { id } = req.params;
+    const registro = await prisma.presenca.findUnique({
+      where: { PresencaID: id },
+    });
+
+    if (!registro) {
+      return sendError(reply, 404, "Presença não encontrada");
+    }
+
+    return reply.send({ data: registro });
+  } catch (error) {
+    req.log.error("Erro ao buscar presença por ID:", error);
+    return sendError(reply, 500, "Erro interno ao buscar presença");
   }
 }
 
@@ -322,7 +318,7 @@ export async function buscarPresencasProfessor(
     });
 
     if (!professor) {
-      throw new AppError("NOT_FOUND", "Professor não encontrado");
+      return sendError(reply, 404, "Professor não encontrado");
     }
 
     // Construir filtros
@@ -401,13 +397,7 @@ export async function buscarPresencasProfessor(
       },
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError && error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
+    req.log.error("Erro ao buscar presenças do professor:", error);
 
     return sendError(
       reply,
@@ -434,8 +424,9 @@ export async function atualizarPresenca(
       hoje.setHours(0, 0, 0, 0);
 
       if (dataPresenca > hoje) {
-        throw new AppError(
-          "VALIDATION_ERROR",
+        return sendError(
+          reply,
+          400,
           "Não é possível registrar presença para datas futuras"
         );
       }
@@ -449,7 +440,7 @@ export async function atualizarPresenca(
       });
 
       if (!presencaExiste) {
-        throw new AppError("NOT_FOUND", "Registro de presença não encontrado");
+        return sendError(reply, 404, "Registro de presença não encontrado");
       }
 
       // Se a data está sendo alterada, verificar duplicidade
@@ -465,8 +456,9 @@ export async function atualizarPresenca(
         });
 
         if (duplicada) {
-          throw new AppError(
-            "DUPLICATE",
+          return sendError(
+            reply,
+            409,
             "Já existe registro de presença para esta data"
           );
         }
@@ -495,22 +487,33 @@ export async function atualizarPresenca(
       data: presenca,
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
-    }
+    req.log.error("Erro ao atualizar presença:", error);
 
     return sendError(reply, 500, "Erro interno ao atualizar presença");
+  }
+}
+
+export async function deletarPresenca(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+  try {
+    const { id } = req.params;
+    const presencaExiste = await prisma.presenca.findUnique({
+      where: { PresencaID: id },
+    });
+
+    if (!presencaExiste) {
+      return sendError(reply, 404, "Presença não encontrada");
+    }
+
+    await prisma.presenca.delete({ where: { PresencaID: id } });
+    return reply.send({
+      mensagem: "Presença removida com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar presença:", error);
+    return sendError(reply, 500, "Erro interno ao deletar presença");
   }
 }
