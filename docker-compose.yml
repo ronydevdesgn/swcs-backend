@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: swcs_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: swcs_backend
+      MYSQL_ROOT_PASSWORD: swcs_backend_init
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+volumes:
+  mysql_data:
