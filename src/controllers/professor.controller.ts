@@ -5,14 +5,8 @@ import {
   IdParam,
 } from "../schemas/professor.schema";
 import { hashSenha } from "../utils/hash";
-import { TipoUsuario, Departamento } from "@prisma/client";
-
-interface ProfessorData {
-  Nome: string;
-  Email: string;
-  Departamento: string;
-  CargaHoraria: number;
-}
+import { TipoUsuario, Departamento, Prisma } from "@prisma/client";
+import { sendError } from "../utils/http";
 
 export async function criarProfessor(
   req: FastifyRequest<{ Body: CreateProfessorInput }>,
@@ -29,18 +23,12 @@ export async function criarProfessor(
     });
 
     if (emailExiste) {
-      return reply.status(409).send({
-        mensagem: "Email já está em uso",
-      });
+      return sendError(reply, 409, "Email já está em uso");
     }
 
     // Criar professor e usuário em uma transação
     const result = await prisma.$transaction(async (tx) => {
       // Criar professor
-      // Validar Departamento
-      if (!Object.values(Departamento).includes(Departamento as Departamento)) {
-        throw new Error("Departamento inválido");
-      }
       const professor = await tx.professor.create({
         data: {
           Nome,
@@ -81,10 +69,14 @@ export async function criarProfessor(
       data: result,
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao criar professor",
-    });
+    req.log.error("Erro ao criar professor:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
+    }
+    return sendError(reply, 500, "Erro interno ao criar professor");
   }
 }
 
@@ -131,10 +123,8 @@ export async function listarProfessores(
 
     return reply.send({ data: professores });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar professores",
-    });
+    req.log.error("Erro ao listar professores:", error);
+    return sendError(reply, 500, "Erro interno ao listar professores");
   }
 }
 
@@ -180,17 +170,13 @@ export async function buscarProfessor(
     });
 
     if (!professor) {
-      return reply.status(404).send({
-        mensagem: "Professor não encontrado",
-      });
+      return sendError(reply, 404, "Professor não encontrado");
     }
 
     return reply.send({ data: professor });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar professor",
-    });
+    req.log.error("Erro ao buscar professor:", error);
+    return sendError(reply, 500, "Erro interno ao buscar professor");
   }
 }
 
@@ -213,9 +199,7 @@ export async function atualizarProfessor(
     });
 
     if (!professorExiste) {
-      return reply.status(404).send({
-        mensagem: "Professor não encontrado",
-      });
+      return sendError(reply, 404, "Professor não encontrado");
     }
 
     // Verificar email único se estiver sendo atualizado
@@ -225,9 +209,7 @@ export async function atualizarProfessor(
       });
 
       if (emailExiste) {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
+        return sendError(reply, 409, "Email já está em uso");
       }
     }
 
@@ -238,11 +220,7 @@ export async function atualizarProfessor(
         data: {
           Nome: dados.Nome,
           Departamento: dados.Departamento
-            ? Object.values(Departamento).includes(
-                dados.Departamento as Departamento
-              )
-              ? (dados.Departamento as Departamento)
-              : undefined
+            ? (dados.Departamento as Departamento)
             : undefined,
           CargaHoraria: dados.CargaHoraria,
         },
@@ -266,9 +244,19 @@ export async function atualizarProfessor(
       data: result,
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar professor",
-    });
+    req.log.error("Erro ao atualizar professor:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return sendError(reply, 404, "Professor não encontrado");
+    }
+    return sendError(reply, 500, "Erro interno ao atualizar professor");
   }
 }
