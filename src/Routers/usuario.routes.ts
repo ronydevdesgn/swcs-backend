@@ -26,7 +26,7 @@ import { autenticar } from "../middlewares/authMiddleware";
 
 export default async function usuarioRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
-  app.addHook("onRequest", autenticar);
+  //app.addHook("onRequest", autenticar);
 
   // Criar usuário
   app.post(
@@ -54,6 +54,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
   app.get(
     "/",
     {
+      onRequest: [autenticar],
       schema: {
         tags: ["Usuários"],
         summary: "Listar todos os usuários",
@@ -73,6 +74,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
   app.get(
     "/:id",
     {
+      onRequest: [autenticar],
       schema: {
         tags: ["Usuários"],
         summary: "Buscar usuário por ID",
@@ -93,6 +95,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
   app.put(
     "/:id",
     {
+      onRequest: [autenticar],
       schema: {
         tags: ["Usuários"],
         summary: "Atualizar um usuário existente",
@@ -117,6 +120,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
   app.put(
     "/:id/senha",
     {
+      onRequest: [autenticar],
       schema: {
         tags: ["Usuários"],
         summary: "Atualizar a senha de um usuário",
@@ -141,6 +145,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
   app.delete(
     "/:id",
     {
+      onRequest: [autenticar],
       schema: {
         tags: ["Usuários"],
         summary: "Deletar um usuário",

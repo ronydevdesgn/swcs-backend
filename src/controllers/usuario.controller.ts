@@ -12,16 +12,17 @@ import type {
   IdParam,
 } from "../schemas/usuario.schema";
 import { hashSenha, compararSenha } from "../utils/hash";
-import { sendError } from "../utils/http";
+import { FastifyRequestWithUser, sendError } from "../utils/http";
 import { Prisma } from "@prisma/client";
+import { Params } from "zod/v4/core";
 
 export async function criarUsuario(
-  req: FastifyRequest<{ Body: CreateUsuarioInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
     const prisma = req.server.prisma;
-    const { Nome, Email, Senha, Tipo } = req.body;
+    const { Nome, Email, Senha, Tipo } = req.body as CreateUsuarioInput;
     const SenhaHash = await hashSenha(Senha);
 
     const usuario = await prisma.usuario.create({
@@ -49,7 +50,7 @@ export async function criarUsuario(
   }
 }
 
-export async function listarUsuarios(req: FastifyRequest, reply: FastifyReply) {
+export async function listarUsuarios(req: FastifyRequestWithUser, reply: FastifyReply) {
   try {
     const usuarios = await req.server.prisma.usuario.findMany({
       select: {
@@ -83,11 +84,11 @@ export async function listarUsuarios(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function buscarUsuario(
-  req: FastifyRequest<{ Params: IdParam }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = req.params;
+    const { id } = req.params as IdParam;
     const usuario = await req.server.prisma.usuario.findUnique({
       where: { UsuarioID: id },
       select: {
@@ -117,12 +118,12 @@ export async function buscarUsuario(
 }
 
 export async function atualizarUsuario(
-  req: FastifyRequest<{ Params: IdParam; Body: UpdateUsuarioInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = req.params;
-    const dados = req.body;
+    const { id } = req.params as IdParam;
+    const dados = req.body as UpdateUsuarioInput;
 
     // Verificar se o email já está em uso por outro usuário
     if (dados.Email) {
@@ -174,12 +175,12 @@ export async function atualizarUsuario(
 }
 
 export async function atualizarSenha(
-  req: FastifyRequest<{ Params: IdParam; Body: UpdateSenhaInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = req.params;
-    const { senhaAtual, novaSenha } = req.body;
+    const { id } = req.params as IdParam;
+    const { senhaAtual, novaSenha } = req.body as UpdateSenhaInput;
 
     const usuario = await req.server.prisma.usuario.findUnique({
       where: { UsuarioID: id },
@@ -210,12 +211,12 @@ export async function atualizarSenha(
 }
 
 export async function deletarUsuario(
-  req: FastifyRequest<{ Params: IdParam }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
     const prisma = req.server.prisma;
-    const { id } = req.params;
+    const { id } = req.params as IdParam;
 
     const usuario = await prisma.usuario.delete({
       where: { UsuarioID: id },

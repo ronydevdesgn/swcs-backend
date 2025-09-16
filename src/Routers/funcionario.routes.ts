@@ -17,7 +17,9 @@ import {
   buscarFuncionario,
   atualizarFuncionario,
 } from "../controllers/funcionario.controller";
+import { Cargo } from "@prisma/client";
 import { autenticar } from "../middlewares/authMiddleware";
+import * as z from 'zod'
 
 export default async function funcionarioRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas

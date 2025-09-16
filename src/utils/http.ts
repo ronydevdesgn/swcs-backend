@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { TipoUsuario } from "@prisma/client";
+import { CreateUsuarioInput, IdParam, UpdateSenhaInput, UpdateUsuarioInput } from "../schemas/usuario.schema";
 
 export interface AuthenticatedUser {
   id: number;

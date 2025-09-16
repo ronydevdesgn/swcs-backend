@@ -24,6 +24,8 @@ import {
   registrarPresencasEmLote,
 } from "../controllers/presencas.controller";
 import { autenticar } from "../middlewares/authMiddleware";
+import * as z from 'zod'
+import { Estado } from "@prisma/client";
 
 export default async function presencasRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
