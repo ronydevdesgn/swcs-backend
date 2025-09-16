@@ -8,7 +8,7 @@ import {
 import { compararSenha, hashSenha } from "../utils/hash";
 import { gerarToken, gerarRefreshToken } from "../utils/jwt";
 import { randomBytes } from "crypto";
-import { TipoUsuario } from "@prisma/client";
+
 import {
   AuthenticatedUser,
   FastifyRequestWithUser,
@@ -123,9 +123,9 @@ export async function refreshTokenHandler(
     const usuario = storedToken.Usuario;
     const payload: AuthenticatedUser = {
       id: usuario.UsuarioID,
+      nome: usuario.Nome,
       email: usuario.Email,
       tipo: usuario.Tipo,
-      nome: usuario.Nome,
     };
 
     // Gerar novos tokens
