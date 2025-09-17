@@ -3,7 +3,7 @@ import { TipoUsuario, Cargo, Departamento } from "@prisma/client";
 
 // Esquema base para propriedades do usuário
 const usuarioBase = {
-  Nome: z
+  nome: z
     .string({
       required_error: "Nome é obrigatório",
       invalid_type_error: "Nome deve ser uma string",
@@ -11,7 +11,7 @@ const usuarioBase = {
     .min(3, "Nome deve ter no mínimo 3 caracteres")
     .max(100, "Nome muito longo")
     .describe("Nome completo do usuário"),
-  Email: z
+  email: z
     .string({
       required_error: "Email é obrigatório",
       invalid_type_error: "Email deve ser uma string",
@@ -24,7 +24,7 @@ const usuarioBase = {
 // Esquema para criação de um novo usuário
 export const usuarioSchema = z.object({
   ...usuarioBase,
-  Senha: z
+  senha: z
     .string({
       required_error: "Senha é obrigatória",
       invalid_type_error: "Senha deve ser uma string",
@@ -32,7 +32,7 @@ export const usuarioSchema = z.object({
     .min(6, "Senha deve ter no mínimo 6 caracteres")
     .max(100, "Senha muito longa")
     .describe("Senha do usuário"),
-  Tipo: z
+  tipo: z
     .nativeEnum(TipoUsuario, {
       required_error: "Tipo de usuário é obrigatório",
       invalid_type_error: "Tipo de usuário inválido",
@@ -42,8 +42,8 @@ export const usuarioSchema = z.object({
 
 // Esquema para atualização de usuário (todas as propriedades opcionais, exceto Tipo)
 export const updateUsuarioSchema = z.object({
-  Nome: usuarioBase.Nome.optional(),
-  Email: usuarioBase.Email.optional(),
+  Nome: usuarioBase.nome.optional(),
+  Email: usuarioBase.email.optional(),
 });
 
 // Esquema para atualização de senha

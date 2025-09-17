@@ -46,6 +46,7 @@ enum Estado {
 enum TipoUsuario {
   FUNCIONARIO
   PROFESSOR
+  SUMARISTA
 }
 
 enum Departamento {
