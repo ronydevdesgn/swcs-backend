@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = 29bd14b49a671c2747978fe6
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTgxOTgzMTAsImV4cCI6MTc1ODI4NDcxMH0.79oT_TNPlpHbaRKPyxPCKWAeX4Rbhflg-IRQZBxu6QM
 
 ### Health / Root
 GET {{baseUrl}}
@@ -10,9 +10,9 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "ronydevdesgn@gmail.com",
-	"senha": "946646130Alberto",
-	"tipo": "FUNCIONARIO"
+	"email": "amira85@hotmail.com",
+	"senha": "professor123",
+	"tipo": "PROFESSOR"
 }
 
 ### Auth - Refresh token
@@ -61,7 +61,7 @@ Authorization: Bearer {{authToken}}
 {
 	"Nome": "Introdução à Computação",
 	"Descricao": "Curso introdutório sobre conceitos básicos",
-	"ProfessorID": 1
+	"ProfessorID": 10
 }
 
 ### Buscar curso por id
