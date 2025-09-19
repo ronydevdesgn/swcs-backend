@@ -18,24 +18,6 @@ import {
 import { autenticar } from "../middlewares/authMiddleware";
 
 export default async function authRoutes(fastify: FastifyInstance) {
-
-  fastify.get("/ping", {
-  schema: {
-    tags: ["auth"],
-    summary: "Ping de teste",
-    response: {
-      200: {
-        type: "object",
-        properties: {
-          pong: { type: "string" }
-        }
-      }
-    }
-  }
-}, async () => {
-  return { pong: "it works" };
-});
-
   // Login
   fastify.post(
     "/login",
