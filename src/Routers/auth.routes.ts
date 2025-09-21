@@ -5,6 +5,7 @@ import {
   requestPasswordResetHandler,
   resetPasswordHandler,
   logoutHandler,
+  meHandler,
 } from "../controllers/auth.controller";
 import {
   loginSchema,
@@ -14,6 +15,7 @@ import {
   loginResponseSchema,
   errorResponseSchema,
   successResponseSchema,
+  usuarioResponseSchema,
 } from "../schemas/auth.schema";
 import { autenticar } from "../middlewares/authMiddleware";
 
@@ -42,6 +44,35 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     loginHandler
+  );
+
+  // Me - Get current user info
+  fastify.get(
+    "/me",
+    {
+      onRequest: [autenticar],
+      schema: {
+        tags: ["auth"],
+        summary: "Obter dados do usuário atual",
+        description: "Retorna os dados do usuário autenticado atualmente",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              data: usuarioResponseSchema,
+            },
+          },
+          401: {
+            ...errorResponseSchema,
+          },
+          500: {
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    meHandler
   );
 
   // Refresh Token
