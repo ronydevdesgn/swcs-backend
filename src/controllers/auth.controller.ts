@@ -309,3 +309,48 @@ export async function logoutHandler(
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
+
+export async function meHandler(
+  req: FastifyRequestWithUser,
+  reply: FastifyReply
+) {
+  try {
+    // Verificar se o usuário está autenticado
+    if (!req.user) {
+      return sendError(reply, 401, "Usuário não autenticado");
+    }
+
+    const prisma = req.server.prisma;
+
+    // Buscar dados atualizados do usuário no banco
+    const usuario = await prisma.usuario.findUnique({
+      where: { UsuarioID: req.user.id },
+      include: {
+        Permissoes: {
+          include: {
+            Permissao: true,
+          },
+        },
+      },
+    });
+
+    if (!usuario) {
+      return sendError(reply, 404, "Usuário não encontrado");
+    }
+
+    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+
+    return reply.send({
+      data: {
+        id: usuario.UsuarioID,
+        nome: usuario.Nome,
+        email: usuario.Email,
+        tipo: usuario.Tipo,
+        permissoes,
+      },
+    });
+  } catch (error) {
+    req.log.error("Erro ao buscar dados do usuário:", error);
+    return sendError(reply, 500, "Erro interno no servidor");
+  }
+}
