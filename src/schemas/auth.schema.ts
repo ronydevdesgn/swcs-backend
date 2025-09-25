@@ -21,10 +21,10 @@ export const loginSchema = z.object({
     .describe('Senha do usuário'),
   tipo: z
     .nativeEnum(TipoUsuario, {
-      required_error: "Tipo de usuário é obrigatório",
       invalid_type_error: "Tipo de usuário inválido"
     })
-    .describe('Tipo do usuário (PROFESSOR ou FUNCIONARIO)')
+    .optional()
+    .describe('Tipo do usuário (PROFESSOR ou FUNCIONARIO) - opcional, será detectado automaticamente')
 });
 
 // Esquema de pedido de redefinição de palavra-passe

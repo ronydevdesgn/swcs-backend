@@ -5,6 +5,8 @@ import {
   requestPasswordResetHandler,
   resetPasswordHandler,
   logoutHandler,
+  meHandler,
+  verificarTipoUsuarioHandler,
 } from "../controllers/auth.controller";
 import {
   loginSchema,
@@ -14,8 +16,10 @@ import {
   loginResponseSchema,
   errorResponseSchema,
   successResponseSchema,
+  usuarioResponseSchema,
 } from "../schemas/auth.schema";
 import { autenticar } from "../middlewares/authMiddleware";
+import { z } from "zod";
 
 export default async function authRoutes(fastify: FastifyInstance) {
   // Login
@@ -44,12 +48,41 @@ export default async function authRoutes(fastify: FastifyInstance) {
     loginHandler
   );
 
+  // Me - Get current user info
+  fastify.get(
+    "/me",
+    {
+      onRequest: [autenticar],
+      schema: {
+        tags: ["auth"],
+        summary: "Obter dados do usuário atual",
+        description: "Retorna os dados do usuário autenticado atualmente",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              data: usuarioResponseSchema,
+            },
+          },
+          401: {
+            ...errorResponseSchema,
+          },
+          500: {
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    meHandler
+  );
+
   // Refresh Token
   fastify.post(
     "/refresh",
     {
       schema: {
-        tags: ["auth"],
+        tags: ["refresh"],
         summary: "Renovar token de acesso",
         description: "Renova o token de acesso usando o refresh token",
         body: refreshTokenSchema,
@@ -141,5 +174,28 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     logoutHandler
+  );
+
+  // Verificar tipo de usuário (test)
+  fastify.get(
+    "/verificar-tipo",
+    {
+      schema: {
+        querystring: z.object({
+          email: z.string().email("Email inválido"),
+        }),
+        response: {
+          200: z.object({
+            tipo: z.enum(["PROFESSOR", "FUNCIONARIO"]),
+            nome: z.string(),
+            existe: z.boolean(),
+          }),
+          404: z.object({
+            mensagem: z.string(),
+          }),
+        },
+      },
+    },
+    verificarTipoUsuarioHandler
   );
 }

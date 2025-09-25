@@ -8,7 +8,7 @@ import {
 import { compararSenha, hashSenha } from "../utils/hash";
 import { gerarToken, gerarRefreshToken } from "../utils/jwt";
 import { randomBytes } from "crypto";
-import { TipoUsuario } from "@prisma/client";
+
 import {
   AuthenticatedUser,
   FastifyRequestWithUser,
@@ -23,19 +23,37 @@ export async function loginHandler(
     const { email, senha, tipo } = req.body;
     const prisma = req.server.prisma;
 
-    // Buscar usuário com permissões
-    const usuario = await prisma.usuario.findFirst({
-      where: {
-        AND: [{ Email: email }, { Tipo: tipo }],
-      },
-      include: {
-        Permissoes: {
-          include: {
-            Permissao: true,
+    let usuario;
+
+    if (tipo) {
+      // Se o tipo foi fornecido, buscar diretamente
+      usuario = await prisma.usuario.findFirst({
+        where: {
+          AND: [{ Email: email }, { Tipo: tipo }],
+        },
+        include: {
+          Permissoes: {
+            include: {
+              Permissao: true,
+            },
           },
         },
-      },
-    });
+      });
+    } else {
+      // Se o tipo não foi fornecido, detectar automaticamente
+      usuario = await prisma.usuario.findUnique({
+        where: {
+          Email: email,
+        },
+        include: {
+          Permissoes: {
+            include: {
+              Permissao: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!usuario) {
       return sendError(reply, 401, "Credenciais inválidas");
@@ -69,6 +87,8 @@ export async function loginHandler(
     });
 
     const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+
+    req.log.info(`Login realizado com sucesso para usuário ${usuario.Email} (Tipo: ${usuario.Tipo})`);
 
     return reply.send({
       usuario: {
@@ -123,9 +143,9 @@ export async function refreshTokenHandler(
     const usuario = storedToken.Usuario;
     const payload: AuthenticatedUser = {
       id: usuario.UsuarioID,
+      nome: usuario.Nome,
       email: usuario.Email,
       tipo: usuario.Tipo,
-      nome: usuario.Nome,
     };
 
     // Gerar novos tokens
@@ -306,6 +326,83 @@ export async function logoutHandler(
     });
   } catch (error) {
     req.log.error("Erro no logout:", error);
+    return sendError(reply, 500, "Erro interno no servidor");
+  }
+}
+
+export async function meHandler(
+  req: FastifyRequestWithUser,
+  reply: FastifyReply
+) {
+  try {
+    // Verificar se o usuário está autenticado
+    if (!req.user) {
+      return sendError(reply, 401, "Usuário não autenticado");
+    }
+
+    const prisma = req.server.prisma;
+
+    // Buscar dados atualizados do usuário no banco
+    const usuario = await prisma.usuario.findUnique({
+      where: { UsuarioID: req.user.id },
+      include: {
+        Permissoes: {
+          include: {
+            Permissao: true,
+          },
+        },
+      },
+    });
+
+    if (!usuario) {
+      return sendError(reply, 404, "Usuário não encontrado");
+    }
+
+    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+
+    return reply.send({
+      data: {
+        id: usuario.UsuarioID,
+        nome: usuario.Nome,
+        email: usuario.Email,
+        tipo: usuario.Tipo,
+        permissoes,
+      },
+    });
+  } catch (error) {
+    req.log.error("Erro ao buscar dados do usuário:", error);
+    return sendError(reply, 500, "Erro interno no servidor");
+  }
+}
+
+// VERIFICAR TIPO USUÁRIO 
+export async function verificarTipoUsuarioHandler(
+  req: FastifyRequest<{ Querystring: { email: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { email } = req.query;
+    const prisma = req.server.prisma;
+
+    const usuario = await prisma.usuario.findUnique({
+      where: { Email: email },
+      select: {
+        Tipo: true,
+        Nome: true,
+      },
+    });
+
+    if (!usuario) {
+      return sendError(reply, 404, "Usuário não encontrado");
+    }
+
+    return reply.send({
+      tipo: usuario.Tipo,
+      nome: usuario.Nome,
+      existe: true,
+    });
+  } catch (error) {
+    req.log.error("Erro ao verificar tipo de usuário:", error);
     return sendError(reply, 500, "Erro interno no servidor");
   }
 }
