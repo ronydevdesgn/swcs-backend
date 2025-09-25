@@ -1,7 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTgxOTgzMTAsImV4cCI6MTc1ODI4NDcxMH0.79oT_TNPlpHbaRKPyxPCKWAeX4Rbhflg-IRQZBxu6QM
-
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTg2MjIzMzcsImV4cCI6MTc1ODcwODczN30.fn4Vl939Eakn55RoJO8VKJZRjcRJiFomJ8mDB3hplJI
 ### Health / Root
 GET {{baseUrl}}
 
@@ -59,13 +58,13 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Introdução à Computação",
-	"Descricao": "Curso introdutório sobre conceitos básicos",
-	"ProfessorID": 10
+	"Nome": "Introdução à Informática",
+	"Descricao": "introdutório sobre conceitos básicos",
+	"ProfessorID": 5
 }
 
 ### Buscar curso por id
-GET {{baseUrl}}cursos/1
+GET {{baseUrl}}cursos/2
 
 ### Atualizar curso
 PUT {{baseUrl}}cursos/1
@@ -78,7 +77,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Remover curso
-DELETE {{baseUrl}}cursos/1
+DELETE {{baseUrl}}cursos/3
 Authorization: Bearer {{authToken}}
 
 
@@ -98,7 +97,7 @@ Authorization: Bearer {{authToken}}
 	"Nome": "João Silva",
 	"Email": "joao.silva@example.com",
 	"Senha": "senhaProf123",
-	"Departamento": "CIENCIA_COMPUTACAO",
+	"Departamento": "INFORMATICA",
 	"CargaHoraria": 20
 }
 
@@ -191,7 +190,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar presença por id
-GET {{baseUrl}}presencas/1
+GET {{baseUrl}}presencas/2
 Authorization: Bearer {{authToken}}
 
 ### Atualizar presença
@@ -265,7 +264,7 @@ Authorization: Bearer {{authToken}}
 {
 	"Nome": "Maria",
 	"Email": "maria@example.com",
-	"Senha": "senhaUser123",
+	"Senha": "senhaUser1234",
 	"Tipo": "FUNCIONARIO"
 }
 
@@ -274,7 +273,7 @@ GET {{baseUrl}}usuarios/1
 Authorization: Bearer {{authToken}}
 
 ### Atualizar usuário
-PUT {{baseUrl}}usuarios/1
+PUT {{baseUrl}}usuarios/10
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -317,12 +316,12 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"UsuarioID": 1,
+	"UsuarioID": 13,
 	"PermissaoID": 2
 }
 
 ### Buscar permissões de um usuário
-GET {{baseUrl}}permissoes/usuario/1
+GET {{baseUrl}}permissoes/usuario/5
 Authorization: Bearer {{authToken}}
 
 

@@ -1,10 +1,4 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  usuarioSchema,
-  updateUsuarioSchema,
-  updateSenhaSchema,
-  idParamSchema,
-} from "../schemas/usuario.schema";
 import type {
   CreateUsuarioInput,
   UpdateUsuarioInput,
@@ -14,7 +8,6 @@ import type {
 import { hashSenha, compararSenha } from "../utils/hash";
 import { FastifyRequestWithUser, sendError } from "../utils/http";
 import { Prisma } from "@prisma/client";
-import { Params } from "zod/v4/core";
 
 export async function criarUsuario(
   req: FastifyRequestWithUser,
@@ -50,7 +43,10 @@ export async function criarUsuario(
   }
 }
 
-export async function listarUsuarios(req: FastifyRequestWithUser, reply: FastifyReply) {
+export async function listarUsuarios(
+  req: FastifyRequestWithUser,
+  reply: FastifyReply
+) {
   try {
     const usuarios = await req.server.prisma.usuario.findMany({
       select: {

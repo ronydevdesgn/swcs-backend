@@ -6,6 +6,7 @@ import {
   resetPasswordHandler,
   logoutHandler,
   meHandler,
+  verificarTipoUsuarioHandler,
 } from "../controllers/auth.controller";
 import {
   loginSchema,
@@ -18,6 +19,7 @@ import {
   usuarioResponseSchema,
 } from "../schemas/auth.schema";
 import { autenticar } from "../middlewares/authMiddleware";
+import { z } from "zod";
 
 export default async function authRoutes(fastify: FastifyInstance) {
   // Login
@@ -172,5 +174,28 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     logoutHandler
+  );
+
+  // Verificar tipo de usuário (test)
+  fastify.get(
+    "/verificar-tipo",
+    {
+      schema: {
+        querystring: z.object({
+          email: z.string().email("Email inválido"),
+        }),
+        response: {
+          200: z.object({
+            tipo: z.enum(["PROFESSOR", "FUNCIONARIO"]),
+            nome: z.string(),
+            existe: z.boolean(),
+          }),
+          404: z.object({
+            mensagem: z.string(),
+          }),
+        },
+      },
+    },
+    verificarTipoUsuarioHandler
   );
 }
