@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTg2MjIzMzcsImV4cCI6MTc1ODcwODczN30.fn4Vl939Eakn55RoJO8VKJZRjcRJiFomJ8mDB3hplJI
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTg5NjMxMjksImV4cCI6MTc1OTA0OTUyOX0.iyXLomweH45wmBNyrKeAJk3BnuQUnJGjrU52kY82qOc
 ### Health / Root
 GET {{baseUrl}}
 
@@ -10,8 +10,7 @@ Content-Type: application/json
 
 {
 	"email": "amira85@hotmail.com",
-	"senha": "professor123",
-	"tipo": "PROFESSOR"
+	"senha": "professor123"
 }
 
 ### Auth - Refresh token
@@ -51,6 +50,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar cursos
 GET {{baseUrl}}cursos
+Authorization: Bearer {{authToken}}
+
 
 ### Criar curso
 POST {{baseUrl}}cursos
@@ -64,7 +65,8 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar curso por id
-GET {{baseUrl}}cursos/2
+GET {{baseUrl}}cursos/1
+Authorization: Bearer {{authToken}}
 
 ### Atualizar curso
 PUT {{baseUrl}}cursos/1
@@ -87,6 +89,7 @@ Authorization: Bearer {{authToken}}
 
 ### Listar professores
 GET {{baseUrl}}professores
+Authorization: Bearer {{authToken}}
 
 ### Criar professor
 POST {{baseUrl}}professores

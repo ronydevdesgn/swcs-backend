@@ -1,18 +1,16 @@
 import jwt from "jsonwebtoken";
 
-function getJwtSecret(): string {
-  return process.env.JWT_SECRET || "minha_chave_secreta";
-}
+const ACCESS_SECRET = process.env.JWT_SECRET!;
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 
 export function gerarToken(payload: object) {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: "1d" });
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: "1d" });
 }
 
 export function verificarToken(token: string) {
-  return jwt.verify(token, getJwtSecret());
+  return jwt.verify(token, ACCESS_SECRET);
 }
 
-export function gerarRefreshToken(userId: number) {
-  const payload = { userId, refresh: true };
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d" });
+export async function gerarRefreshToken(userId: number): Promise<string> {
+  return jwt.sign({ userId }, REFRESH_SECRET, { expiresIn: "7d" });
 }

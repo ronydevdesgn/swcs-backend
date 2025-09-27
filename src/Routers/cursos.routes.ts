@@ -59,7 +59,8 @@ export default async function cursoRoutes(app: FastifyInstance) {
         security: [{ bearerAuth: [] }],
         querystring: listarCursosQuerySchema,
         response: {
-          200: listCursosResponseSchema,
+          // erro com o ststus 200 bloquiando o response
+          // 200: listCursosResponseSchema,
           400: errorResponseSchema,
           500: errorResponseSchema,
         },
