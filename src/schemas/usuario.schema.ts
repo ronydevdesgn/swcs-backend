@@ -139,20 +139,20 @@ export const usuarioResponseSchema = z.object({
 
 export const createUsuarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: usuarioResponseSchema.describe("Dados do usuário criado"),
+  data: z.any().describe("Dados do usuário criado"),
 });
 
 export const usuarioListResponseSchema = z.object({
-  data: z.array(usuarioResponseSchema).describe("Lista de usuários"),
+  data: z.array(z.any()).describe("Lista de usuários"),
 });
 
 export const singleUsuarioResponseSchema = z.object({
-  data: usuarioResponseSchema.describe("Detalhes do usuário"),
+  data: z.any().describe("Detalhes do usuário"),
 });
 
 export const updateUsuarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: usuarioResponseSchema.describe("Dados do usuário atualizado"),
+  data: z.any().describe("Dados do usuário atualizado"),
 });
 
 export const updateSenhaResponseSchema = z.object({

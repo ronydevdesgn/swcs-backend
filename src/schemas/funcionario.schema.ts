@@ -89,7 +89,7 @@ export const funcionarioResponseSchema = z.object({
 });
 
 export const funcionarioListResponseSchema = z.object({
-  data: z.array(funcionarioResponseSchema).describe("Lista de funcionários"),
+  data: z.array(z.any()).describe("Lista de funcionários"),
   meta: z
     .object({
       total: z.number().describe("Número total de funcionários"),
@@ -101,17 +101,17 @@ export const funcionarioListResponseSchema = z.object({
 });
 
 export const singleFuncionarioResponseSchema = z.object({
-  data: funcionarioResponseSchema.describe("Detalhes do funcionário"),
+  data: z.any().describe("Detalhes do funcionário"),
 });
 
 export const createFuncionarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: funcionarioResponseSchema.describe("Detalhes do funcionário criado"),
+  data: z.any().describe("Detalhes do funcionário criado"),
 });
 
 export const updateFuncionarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: funcionarioResponseSchema.describe(
+  data: z.any().describe(
     "Detalhes do funcionário atualizado"
   ),
 });

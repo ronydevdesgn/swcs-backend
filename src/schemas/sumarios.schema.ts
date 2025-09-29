@@ -92,11 +92,11 @@ export const sumarioResponseSchema = z.object({
 
 export const createSumarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: sumarioResponseSchema.describe("Dados do sumário criado"),
+  data: z.any().describe("Dados do sumário criado"),
 });
 
 export const sumarioListResponseSchema = z.object({
-  data: z.array(sumarioResponseSchema).describe("Lista de sumários"),
+  data: z.array(z.any()).describe("Lista de sumários"),
   meta: z
     .object({
       total: z.number().describe("Número total de sumários"),
@@ -110,12 +110,12 @@ export const sumarioListResponseSchema = z.object({
 });
 
 export const singleSumarioResponseSchema = z.object({
-  data: sumarioResponseSchema.describe("Detalhes do sumário"),
+  data: z.any().describe("Detalhes do sumário"),
 });
 
 export const updateSumarioResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: sumarioResponseSchema.describe("Dados do sumário atualizado"),
+  data: z.any().describe("Dados do sumário atualizado"),
 });
 
 // Esquemas de resposta genéricos para erros e sucesso

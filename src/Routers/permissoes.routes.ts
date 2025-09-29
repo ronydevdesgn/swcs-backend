@@ -91,7 +91,7 @@ export default async function permissoesRoutes(app: FastifyInstance) {
         summary: "Buscar permissões por usuário",
         description:
           "Retorna todas as permissões associadas a um ID de usuário específico.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: usuarioPermissaoListResponseSchema,
           500: errorResponseSchema,

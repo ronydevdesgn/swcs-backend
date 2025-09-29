@@ -142,20 +142,20 @@ export const professorResponseSchema = z.object({
 
 export const createProfessorResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: professorResponseSchema.describe("Dados do professor criado"),
+  data: z.any().describe("Dados do professor criado"),
 });
 
 export const professorListResponseSchema = z.object({
-  data: z.array(professorResponseSchema).describe("Lista de professores"),
+  data: z.array(z.any()).describe("Lista de professores"),
 });
 
 export const singleProfessorResponseSchema = z.object({
-  data: professorResponseSchema.describe("Detalhes do professor"),
+  data: z.any().describe("Detalhes do professor"),
 });
 
 export const updateProfessorResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: professorResponseSchema.describe("Dados do professor atualizado"),
+  data: z.any().describe("Dados do professor atualizado"),
 });
 
 // Esquemas de resposta genéricos para erros e sucesso

@@ -53,14 +53,14 @@ export const periodoSchema = z.object({
       required_error: "Data inicial é obrigatória",
       invalid_type_error: "Data inicial deve ser uma string",
     })
-    .datetime("Data inicial deve estar no formato ISO 8601")
+    .date("Data inicial deve estar no formato ISO 8601")
     .describe("Data de início do período para consulta"),
   dataFim: z
     .string({
       required_error: "Data final é obrigatória",
       invalid_type_error: "Data final deve ser uma string",
     })
-    .datetime("Data final deve estar no formato ISO 8601")
+    .date("Data final deve estar no formato ISO 8601")
     .describe("Data de fim do período para consulta"),
 });
 
@@ -113,20 +113,20 @@ export const estatisticasProfessorSchema = z.object({
 
 export const createEfetividadeResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const listEfetividadesResponseSchema = z.object({
-  data: z.array(efetividadeResponseSchema).describe("Lista de efetividades"),
+  data: z.array(z.any()).describe("Lista de efetividades"),
 });
 
 export const singleEfetividadeResponseSchema = z.object({
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const updateEfetividadeResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const deleteEfetividadeResponseSchema = z.object({
@@ -135,23 +135,33 @@ export const deleteEfetividadeResponseSchema = z.object({
 
 export const efetividadesPorPeriodoResponseSchema = z.object({
   data: z
-    .array(efetividadeResponseSchema)
+    .array(z.any())
     .describe("Lista de efetividades do período"),
   meta: z.object({
     periodo: z.object({
       inicio: z.string().describe("Data de início"),
       fim: z.string().describe("Data de fim"),
-    }),
-    total: z.number().describe("Total de registros encontrados"),
+    }).optional(),
+    total: z.number().describe("Total de registros encontrados").optional(),
     estatisticas: z
-      .array(estatisticasProfessorSchema)
-      .describe("Estatísticas por professor"),
+      .array(z.any())
+      .describe("Estatísticas por professor").optional(),
   }),
+  // meta: z.object({
+  //   periodo: z.object({
+  //     inicio: z.string().describe("Data de início"),
+  //     fim: z.string().describe("Data de fim"),
+  //   }).optional(),
+  //   total: z.number().describe("Total de registros encontrados").optional(),
+  //   estatisticas: z
+  //     .array(z.any())
+  //     .describe("Estatísticas por professor").optional(),
+  // }),
 });
 
 export const efetividadesProfessorResponseSchema = z.object({
   data: z
-    .array(efetividadeResponseSchema)
+    .array(z.any())
     .describe("Lista de efetividades do professor"),
   meta: z.object({
     professor: z.object({

@@ -79,7 +79,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
         tags: ["Usuários"],
         summary: "Buscar usuário por ID",
         description: "Retorna um usuário específico com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: singleUsuarioResponseSchema,
           404: errorResponseSchema,
@@ -101,7 +101,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
         summary: "Atualizar um usuário existente",
         description:
           "Atualiza as informações de um usuário (nome e email) com base no ID.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updateUsuarioSchema,
         response: {
           200: updateUsuarioResponseSchema,
@@ -126,7 +126,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
         summary: "Atualizar a senha de um usuário",
         description:
           "Permite que um usuário altere sua senha, exigindo a senha atual para validação.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updateSenhaSchemaSwagger,
         response: {
           200: updateSenhaResponseSchema,
@@ -150,7 +150,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
         tags: ["Usuários"],
         summary: "Deletar um usuário",
         description: "Remove um usuário do sistema com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: deleteUsuarioResponseSchema,
           404: errorResponseSchema,

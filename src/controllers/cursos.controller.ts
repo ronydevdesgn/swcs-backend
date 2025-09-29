@@ -119,13 +119,16 @@ export async function listarCursos(
   reply: FastifyReply
 ) {
   try {
+    console.log("AAA")
     const { search, departamento } = req.query;
     const prisma = req.server.prisma;
 
+    console.log("BBB")
     const whereCondition: any = {
       AND: [],
     };
 
+    console.log("CCC")
     // Filtro de busca por nome ou descrição
     if (search) {
       whereCondition.AND.push({
@@ -146,6 +149,8 @@ export async function listarCursos(
       });
     }
 
+    console.log("DDD")
+
     // Filtro por departamento (através dos professores)
     if (departamento) {
       if (!Object.values(Departamento).includes(departamento as Departamento)) {
@@ -163,6 +168,8 @@ export async function listarCursos(
       });
     }
 
+    console.log("DDD")
+
     const cursos = await prisma.curso.findMany({
       where: whereCondition.AND.length > 0 ? whereCondition : {},
       include: {
@@ -178,18 +185,23 @@ export async function listarCursos(
       orderBy: { Nome: "asc" },
     });
 
+    console.log("EEE")
+    console.log("cursos: ", cursos)
+
     return reply.send({
       data: cursos.map((curso) => ({
         ...curso,
         Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        Descricao: curso.Descricao?.trim()
       })),
       meta: { total: cursos.length },
     });
   } catch (error) {
+    console.log("FFF")
     req.log.error("Erro ao listar cursos:", error);
     const errorMessage =
       error instanceof Error ? error.message : "Erro desconhecido";
+    console.log("GGG")
     return sendError(reply, 500, "Erro interno ao listar cursos", errorMessage);
   }
 }

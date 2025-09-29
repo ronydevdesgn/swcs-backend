@@ -135,6 +135,7 @@ export async function buscarProfessor(
   try {
     const { id } = req.params;
 
+
     const professor = await req.server.prisma.professor.findUnique({
       where: { ProfessorID: id },
       include: {

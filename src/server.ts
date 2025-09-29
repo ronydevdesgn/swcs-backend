@@ -23,15 +23,14 @@ import { errorHandler } from "./middlewares/errorHandler";
 dotenv.config();
 
 export const app = Fastify({ 
-  logger: true,
-  
+  //logger: true,
   ajv: {
     customOptions: {
       removeAdditional: "all",
       coerceTypes: true,
       useDefaults: true,
     }
-  }
+  },
 })
   // habilita o TypeProvider que faz converter Zod→JSONSchema
   .withTypeProvider<ZodTypeProvider>();

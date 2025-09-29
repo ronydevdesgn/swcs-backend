@@ -87,7 +87,7 @@ export const presencaResponseSchema = z.object({
 
 export const createPresencaResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: presencaResponseSchema.describe("Dados da presença registrada"),
+  data: z.any().describe("Dados da presença registrada"),
 });
 
 export const batchPresencaResponseSchema = z.object({
@@ -102,7 +102,7 @@ export const batchPresencaResponseSchema = z.object({
 });
 
 export const presencaListResponseSchema = z.object({
-  data: z.array(presencaResponseSchema).describe("Lista de presenças"),
+  data: z.array(z.any()).describe("Lista de presenças"),
   meta: z
     .object({
       total: z.number().describe("Número total de presenças"),
@@ -121,12 +121,12 @@ export const presencaListResponseSchema = z.object({
 });
 
 export const singlePresencaResponseSchema = z.object({
-  data: presencaResponseSchema.describe("Detalhes da presença"),
+  data: z.any().describe("Detalhes da presença"),
 });
 
 export const updatePresencaResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: presencaResponseSchema.describe("Dados da presença atualizada"),
+  data: z.any().describe("Dados da presença atualizada"),
 });
 
 export const deletePresencaResponseSchema = z.object({
