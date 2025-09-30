@@ -100,10 +100,25 @@ app.get("/", async (request, reply) => {
 await app.register(prismaPlugin);
 
 await app.register(cors, {
-  origin: ["http://localhost:5173", "*"],
+  origin: [
+    "http://localhost:5173",
+    "*",
+    "http://127.0.0.1:5173",
+  ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods",
+  ],
+  exposedHeaders: ["Authorization"],
+  optionsSuccessStatus: 200, // Para suportar browsers legados
 });
 
 
