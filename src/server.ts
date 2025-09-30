@@ -23,7 +23,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 dotenv.config();
 
 export const app = Fastify({ 
-  //logger: true,
+  logger: true,
   ajv: {
     customOptions: {
       removeAdditional: "all",
@@ -99,7 +99,7 @@ app.get("/", async (request, reply) => {
 await app.register(prismaPlugin);
 
 await app.register(cors, {
-  origin: ["http://localhost:5173", "*"],
+  origin: ["http://localhost:5173"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
