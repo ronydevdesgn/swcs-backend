@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTkxMDA1MjgsImV4cCI6MTc1OTE4NjkyOH0.LyqoeLYu29ENqi5igMOpyaUOxDiMCGOrVUROkMErQ8w
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTkyNDU1MTgsImV4cCI6MTc1OTMzMTkxOH0.7xPxLolQIjMyWVRhplF_oErwBOqLEBKIEwrTNbAQtm4
 ### Health / Root
 GET {{baseUrl}}
 

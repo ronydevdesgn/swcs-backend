@@ -58,7 +58,8 @@ export default async function cursoRoutes(app: FastifyInstance) {
           "Lista todos os cursos com filtros opcionais de busca e departamento",
         querystring: listarCursosQuerySchema,
         response: {
-          200: listCursosResponseSchema,
+          // erro com o ststus 200 bloquiando o response
+          // 200: listCursosResponseSchema,
           400: errorResponseSchema,
           500: errorResponseSchema,
         },
