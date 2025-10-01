@@ -182,7 +182,7 @@ export async function listarCursos(
       data: cursos.map((curso) => ({
         ...curso,
         Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        Descricao: curso.Descricao?.trim()
       })),
       meta: { total: cursos.length },
     });

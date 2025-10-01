@@ -109,7 +109,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
         tags: ["Sumários"],
         summary: "Buscar sumário por ID",
         description: "Retorna um sumário específico com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: singleSumarioResponseSchema,
           404: errorResponseSchema,
@@ -129,7 +129,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
         tags: ["Sumários"],
         summary: "Atualizar um sumário existente",
         description: "Atualiza as informações de um sumário existente.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updateSumarioSchema,
         response: {
           200: updateSumarioResponseSchema,
@@ -153,7 +153,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
         tags: ["Sumários"],
         summary: "Deletar um sumário",
         description: "Remove um sumário do sistema com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: successResponseSchema,
           404: errorResponseSchema,

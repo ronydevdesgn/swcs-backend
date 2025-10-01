@@ -85,7 +85,7 @@ export default async function professorRoutes(app: FastifyInstance) {
         summary: "Buscar professor por ID",
         description:
           "Retorna um professor específico com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: singleProfessorResponseSchema,
           404: errorResponseSchema,
@@ -106,7 +106,7 @@ export default async function professorRoutes(app: FastifyInstance) {
         summary: "Atualizar um professor existente",
         description:
           "Atualiza as informações de um professor e seu usuário associado.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updateProfessorSchema,
         response: {
           200: updateProfessorResponseSchema,

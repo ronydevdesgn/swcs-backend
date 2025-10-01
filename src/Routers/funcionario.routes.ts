@@ -86,7 +86,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
         summary: "Buscar funcionário por ID",
         description:
           "Retorna um funcionário específico com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: singleFuncionarioResponseSchema,
           404: errorResponseSchema,
@@ -107,7 +107,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
         summary: "Atualizar um funcionário existente",
         description:
           "Atualiza as informações de um funcionário e seu usuário associado.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updateFuncionarioSchema,
         response: {
           200: updateFuncionarioResponseSchema,

@@ -56,7 +56,6 @@ export default async function cursoRoutes(app: FastifyInstance) {
         summary: "Listar cursos",
         description:
           "Lista todos os cursos com filtros opcionais de busca e departamento",
-        security: [{ bearerAuth: [] }],
         querystring: listarCursosQuerySchema,
         response: {
           // erro com o ststus 200 bloquiando o response

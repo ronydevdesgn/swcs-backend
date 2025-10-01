@@ -24,14 +24,13 @@ dotenv.config();
 
 export const app = Fastify({ 
   logger: true,
-  
   ajv: {
     customOptions: {
       removeAdditional: "all",
       coerceTypes: true,
       useDefaults: true,
     }
-  }
+  },
 })
   // habilita o TypeProvider que faz converter Zod→JSONSchema
   .withTypeProvider<ZodTypeProvider>();
@@ -100,11 +99,7 @@ app.get("/", async (request, reply) => {
 await app.register(prismaPlugin);
 
 await app.register(cors, {
-  origin: [
-    "http://localhost:5173",
-    "*",
-    "http://127.0.0.1:5173",
-  ],
+  origin: ["http://localhost:5173"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: [

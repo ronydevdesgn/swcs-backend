@@ -127,7 +127,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
         summary: "Buscar presença por ID",
         description:
           "Retorna um registro de presença específico com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: singlePresencaResponseSchema,
           404: errorResponseSchema,
@@ -148,7 +148,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
         summary: "Buscar presenças por professor",
         description:
           "Retorna todas as presenças de um professor, com opções de filtro por período e estado.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         querystring: z.object({
           inicio: z
             .string()
@@ -185,7 +185,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
         summary: "Atualizar uma presença existente",
         description:
           "Atualiza as informações de um registro de presença existente.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         body: updatePresencaSchema,
         response: {
           200: updatePresencaResponseSchema,
@@ -208,7 +208,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
         tags: ["Presenças"],
         summary: "Remover uma presença",
         description: "Remove um registro de presença com base no ID fornecido.",
-        params: idParamSchemaSwagger,
+        params: idParamSchema,
         response: {
           200: deletePresencaResponseSchema,
           404: errorResponseSchema,

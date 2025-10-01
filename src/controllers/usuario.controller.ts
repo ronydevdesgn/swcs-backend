@@ -15,15 +15,15 @@ export async function criarUsuario(
 ) {
   try {
     const prisma = req.server.prisma;
-    const { Nome, Email, Senha, Tipo } = req.body as CreateUsuarioInput;
-    const SenhaHash = await hashSenha(Senha);
+    const { nome, email, senha, tipo } = req.body as CreateUsuarioInput;
+    const SenhaHash = await hashSenha(senha);
 
     const usuario = await prisma.usuario.create({
       data: {
-        Nome,
-        Email,
+        Nome: nome,
+        Email: email,
         SenhaHash: SenhaHash,
-        Tipo: Tipo,
+        Tipo: tipo,
       },
       include: { Permissoes: true },
     });

@@ -90,9 +90,12 @@ export const cursoResponseSchema = z.object({
   CursoID: z.number().describe("ID único do curso"),
   Nome: z.string().describe("Nome do curso"),
   Descricao: z.string().nullable().describe("Descrição do curso"),
+  CreatedAt: z.string().datetime(),
+  UpdatedAt: z.string().datetime(),
   Professores: z
     .array(professorResponseSchema)
-    .describe("Lista de professores do curso"),
+    .describe("Lista de professores do curso")
+    .optional(),
   Sumarios: z
     .array(sumarioResponseSchema)
     .optional()
@@ -106,11 +109,11 @@ export const cursoResponseSchema = z.object({
 
 export const createCursoResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: cursoResponseSchema,
+  data: z.any(),
 });
 
 export const listCursosResponseSchema = z.object({
-  data: z.array(cursoResponseSchema).describe("Lista de cursos"),
+  data: z.any().describe("Lista de cursos"),
   meta: z
     .object({
       total: z.number().describe("Total de cursos encontrados"),
@@ -119,12 +122,12 @@ export const listCursosResponseSchema = z.object({
 });
 
 export const singleCursoResponseSchema = z.object({
-  data: cursoResponseSchema,
+  data: z.any(),
 });
 
 export const updateCursoResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: cursoResponseSchema,
+  data: z.any(),
 });
 
 export const deleteCursoResponseSchema = z.object({

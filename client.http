@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImVtYWlsIjoiYW1pcmE4NUBob3RtYWlsLmNvbSIsInRpcG8iOiJQUk9GRVNTT1IiLCJub21lIjoiVGFzaGEgSGludHoiLCJpYXQiOjE3NTg5NjMxMjksImV4cCI6MTc1OTA0OTUyOX0.iyXLomweH45wmBNyrKeAJk3BnuQUnJGjrU52kY82qOc
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTkyNDU1MTgsImV4cCI6MTc1OTMzMTkxOH0.7xPxLolQIjMyWVRhplF_oErwBOqLEBKIEwrTNbAQtm4
 ### Health / Root
 GET {{baseUrl}}
 
@@ -9,8 +9,8 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "amira85@hotmail.com",
-	"senha": "professor123"
+	"email": "dillan20@yahoo.com",
+	"senha": "funcionario123"
 }
 
 ### Auth - Refresh token
@@ -50,8 +50,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar cursos
 GET {{baseUrl}}cursos
+Content-Type: application/json
 Authorization: Bearer {{authToken}}
-
 
 ### Criar curso
 POST {{baseUrl}}cursos
@@ -59,27 +59,29 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Introdução à Informática",
+	"Nome": "Introdução à Informtica",
 	"Descricao": "introdutório sobre conceitos básicos",
 	"ProfessorID": 5
 }
 
 ### Buscar curso por id
-GET {{baseUrl}}cursos/1
+GET {{baseUrl}}cursos/7
+Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
+
 ### Atualizar curso
-PUT {{baseUrl}}cursos/1
+PUT {{baseUrl}}cursos/7
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Introdução à Computação (Atualizado)",
-	"Descricao": "Descrição atualizada"
+	"Nome": "Introdução à Informatic",
+	"Descricao": "introdutório sobre conceitos básicos"
 }
 
 ### Remover curso
-DELETE {{baseUrl}}cursos/3
+DELETE {{baseUrl}}cursos/7
 Authorization: Bearer {{authToken}}
 
 
@@ -89,6 +91,7 @@ Authorization: Bearer {{authToken}}
 
 ### Listar professores
 GET {{baseUrl}}professores
+Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 ### Criar professor
@@ -97,15 +100,16 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "João Silva",
-	"Email": "joao.silva@example.com",
+	"Nome": "Paulo da Silva",
+	"Email": "paulo.silva@example.com",
 	"Senha": "senhaProf123",
 	"Departamento": "INFORMATICA",
 	"CargaHoraria": 20
 }
 
 ### Buscar professor
-GET {{baseUrl}}professores/1
+GET {{baseUrl}}professores/5
+Authorization: Bearer {{authToken}}
 
 ### Atualizar professor
 PUT {{baseUrl}}professores/1
@@ -123,6 +127,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar sumários
 GET {{baseUrl}}sumarios
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 ### Criar sumário
 POST {{baseUrl}}sumarios
@@ -133,11 +139,12 @@ Authorization: Bearer {{authToken}}
 	"Conteudo": "Resumo da aula sobre Fastify",
 	"Data": "2025-09-01T10:00:00.000Z",
 	"CursoID": 1,
-	"ProfessorID": 1
+	"ProfessorID": 5
 }
 
 ### Buscar sumário
 GET {{baseUrl}}sumarios/1
+Authorization: Bearer {{authToken}}
 
 ### Atualizar sumário
 PUT {{baseUrl}}sumarios/1
@@ -149,7 +156,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Deletar sumário
-DELETE {{baseUrl}}sumarios/1
+DELETE {{baseUrl}}sumarios/2
 Authorization: Bearer {{authToken}}
 
 
@@ -181,7 +188,7 @@ Authorization: Bearer {{authToken}}
 	"presencas": [
 		{ 
       "Data": "2025-09-01T00:00:00.000Z", 
-      "ProfessorID": 1, 
+      "ProfessorID": 3, 
       "Estado": "PRESENTE" 
       },
 		{ 
@@ -230,7 +237,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar efetividades por período
-GET {{baseUrl}}efetividades/periodo?dataInicio=2025-09-01&dataFim=2025-09-30
+GET {{baseUrl}}efetividades/periodo?dataInicio=2025-09-01&dataFim=2025-09-28
 Authorization: Bearer {{authToken}}
 
 ### Buscar efetividades de um professor
@@ -243,7 +250,7 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"HorasTrabalhadas": 5
+	"HorasTrabalhadas": 8
 }
 
 ### Remover efetividade
@@ -265,10 +272,10 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Maria",
-	"Email": "maria@example.com",
-	"Senha": "senhaUser1234",
-	"Tipo": "FUNCIONARIO"
+	"nome": "Maria",
+	"email": "maria@example.com",
+	"senha": "senhaUser1234",
+	"tipo": "FUNCIONARIO"
 }
 
 ### Buscar usuário
@@ -319,12 +326,12 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"UsuarioID": 13,
+	"UsuarioID": 3,
 	"PermissaoID": 2
 }
 
 ### Buscar permissões de um usuário
-GET {{baseUrl}}permissoes/usuario/5
+GET {{baseUrl}}permissoes/usuario/3
 Authorization: Bearer {{authToken}}
 
 
@@ -333,11 +340,11 @@ Authorization: Bearer {{authToken}}
 ###########################################################################
 
 ### Listar funcionários
-GET {{baseUrl}}funcionario
+GET {{baseUrl}}funcionarios
 Authorization: Bearer {{authToken}}
 
 ### Criar funcionário
-POST {{baseUrl}}funcionario
+POST {{baseUrl}}funcionarios
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -345,15 +352,15 @@ Authorization: Bearer {{authToken}}
 	"Nome": "Ana",
 	"Email": "ana.func@example.com",
 	"Senha": "senhaFunc123",
-	"Cargo": "ADMIN"
+	"Cargo": "ADMINISTRATIVO"
 }
 
 ### Buscar funcionário
-GET {{baseUrl}}funcionario/1
+GET {{baseUrl}}funcionarios/1
 Authorization: Bearer {{authToken}}
 
 ### Atualizar funcionário
-PUT {{baseUrl}}funcionario/1
+PUT {{baseUrl}}funcionarios/1
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
