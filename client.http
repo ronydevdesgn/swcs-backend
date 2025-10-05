@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTk2MDIxMjUsImV4cCI6MTc1OTY4ODUyNX0.bp4Uvv2ANABcJ4eZtNlLJBLEHKZrVSpY6nEd6MO6kJM
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTk2ODg4NTksImV4cCI6MTc1OTc3NTI1OX0.LEITW2xtXYB-mKnc2myyahdDohG5uONhO4k9Rhw7gZM
 ### Health / Root
 GET {{baseUrl}}
 
@@ -144,8 +144,8 @@ Authorization: Bearer {{authToken}}
 {
 	"Conteudo": "Resumo da aula sobre Fastify",
 	"Data": "2025-09-01T10:00:00.000Z",
-	"CursoID": 1,
-	"ProfessorID": 5
+	"CursoID": 2,
+	"ProfessorID": 2
 }
 
 ### Buscar sumário

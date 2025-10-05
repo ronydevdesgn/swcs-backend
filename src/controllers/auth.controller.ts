@@ -32,6 +32,7 @@ export async function loginHandler(
           AND: [{ Email: email }, { Tipo: tipo }],
         },
         include: {
+          Professor: true,
           Permissoes: {
             include: {
               Permissao: true,
@@ -46,6 +47,7 @@ export async function loginHandler(
           Email: email,
         },
         include: {
+          Professor: true,
           Permissoes: {
             include: {
               Permissao: true,
@@ -96,6 +98,10 @@ export async function loginHandler(
         nome: usuario.Nome,
         email: usuario.Email,
         tipo: usuario.Tipo,
+        professor: usuario.Professor ? {
+          professorId: usuario.Professor.ProfessorID,
+          nome: usuario.Professor.Nome
+        } : null,
         permissoes,
       },
       accessToken,
@@ -346,6 +352,7 @@ export async function meHandler(
     const usuario = await prisma.usuario.findUnique({
       where: { UsuarioID: req.user.id },
       include: {
+        Professor: true,
         Permissoes: {
           include: {
             Permissao: true,
@@ -366,6 +373,10 @@ export async function meHandler(
         nome: usuario.Nome,
         email: usuario.Email,
         tipo: usuario.Tipo,
+        professor: usuario.Professor ? {
+          nome: usuario.Professor?.Nome,
+          professorId: usuario.Professor?.ProfessorID,
+        } : null, 
         permissoes,
       },
     });
