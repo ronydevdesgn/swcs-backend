@@ -59,18 +59,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
         description: "Retorna os dados do usuário autenticado atualmente",
         security: [{ bearerAuth: [] }],
         response: {
-          200: {
-            type: "object",
-            properties: {
-              data: usuarioResponseSchema,
-            },
-          },
-          401: {
-            ...errorResponseSchema,
-          },
-          500: {
-            ...errorResponseSchema,
-          },
+          200: usuarioResponseSchema,
+          401: 
+            errorResponseSchema,        
+          500: 
+            errorResponseSchema,
         },
       },
     },
