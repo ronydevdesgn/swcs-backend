@@ -166,7 +166,11 @@ export async function listarCursos(
     const cursos = await prisma.curso.findMany({
       where: whereCondition.AND.length > 0 ? whereCondition : {},
       include: {
-        Professores: true,
+        Professores: {
+          select: {
+            Professor: true
+          }
+        },
         Sumarios: {
           take: 5,
           orderBy: { Data: "desc" },
@@ -178,6 +182,7 @@ export async function listarCursos(
       orderBy: { Nome: "asc" },
     });
 
+    console.log(cursos.map(u=> u.Professores))
     return reply.send({
       data: cursos.map((curso) => ({
         ...curso,

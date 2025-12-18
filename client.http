@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJkaWxsYW4yMEB5YWhvby5jb20iLCJ0aXBvIjoiRlVOQ0lPTkFSSU8iLCJub21lIjoiTWFiZWwgTW9vcmUiLCJpYXQiOjE3NTk2ODg4NTksImV4cCI6MTc1OTc3NTI1OX0.LEITW2xtXYB-mKnc2myyahdDohG5uONhO4k9Rhw7gZM
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiZW1haWwiOiJkYWhsaWFfdG95ODdAeWFob28uY29tIiwidGlwbyI6IlBST0ZFU1NPUiIsIm5vbWUiOiJNYXVyZWVuIFdpemEiLCJpYXQiOjE3NjYwMjczOTYsImV4cCI6MTc2NjExMzc5Nn0.H1H7gnuBTlQgbCp9b9QuJ8nDmxkxBe7y_Mq8YdXaNL8
 ### Health / Root
 GET {{baseUrl}}
 
@@ -9,8 +9,8 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "dillan20@yahoo.com",
-	"senha": "funcionario123"
+	"email": "dahlia_toy87@yahoo.com",
+	"senha": "professor123"
 }
 
 ### Auth - Refresh token

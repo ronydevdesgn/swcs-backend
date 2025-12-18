@@ -158,6 +158,7 @@ export async function listarEfetividades(
 
     const registros = await prisma.efetividade.findMany({
       include: {
+        Curso: true,
         Professor: {
           select: {
             Nome: true,
