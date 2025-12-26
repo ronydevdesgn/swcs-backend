@@ -55,7 +55,13 @@ app.addHook("preValidation", async (req) => {
       horasTrabalhadas: "HorasTrabalhadas",
       professorID: "ProfessorID",
       cursoID: "CursoID",
-      estado: "Estado",
+      sumarioID: "SumarioID",
+      presencaID: "PresencaID",
+      efetividadeID: "EfetividadeID",
+      funcionarioID: "FuncionarioID",
+      departamento: "Departamento",
+      cargaHoraria: "CargaHoraria",
+      permissoes: "Permissoes",
     };
     for (const [key, val] of Object.entries(mapping)) {
       if (body[key] !== undefined && body[val] === undefined) {
@@ -96,9 +102,9 @@ app.get("/", async (request, reply) => {
 });
 
 
-await app.register(prismaPlugin);
+app.register(prismaPlugin);
 
-await app.register(cors, {
+app.register(cors, {
   origin: ["http://localhost:5173"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -117,20 +123,20 @@ await app.register(cors, {
 });
 
 
-await app.register(authRoutes, { prefix: "/auth" });
-await app.register(professorRoutes, { prefix: "/professores" });
-await app.register(funcionarioRoutes, { prefix: "/funcionarios" });
-await app.register(usuarioRoutes, { prefix: "/usuarios" });
-await app.register(permissoesRoutes, { prefix: "/permissoes" });
-await app.register(cursosRoutes, { prefix: "/cursos" });
-await app.register(sumariosRoutes, { prefix: "/sumarios" });
-await app.register(presencasRoutes, { prefix: "/presencas" });
-await app.register(efetividadesRoutes, { prefix: "/efetividades" });
+app.register(authRoutes, { prefix: "/auth" });
+app.register(professorRoutes, { prefix: "/professores" });
+app.register(funcionarioRoutes, { prefix: "/funcionarios" });
+app.register(usuarioRoutes, { prefix: "/usuarios" });
+app.register(permissoesRoutes, { prefix: "/permissoes" });
+app.register(cursosRoutes, { prefix: "/cursos" });
+app.register(sumariosRoutes, { prefix: "/sumarios" });
+app.register(presencasRoutes, { prefix: "/presencas" });
+app.register(efetividadesRoutes, { prefix: "/efetividades" });
 
 
 if (enableSwagger) {
   try {
-    await app.register(swaggerPlugin);
+    app.register(swaggerPlugin);
     app.log.info("Swagger plugin registered successfully");
   } catch (error) {
     app.log.error("Failed to register Swagger plugin:", error);

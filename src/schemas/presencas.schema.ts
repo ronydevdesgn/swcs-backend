@@ -19,6 +19,13 @@ export const presencaSchema = z.object({
     })
     .positive("ID do professor deve ser positivo")
     .describe("ID numérico do professor"),
+  CursoID: z
+    .number({
+      required_error: "ID do curso é obrigatório",
+      invalid_type_error: "ID do curso deve ser um número",
+    })
+    .positive("ID do curso deve ser positivo")
+    .describe("ID numérico do curso"),
   Estado: z
     .nativeEnum(Estado, {
       required_error: "Estado é obrigatório",
@@ -47,6 +54,11 @@ export const updatePresencaSchema = z.object({
     .positive("ID do professor deve ser positivo")
     .optional()
     .describe("Novo ID numérico do professor"),
+  CursoID: z
+    .number()
+    .positive("ID do curso deve ser positivo")
+    .optional()
+    .describe("Novo ID numérico do curso"),
   Estado: z
     .nativeEnum(Estado, {
       invalid_type_error: "Estado inválido",

@@ -16,7 +16,7 @@ export async function registrarPresenca(
   const prisma = req.server.prisma;
 
   try {
-    const { Data, ProfessorID, Estado: estado } = req.body;
+    const { Data, ProfessorID, CursoID, Estado: estado } = req.body;
 
     // Validar data
     const dataPresenca = new Date(Data);
@@ -75,6 +75,7 @@ export async function registrarPresenca(
           Data: dataPresenca,
           Estado: estado,
           ProfessorID,
+          CursoID,
         },
         include: {
           Professor: {

@@ -261,3 +261,47 @@ export async function atualizarProfessor(
     return sendError(reply, 500, "Erro interno ao atualizar professor");
   }
 }
+
+export async function deletarProfessor(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+
+  try {
+    const { id } = req.params;
+    console.log("[DEBUG] deletarProfessor called with ID:", id);
+
+    // Verificar se o professor existe
+    const professorExiste = await prisma.professor.findUnique({
+      where: { ProfessorID: id },
+    });
+    console.log("[DEBUG] findUnique result:", professorExiste);
+
+    if (!professorExiste) {
+      return sendError(reply, 404, "Professor não encontrado");
+    }
+
+    // Excluir (transação se necessário para limpar dependências, mas delete cascade pode cuidar disso)
+    // Se houver dependências sem cascade, precisamos deletar antes?
+    // Usuario está vinculado.
+    // Vamos usar delete simples por enquanto, assumindo cascade no banco ou sem restrição forte.
+    
+    await prisma.professor.delete({
+      where: { ProfessorID: id },
+    });
+
+    return reply.send({
+      mensagem: "Professor removido com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar professor:", error);
+    if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        return sendError(reply, 404, "Professor não encontrado");
+      }
+    return sendError(reply, 500, "Erro interno ao deletar professor");
+  }
+}

@@ -186,6 +186,7 @@ export async function listarCursos(
     return reply.send({
       data: cursos.map((curso) => ({
         ...curso,
+        Professores: curso.Professores.map((p) => p.Professor),
         Nome: curso.Nome.trim(),
         Descricao: curso.Descricao?.trim()
       })),
