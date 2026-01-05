@@ -18,6 +18,7 @@ import cursosRoutes from "./Routers/cursos.routes";
 import sumariosRoutes from "./Routers/sumarios.routes";
 import presencasRoutes from "./Routers/presencas.routes";
 import efetividadesRoutes from "./Routers/efetividades.routes";
+import dashboardRoutes from "./Routers/dashboard.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 
 dotenv.config();
@@ -91,6 +92,7 @@ app.get("/", async (request, reply) => {
       sumarios: "/sumarios",
       presencas: "/presencas",
       efetividades: "/efetividades",
+      dashboard: "/dashboard/stats",
     },
   } as Record<string, unknown>;
 
@@ -132,6 +134,7 @@ app.register(cursosRoutes, { prefix: "/cursos" });
 app.register(sumariosRoutes, { prefix: "/sumarios" });
 app.register(presencasRoutes, { prefix: "/presencas" });
 app.register(efetividadesRoutes, { prefix: "/efetividades" });
+app.register(dashboardRoutes, { prefix: "/dashboard" });
 
 
 if (enableSwagger) {
