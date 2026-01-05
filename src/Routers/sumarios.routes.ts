@@ -10,6 +10,7 @@ import {
   singleSumarioResponseSchema,
   updateSumarioResponseSchema,
   successResponseSchema,
+  CreateSumarioInput,
 } from "../schemas/sumarios.schema";
 import { autenticar } from "../middlewares/authMiddleware";
 import {
@@ -21,14 +22,18 @@ import {
 } from "../controllers/sumarios.controller";
 import { z } from "zod";
 
+import { authorize } from "../middlewares/authorize";
+import { PERMISSIONS } from "../consts/permissions";
+
 export default async function sumariosRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
   app.addHook("onRequest", autenticar);
 
   // Criar Sumário
-  app.post(
+  app.post<{ Body: CreateSumarioInput }>(
     "/",
     {
+      preHandler: authorize([PERMISSIONS.REGISTRAR_SUMARIO]),
       schema: {
         tags: ["Sumários"],
         summary: "Criar um novo sumário",

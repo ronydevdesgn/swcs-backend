@@ -13,6 +13,7 @@ import {
   successResponseSchema,
   batchPresencaSchema,
   batchPresencaResponseSchema,
+  CreatePresencaInput,
 } from "../schemas/presencas.schema";
 import {
   registrarPresenca,
@@ -27,14 +28,18 @@ import { autenticar } from "../middlewares/authMiddleware";
 import * as z from 'zod'
 import { Estado } from "@prisma/client";
 
+import { authorize } from "../middlewares/authorize";
+import { PERMISSIONS } from "../consts/permissions";
+
 export default async function presencasRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
   app.addHook("onRequest", autenticar);
 
   // Registrar presença individual
-  app.post(
+  app.post<{ Body: CreatePresencaInput }>(
     "/",
     {
+      preHandler: authorize([PERMISSIONS.GERIR_PRESENCAS]),
       schema: {
         tags: ["Presenças"],
         summary: "Registrar uma nova presença",

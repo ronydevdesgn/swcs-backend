@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
   nome: string;
   email: string;
   tipo: TipoUsuario;
+  permissoes: string[];
 }
 
 export interface FastifyRequestWithUser extends FastifyRequest {
