@@ -21,9 +21,9 @@ export default {
     '!src/server.ts',
     '!src/tests/**/*.ts',
   ],
+  setupFiles: ['<rootDir>/src/tests/env-setup.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testTimeout: 30000, // 30 segundos de timeout
-  maxWorkers: 1, // Executar testes sequencialmente para evitar conflitos de porta
   forceExit: true, // Forçar saída após os testes
   detectOpenHandles: true, // Detectar handles abertos
   extensionsToTreatAsEsm: ['.ts'],
