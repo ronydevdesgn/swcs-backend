@@ -39,6 +39,8 @@
     "fastify-plugin": "^4.5.1",
     "fastify-type-provider-zod": "^4.0.2",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "mysql2": "^3.10.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.6",

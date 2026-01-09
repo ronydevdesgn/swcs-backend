@@ -1,9 +1,33 @@
 import { z } from "zod";
-import { Estado } from "@prisma/client";
+import { Departamento, Estado } from "@prisma/client";
 
 /**
  * Esquema de validação para criar uma nova presença
  */
+
+export const reportSchema = z.object({
+  startDate: z
+    .string({
+      required_error: "Data é obrigatória",
+      invalid_type_error: "Data deve ser uma string",
+    })
+    .datetime("Data inválida")
+    .describe("Data e hora da presença (ISO 8601)"),
+  endDate: z
+    .string({
+      required_error: "Data é obrigatória",
+      invalid_type_error: "Data deve ser uma string",
+    })
+    .datetime("Data inválida")
+    .describe("Data e hora da presença (ISO 8601)"),
+  departamento: z
+    .nativeEnum(Departamento, {
+      invalid_type_error: "Estado inválido",
+    })
+    .optional()
+    .describe("Novo estado da presença: PRESENTE ou FALTA")
+});
+
 export const presencaSchema = z.object({
   Data: z
     .string({

@@ -13,6 +13,7 @@ import {
   successResponseSchema,
   batchPresencaSchema,
   batchPresencaResponseSchema,
+  reportSchema,
 } from "../schemas/presencas.schema";
 import {
   registrarPresenca,
@@ -25,13 +26,81 @@ import {
 } from "../controllers/presencas.controller";
 import { autenticar } from "../middlewares/authMiddleware";
 import * as z from 'zod'
-import { Estado } from "@prisma/client";
+import { Departamento, Estado } from "@prisma/client";
+import { listPresencasPorMes, reportPresencasPorMes } from "../controllers/report-presencas-por-mes.controller";
 
 export default async function presencasRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
   app.addHook("onRequest", autenticar);
 
   // Registrar presença individual
+
+  app.get(
+    "/report/relatorios",
+    {
+      schema: {
+        tags: ["Presenças"],
+        summary: "Gerar relatório uma nova presença",
+        description:
+          "Registra uma presença para um professor em uma data e estado específicos.",
+         querystring: z.object({
+          startDate: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de início para o filtro (ISO 8601)"),
+          endDate: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de fim para o filtro (ISO 8601)"),
+          departamento: z
+            .nativeEnum(Departamento)
+            .optional()
+            .describe("Filtrar por estado da presença (PRESENTE ou FALTA)")
+        }),
+        response: {
+          201: z.any().describe("Dados da presença registrada"),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    reportPresencasPorMes
+  );
+
+    app.get(
+    "/list/relatorios",
+    {
+      schema: {
+        tags: ["Presenças"],
+        summary: "Gerar relatório uma nova presença",
+        description:
+          "Registra uma presença para um professor em uma data e estado específicos.",
+         querystring: z.object({
+          startDate: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de início para o filtro (ISO 8601)"),
+          endDate: z
+            .string()
+            .datetime()
+            .optional()
+            .describe("Data de fim para o filtro (ISO 8601)"),
+          departamento: z
+            .nativeEnum(Departamento)
+            .optional()
+            .describe("Filtrar por estado da presença (PRESENTE ou FALTA)")
+        }),
+        response: {
+          201: z.any().describe("Relatorio exibido com sucesso"),
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    listPresencasPorMes
+  );
+
   app.post(
     "/",
     {

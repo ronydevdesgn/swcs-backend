@@ -1,6 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiZW1haWwiOiJkYWhsaWFfdG95ODdAeWFob28uY29tIiwidGlwbyI6IlBST0ZFU1NPUiIsIm5vbWUiOiJNYXVyZWVuIFdpemEiLCJpYXQiOjE3NjYwMjczOTYsImV4cCI6MTc2NjExMzc5Nn0.H1H7gnuBTlQgbCp9b9QuJ8nDmxkxBe7y_Mq8YdXaNL8
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJkb25uaWUyQHlhaG9vLmNvbSIsInRpcG8iOiJGVU5DSU9OQVJJTyIsIm5vbWUiOiJDaHJpcyBNYW5uIiwiaWF0IjoxNzY3ODcwODQ1LCJleHAiOjE3Njc5NTcyNDV9.lDaWRV5gup0DSGHlyoTvFGiouUHpiNAj8Y-VVlvMsf0
 ### Health / Root
 GET {{baseUrl}}
 
@@ -9,8 +9,8 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "dahlia_toy87@yahoo.com",
-	"senha": "professor123"
+	"email": "donnie2@yahoo.com",
+	"senha": "funcionario123"
 }
 
 ### Auth - Refresh token
@@ -184,6 +184,16 @@ Authorization: Bearer {{authToken}}
 	"ProfessorID": 1,
 	"Estado": "PRESENTE"
 }
+
+### Gerar relatório
+GET {{baseUrl}}reports/relatorios?startDate=2025-09-01T00:00:00.000Z&endDate=2025-09-02T00:00:00.000Z&departamento=INFORMATICA
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+### listar dados do relatorio de faltas
+GET {{baseUrl}}presencas/list/relatorios?startDate=2025-09-01T00:00:00.000Z&endDate=2025-12-22T00:00:00.000Z&departamento=INFORMATICA
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 ### Registrar presenças em lote
 POST {{baseUrl}}presencas/batch

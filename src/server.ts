@@ -19,6 +19,7 @@ import sumariosRoutes from "./Routers/sumarios.routes";
 import presencasRoutes from "./Routers/presencas.routes";
 import efetividadesRoutes from "./Routers/efetividades.routes";
 import { errorHandler } from "./middlewares/errorHandler";
+import reportsRoutes from "./Routers/report.routes";
 
 dotenv.config();
 
@@ -119,6 +120,7 @@ await app.register(cors, {
 
 await app.register(authRoutes, { prefix: "/auth" });
 await app.register(professorRoutes, { prefix: "/professores" });
+await app.register(reportsRoutes, { prefix: "/reports" });
 await app.register(funcionarioRoutes, { prefix: "/funcionarios" });
 await app.register(usuarioRoutes, { prefix: "/usuarios" });
 await app.register(permissoesRoutes, { prefix: "/permissoes" });
