@@ -13,6 +13,7 @@ import {
   successResponseSchema,
   batchPresencaSchema,
   batchPresencaResponseSchema,
+  CreatePresencaInput,
   reportSchema,
 } from "../schemas/presencas.schema";
 import {
@@ -27,6 +28,9 @@ import {
 import { autenticar } from "../middlewares/authMiddleware";
 import * as z from 'zod'
 import { Departamento, Estado } from "@prisma/client";
+
+import { authorize } from "../middlewares/authorize";
+import { PERMISSIONS } from "../consts/permissions";
 import { listPresencasPorMes, reportPresencasPorMes } from "../controllers/report-presencas-por-mes.controller";
 
 export default async function presencasRoutes(app: FastifyInstance) {
@@ -101,9 +105,10 @@ export default async function presencasRoutes(app: FastifyInstance) {
     listPresencasPorMes
   );
 
-  app.post(
+  app.post<{ Body: CreatePresencaInput }>(
     "/",
     {
+      preHandler: authorize([PERMISSIONS.GERIR_PRESENCAS]),
       schema: {
         tags: ["Presenças"],
         summary: "Registrar uma nova presença",

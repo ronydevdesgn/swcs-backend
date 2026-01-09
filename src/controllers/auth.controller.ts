@@ -73,6 +73,7 @@ export async function loginHandler(
       email: usuario.Email,
       tipo: usuario.Tipo,
       nome: usuario.Nome,
+      permissoes: usuario.Permissoes.map((p) => p.Permissao.Descricao),
     };
 
     // Gerar tokens
@@ -152,6 +153,7 @@ export async function refreshTokenHandler(
       nome: usuario.Nome,
       email: usuario.Email,
       tipo: usuario.Tipo,
+      permissoes: usuario.Permissoes.map((p) => p.Permissao.Descricao),
     };
 
     // Gerar novos tokens

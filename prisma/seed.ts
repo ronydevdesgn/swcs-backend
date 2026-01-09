@@ -27,13 +27,26 @@ async function main() {
 
   // Criar permissões base
   const permissoes = [
+    "Visualizar Dashboard",
     "Registrar Sumário",
     "Gerir Presenças",
     "Visualizar Efetividades",
+    "Acesso total ao sistema",
   ];
 
   await prisma.permissao.createMany({
     data: permissoes.map((p) => ({ Descricao: p })),
+  });
+
+  // Buscar as permissões criadas para associar aos usuários
+  const permissaoDashboard = await prisma.permissao.findFirst({
+    where: { Descricao: "Visualizar Dashboard" },
+  });
+  const permissaoRegistrarSumario = await prisma.permissao.findFirst({
+    where: { Descricao: "Registrar Sumário" },
+  });
+  const permissaoAcessoTotal = await prisma.permissao.findFirst({
+    where: { Descricao: "Acesso total ao sistema" },
   });
 
   // Gerar dados falsos com faker
@@ -73,7 +86,7 @@ async function main() {
         data: {
           Nome: faker.person.fullName(),
           Email: faker.internet.email().toLowerCase(),
-          Cargo: faker.helpers.arrayElement(Object.values(Cargo)),
+          Cargo: faker.helpers.arrayElement(Object.values(Cargo)),      
         },
       })
     );
@@ -81,7 +94,7 @@ async function main() {
 
   // Criar usuários para alguns funcionários e professores
   for (const f of funcionarios) {
-    await prisma.usuario.create({
+    const funcionarioUser = await prisma.usuario.create({
       data: {
         Nome: f.Nome,
         Email: f.Email,
@@ -90,6 +103,16 @@ async function main() {
         Funcionario: { connect: { FuncionarioID: f.FuncionarioID } },
       },
     });
+
+    // Funcionários têm acesso total ao sistema
+    if (permissaoAcessoTotal) {
+      await prisma.usuarioPermissao.create({
+        data: {
+          UsuarioID: funcionarioUser.UsuarioID,
+          PermissaoID: permissaoAcessoTotal.PermissaoID,
+        },
+      });
+    }
   }
 
   for (const p of professores.slice(0, 6)) {
@@ -102,6 +125,24 @@ async function main() {
         Professor: { connect: { ProfessorID: p.ProfessorID } },
       },
     });
+
+    // Professores têm permissão para visualizar dashboard e registrar sumário
+    if (permissaoDashboard) {
+      await prisma.usuarioPermissao.create({
+        data: {
+          UsuarioID: profUser.UsuarioID,
+          PermissaoID: permissaoDashboard.PermissaoID,
+        },
+      });
+    }
+    if (permissaoRegistrarSumario) {
+      await prisma.usuarioPermissao.create({
+        data: {
+          UsuarioID: profUser.UsuarioID,
+          PermissaoID: permissaoRegistrarSumario.PermissaoID,
+        },
+      });
+    }
 
     // Associar professor a um curso aleatório
     await prisma.professorCurso.createMany({

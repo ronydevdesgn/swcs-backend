@@ -71,7 +71,7 @@ export const funcionarioResponseSchema = z.object({
     .object({
       Email: z.string().email().describe("Email do usuário associado"),
       Tipo: z
-        .nativeEnum(z.enum(["FUNCIONARIO", "PROFESSOR", "SUMARISTA"]))
+        .enum(["FUNCIONARIO", "PROFESSOR", "SUMARISTA"])
         .describe("Tipo de usuário (FUNCIONARIO ou PROFESSOR)"),
       Permissoes: z
         .array(

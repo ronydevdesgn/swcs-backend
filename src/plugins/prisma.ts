@@ -67,20 +67,7 @@ const prismaPlugin: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Hook para lidar com erros de conexão durante runtime
-  fastify.addHook("onRequest", async (request, reply) => {
-    try {
-      // Verifica se a conexão ainda está ativa
-      await fastify.prisma.$queryRaw`SELECT 1`;
-    } catch (error) {
-      fastify.log.error("Database connection lost:", error);
-      reply.status(503).send({
-        statusCode: 503,
-        error: "Service Unavailable",
-        message: "Database connection lost",
-      });
-    }
-  });
+
 };
 
 export default fp(prismaPlugin, {
