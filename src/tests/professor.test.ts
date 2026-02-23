@@ -1,5 +1,5 @@
 import { app } from "../server";
-import { makeAuthenticatedRequest } from "./testHelpers";
+import { makeAuthenticatedRequest, cleanupTestData, seedTestPermissions } from "./testHelpers";
 import { Departamento } from "@prisma/client";
 
 describe("Professor Routes", () => {
@@ -7,6 +7,7 @@ describe("Professor Routes", () => {
 
   beforeAll(async () => {
     await app.ready();
+    await seedTestPermissions();
   });
 
   afterAll(async () => {

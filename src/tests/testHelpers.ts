@@ -2,26 +2,39 @@
 import { app } from "../server";
 import { PrismaClient, TipoUsuario } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { uuidv4 } from "zod/v4";
 
-const prisma = new PrismaClient();
+let prismaInstance: PrismaClient;
+
+function getPrisma() {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient();
+  }
+  return prismaInstance;
+}
+
 
 // Token de teste fixo para autenticação
-const TEST_TOKEN = jwt.sign(
-  {
-    userId: uuidv4(),
-    tipo: "FUNCIONARIO",
-    email: "test@example.com",
-    nome: "Usuário Teste",
-  },
-  "test-secret-key",
-  { expiresIn: "1d" }
-);
+const JWT_SECRET = process.env.JWT_SECRET || "minhasecretachave";
+
+export function generateTestToken(userId: number, email: string, tipo: string, permissions: string[] = []) {
+  return jwt.sign(
+    {
+      id: userId,
+      tipo,
+      email,
+      nome: "Usuário Teste",
+      permissoes: permissions,
+    },
+    JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+}
 
 export async function createTestProfessor() {
-  const professor = await prisma.professor.create({
+  const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
+  const professor = await getPrisma().professor.create({
     data: {
-      Nome: `Professor Teste ${Date.now()}`,
+      Nome: `Professor Teste ${uniqueId}`,
       Departamento: "INFORMATICA",
       CargaHoraria: 20,
     },
@@ -30,9 +43,10 @@ export async function createTestProfessor() {
 }
 
 export async function createTestCurso() {
-  const curso = await prisma.curso.create({
+  const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
+  const curso = await getPrisma().curso.create({
     data: {
-      Nome: `Curso Teste ${Date.now()}`,
+      Nome: `Curso Teste ${uniqueId}`,
       Descricao: "Curso para testes",
     },
   });
@@ -40,10 +54,11 @@ export async function createTestCurso() {
 }
 
 export async function createTestFuncionario() {
-  const funcionario = await prisma.funcionario.create({
+  const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
+  const funcionario = await getPrisma().funcionario.create({
     data: {
-      Nome: `Funcionário Teste ${Date.now()}`,
-      Email: `funcionario${Date.now()}@test.com`,
+      Nome: `Funcionário Teste ${uniqueId}`,
+      Email: `funcionario${uniqueId}@test.com`,
       Cargo: "SECRETARIO",
     },
   });
@@ -55,28 +70,127 @@ export async function makeAuthenticatedRequest(
   url: string,
   payload?: any
 ) {
+  let token;
+  const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
+  const usuarioInfo = {
+     email: `test-default-${uniqueId}@example.com`,
+     tipo: "FUNCIONARIO" as TipoUsuario
+   }
+
+  // Verificar se já existe um usuário de teste padrão, senão criar
+  // NOTE: For parallel tests, we almost always want a NEW user to avoid collisions.
+  let user = await getPrisma().usuario.create({
+      data: {
+        Nome: "Usuário Teste Padrão",
+        Email: usuarioInfo.email,
+        SenhaHash: "hashvalidoparateste",
+        Tipo: usuarioInfo.tipo,
+      }
+    });
+  
+  // Assign standard permissions to test user so they can access protected routes
+  const permissionsToAssign = ["Registrar Sumário", "Gerir Presenças", "Visualizar Efetividades"];
+  const assignedPermissions = [];
+  
+  for (const pDesc of permissionsToAssign) {
+     let perm = await getPrisma().permissao.findFirst({ where: { Descricao: pDesc } });
+     if (!perm) {
+       perm = await getPrisma().permissao.create({ data: { Descricao: pDesc } });
+     }
+     await getPrisma().usuarioPermissao.create({
+       data: {
+         UsuarioID: user.UsuarioID,
+         PermissaoID: perm.PermissaoID
+       }
+     });
+     assignedPermissions.push(pDesc);
+  }
+
+  token = generateTestToken(user.UsuarioID, user.Email, user.Tipo, assignedPermissions);
+
   return app.inject({
     method,
     url,
     payload,
     headers: {
-      Authorization: `Bearer ${TEST_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 }
 
+export async function createTestUser(opts: { permissions?: string[], tipo?: TipoUsuario } = {}) {
+  const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
+  const email = `testuser${uniqueId}@test.com`;
+  const tipo = opts.tipo || "FUNCIONARIO";
+  
+  const user = await getPrisma().usuario.create({
+    data: {
+      Nome: "Usuário Teste com Permissões",
+      Email: email,
+      SenhaHash: "hash123",
+      Tipo: tipo,
+    }
+  });
+
+  if (opts.permissions && opts.permissions.length > 0) {
+    // Ensure permissions exist or find them by description
+    for (const pDesc of opts.permissions) {
+      let perm = await getPrisma().permissao.findFirst({ where: { Descricao: pDesc } });
+      if (!perm) {
+        perm = await getPrisma().permissao.create({ data: { Descricao: pDesc } });
+      }
+      await getPrisma().usuarioPermissao.create({
+        data: {
+          UsuarioID: user.UsuarioID,
+          PermissaoID: perm.PermissaoID
+        }
+      });
+    }
+  }
+  
+  // Return user object compatible with generateTestToken
+  return {
+    ...user,
+    permissions: opts.permissions || []
+  };
+}
+
+export async function createProfessorCurso(professorId: number, cursoId: number) {
+  return await getPrisma().professorCurso.create({
+    data: {
+      ProfessorID: professorId,
+      CursoID: cursoId,
+    }
+  });
+}
+
 export async function cleanupTestData() {
-  // Limpar dados de teste em ordem reversa para evitar problemas de foreign key
-  await prisma.usuarioPermissao.deleteMany({});
-  await prisma.refreshToken.deleteMany({});
-  await prisma.passwordReset.deleteMany({});
-  await prisma.efetividade.deleteMany({});
-  await prisma.presenca.deleteMany({});
-  await prisma.sumario.deleteMany({});
-  await prisma.professorCurso.deleteMany({});
-  await prisma.professor.deleteMany({});
-  await prisma.funcionario.deleteMany({});
-  await prisma.curso.deleteMany({});
-  await prisma.permissao.deleteMany({});
-  await prisma.usuario.deleteMany({});
+  // Disable global cleanup for parallel testing
+  // await getPrisma().usuarioPermissao.deleteMany({});
+  // ...
+  console.log("Skipping global cleanup to allow parallel execution");
+}
+
+export async function seedTestPermissions() {
+  // Garantir que permissões 1 e 2 existem para o controller de professor
+  const permissoes = [
+    { PermissaoID: 1, Descricao: "Registrar Sumário" },
+    { PermissaoID: 2, Descricao: "Gerir Presenças" },
+    { PermissaoID: 3, Descricao: "Visualizar Efetividades" }, // Opcional
+  ];
+
+  for (const p of permissoes) {
+    const exists = await getPrisma().permissao.findUnique({ where: { PermissaoID: p.PermissaoID } });
+    if (!exists) {
+        // Tenta criar com ID específico. Se o banco rejeitar (autoincrement), pode ser um problema,
+        // mas MySQL permite se nao houver conflito.
+        // A previous clear makes it likely safe or we might need reset auto-increment.
+        try {
+            await getPrisma().permissao.create({ data: p });
+        } catch (e) {
+            console.warn(`Failed to seed permission ${p.PermissaoID}, trying without ID`, e);
+            await getPrisma().permissao.create({ data: { Descricao: p.Descricao } });
+        }
+    }
+  }
 }

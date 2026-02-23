@@ -3,6 +3,7 @@ import {
   makeAuthenticatedRequest,
   createTestProfessor,
   createTestCurso,
+  cleanupTestData,
 } from "./testHelpers";
 import { Estado } from "@prisma/client";
 

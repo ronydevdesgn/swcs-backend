@@ -3,6 +3,7 @@ import {
   makeAuthenticatedRequest,
   createTestProfessor,
   createTestCurso,
+  createProfessorCurso,
 } from "./testHelpers";
 
 describe("Sumario Routes", () => {
@@ -18,6 +19,7 @@ describe("Sumario Routes", () => {
     const curso = await createTestCurso();
     cursoId = curso.CursoID;
     professorId = professor.ProfessorID;
+    await createProfessorCurso(professorId, cursoId);
   });
 
   afterAll(async () => {
