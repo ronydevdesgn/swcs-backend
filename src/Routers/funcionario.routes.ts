@@ -1,25 +1,23 @@
-import { FastifyInstance } from "fastify";
-import {
-  createFuncionarioSchema,
-  updateFuncionarioSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  createFuncionarioResponseSchema,
-  funcionarioListResponseSchema,
-  singleFuncionarioResponseSchema,
-  updateFuncionarioResponseSchema,
-  errorResponseSchema,
-  successResponseSchema,
-} from "../schemas/funcionario.schema";
-import {
-  criarFuncionario,
-  listarFuncionarios,
-  buscarFuncionario,
-  atualizarFuncionario,
-} from "../controllers/funcionario.controller";
 import { Cargo } from "@prisma/client";
+import { FastifyInstance } from "fastify";
+import * as z from 'zod';
+import {
+    atualizarFuncionario,
+    buscarFuncionario,
+    criarFuncionario,
+    listarFuncionarios,
+} from "../controllers/funcionario.controller";
 import { autenticar } from "../middlewares/authMiddleware";
-import * as z from 'zod'
+import {
+    createFuncionarioResponseSchema,
+    createFuncionarioSchema,
+    errorResponseSchema,
+    funcionarioListResponseSchema,
+    idParamSchema,
+    singleFuncionarioResponseSchema,
+    updateFuncionarioResponseSchema,
+    updateFuncionarioSchema
+} from "../schemas/funcionario.schema";
 
 export default async function funcionarioRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -30,7 +28,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Funcionários"],
+        tags: ["funcionarios"],
         summary: "Criar um novo funcionário",
         description:
           "Cria um novo funcionário com informações de usuário associadas.",
@@ -52,7 +50,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Funcionários"],
+        tags: ["funcionarios"],
         summary: "Listar todos os funcionários",
         description:
           "Retorna uma lista de todos os funcionários com opções de filtro.",
@@ -82,7 +80,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Funcionários"],
+        tags: ["funcionarios"],
         summary: "Buscar funcionário por ID",
         description:
           "Retorna um funcionário específico com base no ID fornecido.",
@@ -103,7 +101,7 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Funcionários"],
+        tags: ["funcionarios"],
         summary: "Atualizar um funcionário existente",
         description:
           "Atualiza as informações de um funcionário e seu usuário associado.",

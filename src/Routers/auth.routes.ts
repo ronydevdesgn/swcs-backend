@@ -1,25 +1,25 @@
 import { FastifyInstance } from "fastify";
-import {
-  loginHandler,
-  refreshTokenHandler,
-  requestPasswordResetHandler,
-  resetPasswordHandler,
-  logoutHandler,
-  meHandler,
-  verificarTipoUsuarioHandler,
-} from "../controllers/auth.controller";
-import {
-  loginSchema,
-  refreshTokenSchema,
-  passwordResetSchemaSwagger,
-  passwordResetRequestSchema,
-  loginResponseSchema,
-  errorResponseSchema,
-  successResponseSchema,
-  usuarioResponseSchema,
-} from "../schemas/auth.schema";
-import { autenticar } from "../middlewares/authMiddleware";
 import { z } from "zod";
+import {
+    loginHandler,
+    logoutHandler,
+    meHandler,
+    refreshTokenHandler,
+    requestPasswordResetHandler,
+    resetPasswordHandler,
+    verificarTipoUsuarioHandler,
+} from "../controllers/auth.controller";
+import { autenticar } from "../middlewares/authMiddleware";
+import {
+    errorResponseSchema,
+    loginResponseSchema,
+    loginSchema,
+    passwordResetRequestSchema,
+    passwordResetSchemaSwagger,
+    refreshTokenSchema,
+    successResponseSchema,
+    usuarioResponseSchema,
+} from "../schemas/auth.schema";
 
 export default async function authRoutes(fastify: FastifyInstance) {
   // Login
@@ -75,7 +75,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     "/refresh",
     {
       schema: {
-        tags: ["refresh"],
+        tags: ["auth"],
         summary: "Renovar token de acesso",
         description: "Renova o token de acesso usando o refresh token",
         body: refreshTokenSchema,

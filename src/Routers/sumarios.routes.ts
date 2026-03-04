@@ -1,29 +1,28 @@
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 import {
-  createSumarioSchema,
-  updateSumarioSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  errorResponseSchema,
-  createSumarioResponseSchema,
-  sumarioListResponseSchema,
-  singleSumarioResponseSchema,
-  updateSumarioResponseSchema,
-  successResponseSchema,
-  CreateSumarioInput,
-} from "../schemas/sumarios.schema";
+    atualizarSumario,
+    buscarSumario,
+    criarSumario,
+    deletarSumario,
+    listarSumarios,
+} from "../controllers/sumarios.controller";
 import { autenticar } from "../middlewares/authMiddleware";
 import {
-  criarSumario,
-  listarSumarios,
-  buscarSumario,
-  atualizarSumario,
-  deletarSumario,
-} from "../controllers/sumarios.controller";
-import { z } from "zod";
+    CreateSumarioInput,
+    createSumarioResponseSchema,
+    createSumarioSchema,
+    errorResponseSchema,
+    idParamSchema,
+    singleSumarioResponseSchema,
+    successResponseSchema,
+    sumarioListResponseSchema,
+    updateSumarioResponseSchema,
+    updateSumarioSchema
+} from "../schemas/sumarios.schema";
 
-import { authorize } from "../middlewares/authorize";
 import { PERMISSIONS } from "../consts/permissions";
+import { authorize } from "../middlewares/authorize";
 
 export default async function sumariosRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -35,7 +34,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     {
       preHandler: authorize([PERMISSIONS.REGISTRAR_SUMARIO]),
       schema: {
-        tags: ["Sumários"],
+        tags: ["sumarios"],
         summary: "Criar um novo sumário",
         description:
           "Cria um novo sumário para um curso e professor específicos.",
@@ -59,7 +58,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Sumários"],
+        tags: ["sumarios"],
         summary: "Listar todos os sumários",
         description:
           "Retorna uma lista paginada de todos os sumários com opções de filtro.",
@@ -111,7 +110,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Sumários"],
+        tags: ["sumarios"],
         summary: "Buscar sumário por ID",
         description: "Retorna um sumário específico com base no ID fornecido.",
         params: idParamSchema,
@@ -131,7 +130,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Sumários"],
+        tags: ["sumarios"],
         summary: "Atualizar um sumário existente",
         description: "Atualiza as informações de um sumário existente.",
         params: idParamSchema,
@@ -155,7 +154,7 @@ export default async function sumariosRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Sumários"],
+        tags: ["sumarios"],
         summary: "Deletar um sumário",
         description: "Remove um sumário do sistema com base no ID fornecido.",
         params: idParamSchema,

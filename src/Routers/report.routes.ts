@@ -1,33 +1,7 @@
+import { Departamento } from "@prisma/client";
 import { FastifyInstance } from "fastify";
-import {
-  presencaSchema,
-  updatePresencaSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  createPresencaResponseSchema,
-  presencaListResponseSchema,
-  singlePresencaResponseSchema,
-  updatePresencaResponseSchema,
-  deletePresencaResponseSchema,
-  errorResponseSchema,
-  successResponseSchema,
-  batchPresencaSchema,
-  batchPresencaResponseSchema,
-  reportSchema,
-} from "../schemas/presencas.schema";
-import {
-  registrarPresenca,
-  listarPresencas,
-  buscarPresencasProfessor,
-  atualizarPresenca,
-  buscarPresencaPorId,
-  deletarPresenca,
-  registrarPresencasEmLote,
-} from "../controllers/presencas.controller";
-import { autenticar } from "../middlewares/authMiddleware";
-import * as z from 'zod'
-import { Departamento, Estado } from "@prisma/client";
-import { listPresencasPorMes, reportPresencasPorMes } from "../controllers/report-presencas-por-mes.controller";
+import * as z from 'zod';
+import { reportPresencasPorMes } from "../controllers/report-presencas-por-mes.controller";
 
 export default async function reportsRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -38,10 +12,10 @@ export default async function reportsRoutes(app: FastifyInstance) {
     "/relatorios",
     {
       schema: {
-        tags: ["Presenças"],
-        summary: "Gerar relatório uma nova presença",
+        tags: ["reports"],
+        summary: "Gerar relatório de presenças por mês",
         description:
-          "Registra uma presença para um professor em uma data e estado específicos.",
+          "Gera um relatório de presenças de professores agrupado por mês, com possibilidade de filtrar por período e departamento.",
          querystring: z.object({
           startDate: z
             .string()
@@ -56,10 +30,10 @@ export default async function reportsRoutes(app: FastifyInstance) {
           departamento: z
             .nativeEnum(Departamento)
             .optional()
-            .describe("Filtrar por estado da presença (PRESENTE ou FALTA)")
+            .describe("Filtrar por departamento")
         }),
         response: {
-          201: z.any().describe("Dados da presença registrada"),
+          200: z.any().describe("Relatório gerado com sucesso"),
         },
         security: [{ bearerAuth: [] }],
       },

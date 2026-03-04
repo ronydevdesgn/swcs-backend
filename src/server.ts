@@ -1,26 +1,26 @@
-import Fastify from "fastify";
-import dotenv from "dotenv";
-import swaggerPlugin from "./plugins/swagger";
-import prismaPlugin from "./plugins/prisma";
 import cors from "@fastify/cors";
+import dotenv from "dotenv";
+import Fastify from "fastify";
 import {
-  validatorCompiler,
-  serializerCompiler,
-  ZodTypeProvider,
+    serializerCompiler,
+    validatorCompiler,
+    ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import prismaPlugin from "./plugins/prisma";
+import swaggerPlugin from "./plugins/swagger";
 
-import authRoutes from "./Routers/auth.routes";
-import professorRoutes from "./Routers/professor.routes";
-import funcionarioRoutes from "./Routers/funcionario.routes";
-import usuarioRoutes from "./Routers/usuario.routes";
-import permissoesRoutes from "./Routers/permissoes.routes";
-import cursosRoutes from "./Routers/cursos.routes";
-import sumariosRoutes from "./Routers/sumarios.routes";
-import presencasRoutes from "./Routers/presencas.routes";
-import efetividadesRoutes from "./Routers/efetividades.routes";
-import dashboardRoutes from "./Routers/dashboard.routes";
 import { errorHandler } from "./middlewares/errorHandler";
+import authRoutes from "./Routers/auth.routes";
+import cursosRoutes from "./Routers/cursos.routes";
+import dashboardRoutes from "./Routers/dashboard.routes";
+import efetividadesRoutes from "./Routers/efetividades.routes";
+import funcionarioRoutes from "./Routers/funcionario.routes";
+import permissoesRoutes from "./Routers/permissoes.routes";
+import presencasRoutes from "./Routers/presencas.routes";
+import professorRoutes from "./Routers/professor.routes";
 import reportsRoutes from "./Routers/report.routes";
+import sumariosRoutes from "./Routers/sumarios.routes";
+import usuarioRoutes from "./Routers/usuario.routes";
 
 dotenv.config();
 
@@ -128,7 +128,7 @@ app.register(cors, {
 
 app.register(authRoutes, { prefix: "/auth" });
 app.register(professorRoutes, { prefix: "/professores" });
-await app.register(reportsRoutes, { prefix: "/reports" });
+app.register(reportsRoutes, { prefix: "/reports" });
 app.register(funcionarioRoutes, { prefix: "/funcionarios" });
 app.register(usuarioRoutes, { prefix: "/usuarios" });
 app.register(permissoesRoutes, { prefix: "/permissoes" });

@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { autenticar } from "../middlewares/authMiddleware";
 import { getDashboardStats } from "../controllers/dashboard.controller";
+import { autenticar } from "../middlewares/authMiddleware";
 import {
-  dashboardStatsResponseSchema,
-  dashboardErrorResponseSchema,
+    dashboardErrorResponseSchema,
+    dashboardStatsResponseSchema,
 } from "../schemas/dashboard.schema";
 
 export default async function dashboardRoutes(app: FastifyInstance) {
@@ -14,7 +14,7 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     "/stats",
     {
       schema: {
-        tags: ["Dashboard"],
+        tags: ["dashboard"],
         summary: "Obter estatísticas gerais",
         description: "Retorna contagens agregadas de entidades do sistema para o dashboard.",
         response: {

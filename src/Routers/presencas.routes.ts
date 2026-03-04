@@ -1,37 +1,34 @@
+import { Departamento, Estado } from "@prisma/client";
 import { FastifyInstance } from "fastify";
+import * as z from 'zod';
 import {
-  presencaSchema,
-  updatePresencaSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  createPresencaResponseSchema,
-  presencaListResponseSchema,
-  singlePresencaResponseSchema,
-  updatePresencaResponseSchema,
-  deletePresencaResponseSchema,
-  errorResponseSchema,
-  successResponseSchema,
-  batchPresencaSchema,
-  batchPresencaResponseSchema,
-  CreatePresencaInput,
-  reportSchema,
-} from "../schemas/presencas.schema";
-import {
-  registrarPresenca,
-  listarPresencas,
-  buscarPresencasProfessor,
-  atualizarPresenca,
-  buscarPresencaPorId,
-  deletarPresenca,
-  registrarPresencasEmLote,
+    atualizarPresenca,
+    buscarPresencaPorId,
+    buscarPresencasProfessor,
+    deletarPresenca,
+    listarPresencas,
+    registrarPresenca,
+    registrarPresencasEmLote,
 } from "../controllers/presencas.controller";
 import { autenticar } from "../middlewares/authMiddleware";
-import * as z from 'zod'
-import { Departamento, Estado } from "@prisma/client";
+import {
+    batchPresencaResponseSchema,
+    batchPresencaSchema,
+    CreatePresencaInput,
+    createPresencaResponseSchema,
+    deletePresencaResponseSchema,
+    errorResponseSchema,
+    idParamSchema,
+    presencaListResponseSchema,
+    presencaSchema,
+    singlePresencaResponseSchema,
+    updatePresencaResponseSchema,
+    updatePresencaSchema
+} from "../schemas/presencas.schema";
 
-import { authorize } from "../middlewares/authorize";
 import { PERMISSIONS } from "../consts/permissions";
 import { listPresencasPorMes, reportPresencasPorMes } from "../controllers/report-presencas-por-mes.controller";
+import { authorize } from "../middlewares/authorize";
 
 export default async function presencasRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -43,7 +40,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/report/relatorios",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Gerar relatório uma nova presença",
         description:
           "Registra uma presença para um professor em uma data e estado específicos.",
@@ -76,7 +73,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/list/relatorios",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Gerar relatório uma nova presença",
         description:
           "Registra uma presença para um professor em uma data e estado específicos.",
@@ -110,7 +107,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     {
       preHandler: authorize([PERMISSIONS.GERIR_PRESENCAS]),
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Registrar uma nova presença",
         description:
           "Registra uma presença para um professor em uma data e estado específicos.",
@@ -133,7 +130,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/batch",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Registrar múltiplas presenças em lote",
         description:
           "Registra múltiplas presenças de uma vez para diferentes professores ou datas.",
@@ -156,7 +153,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Listar presenças com filtros",
         description:
           "Retorna uma lista de presenças, com opções para filtrar por período, estado e professor.",
@@ -197,7 +194,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Buscar presença por ID",
         description:
           "Retorna um registro de presença específico com base no ID fornecido.",
@@ -218,7 +215,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/professor/:id",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Buscar presenças por professor",
         description:
           "Retorna todas as presenças de um professor, com opções de filtro por período e estado.",
@@ -255,7 +252,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Atualizar uma presença existente",
         description:
           "Atualiza as informações de um registro de presença existente.",
@@ -279,7 +276,7 @@ export default async function presencasRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Presenças"],
+        tags: ["presencas"],
         summary: "Remover uma presença",
         description: "Remove um registro de presença com base no ID fornecido.",
         params: idParamSchema,

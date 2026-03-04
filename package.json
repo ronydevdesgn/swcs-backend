@@ -40,8 +40,8 @@
     "fastify-type-provider-zod": "^4.0.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.4",
-    "jspdf-autotable": "^5.0.2",
-    "mysql2": "^3.10.1",
+    "jspdf-autotable": "^5.0.7",
+    "pg": "^8.13.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.6",
     "zod": "^3.24.3"

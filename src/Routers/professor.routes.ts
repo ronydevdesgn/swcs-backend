@@ -1,24 +1,23 @@
+import { Departamento } from "@prisma/client";
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 import {
-  createProfessorSchema,
-  updateProfessorSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  createProfessorResponseSchema,
-  professorListResponseSchema,
-  singleProfessorResponseSchema,
-  updateProfessorResponseSchema,
-  errorResponseSchema,
-} from "../schemas/professor.schema";
-import {
-  criarProfessor,
-  listarProfessores,
-  buscarProfessor,
-  atualizarProfessor,
+    atualizarProfessor,
+    buscarProfessor,
+    criarProfessor,
+    listarProfessores,
 } from "../controllers/professor.controller";
 import { autenticar } from "../middlewares/authMiddleware";
-import { z } from "zod";
-import { Departamento } from "@prisma/client";
+import {
+    createProfessorResponseSchema,
+    createProfessorSchema,
+    errorResponseSchema,
+    idParamSchema,
+    professorListResponseSchema,
+    singleProfessorResponseSchema,
+    updateProfessorResponseSchema,
+    updateProfessorSchema
+} from "../schemas/professor.schema";
 
 export default async function professorRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -29,7 +28,7 @@ export default async function professorRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Professores"],
+        tags: ["professores"],
         summary: "Criar um novo professor",
         description:
           "Cria um novo professor com informações de usuário associadas.",
@@ -51,7 +50,7 @@ export default async function professorRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Professores"],
+        tags: ["professores"],
         summary: "Listar todos os professores",
         description:
           "Retorna uma lista de todos os professores cadastrados, com detalhes de seus cursos e sumários.",
@@ -81,7 +80,7 @@ export default async function professorRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Professores"],
+        tags: ["professores"],
         summary: "Buscar professor por ID",
         description:
           "Retorna um professor específico com base no ID fornecido.",
@@ -102,7 +101,7 @@ export default async function professorRoutes(app: FastifyInstance) {
     "/:id",
     {
       schema: {
-        tags: ["Professores"],
+        tags: ["professores"],
         summary: "Atualizar um professor existente",
         description:
           "Atualiza as informações de um professor e seu usuário associado.",

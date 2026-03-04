@@ -1,5 +1,4 @@
 // prisma/schema.prisma
-
 // Atualizado conforme novo schema com Funcionario, enums e ajustes
 
 generator client {
@@ -7,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -65,7 +64,7 @@ model Professor {
   ProfessorID  Int              @id @default(autoincrement())
   Nome         String           @db.VarChar(100)
   Departamento Departamento
-  CargaHoraria Int              @db.Int
+  CargaHoraria Int
   Cursos       ProfessorCurso[]
   Sumarios     Sumario[]        @relation("ProfessorSumarios")
   Presencas    Presenca[]
@@ -169,14 +168,14 @@ model Presenca {
   @@index([ProfessorID])
   @@index([CursoID])
   @@index([Data])
-  @@index([Data, ProfessorID]) // Índice composto para relatórios de presença
-  @@index([Estado]) // Índice para filtros por estado
+  @@index([Data, ProfessorID])
+  @@index([Estado])
 }
 
 model Efetividade {
   EfetividadeID    Int       @id @default(autoincrement())
   Data             DateTime
-  HorasTrabalhadas Int       @db.Int
+  HorasTrabalhadas Int
   ProfessorID      Int
   CursoID          Int       @default(1)
   Professor        Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Restrict)
@@ -187,7 +186,7 @@ model Efetividade {
   @@index([ProfessorID])
   @@index([CursoID])
   @@index([Data])
-  @@index([Data, ProfessorID]) // Índice composto para relatórios
+  @@index([Data, ProfessorID])
 }
 
 model Permissao {

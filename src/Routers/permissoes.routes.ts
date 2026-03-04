@@ -1,23 +1,21 @@
 import { FastifyInstance } from "fastify";
 import {
-  permissaoSchema,
-  usuarioPermissaoSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  permissaoListResponseSchema,
-  singlePermissaoResponseSchema,
-  usuarioPermissaoListResponseSchema,
-  createPermissaoResponseSchema,
-  atribuirPermissaoResponseSchema,
-  errorResponseSchema,
-} from "../schemas/permissoes.schema";
-import {
-  criarPermissao,
-  atribuirPermissaoUsuario,
-  listarPermissoes,
-  buscarPermissoesPorUsuario,
+    atribuirPermissaoUsuario,
+    buscarPermissoesPorUsuario,
+    criarPermissao,
+    listarPermissoes,
 } from "../controllers/permissoes.controller";
 import { autenticar } from "../middlewares/authMiddleware";
+import {
+    atribuirPermissaoResponseSchema,
+    createPermissaoResponseSchema,
+    errorResponseSchema,
+    idParamSchema,
+    permissaoListResponseSchema,
+    permissaoSchema,
+    usuarioPermissaoListResponseSchema,
+    usuarioPermissaoSchema
+} from "../schemas/permissoes.schema";
 
 export default async function permissoesRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -28,7 +26,7 @@ export default async function permissoesRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Permissões"],
+        tags: ["permissoes"],
         summary: "Criar uma nova permissão",
         description: "Cria uma nova permissão com uma descrição única.",
         body: permissaoSchema,
@@ -48,7 +46,7 @@ export default async function permissoesRoutes(app: FastifyInstance) {
     "/atribuir",
     {
       schema: {
-        tags: ["Permissões"],
+        tags: ["permissoes"],
         summary: "Atribuir permissão a um usuário",
         description: "Atribui uma permissão existente a um usuário específico.",
         body: usuarioPermissaoSchema,
@@ -68,7 +66,7 @@ export default async function permissoesRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Permissões"],
+        tags: ["permissoes"],
         summary: "Listar todas as permissões",
         description:
           "Retorna uma lista de todas as permissões cadastradas no sistema.",
@@ -87,7 +85,7 @@ export default async function permissoesRoutes(app: FastifyInstance) {
     "/usuario/:id",
     {
       schema: {
-        tags: ["Permissões"],
+        tags: ["permissoes"],
         summary: "Buscar permissões por usuário",
         description:
           "Retorna todas as permissões associadas a um ID de usuário específico.",

@@ -1,26 +1,26 @@
 import { FastifyInstance } from "fastify";
 import {
-  createCursoSchema,
-  updateCursoSchema,
-  idParamSchema,
-  listarCursosQuerySchema,
-  departamentoQuerySchema,
-  createCursoResponseSchema,
-  listCursosResponseSchema,
-  singleCursoResponseSchema,
-  updateCursoResponseSchema,
-  deleteCursoResponseSchema,
-  errorResponseSchema,
-} from "../schemas/cursos.schema";
-import {
-  criarCurso,
-  listarCursos,
-  listarCursosPorDepartamento,
-  buscarCurso,
-  atualizarCurso,
-  deletarCurso,
+    atualizarCurso,
+    buscarCurso,
+    criarCurso,
+    deletarCurso,
+    listarCursos,
+    listarCursosPorDepartamento,
 } from "../controllers/cursos.controller";
 import { autenticar } from "../middlewares/authMiddleware";
+import {
+    createCursoResponseSchema,
+    createCursoSchema,
+    deleteCursoResponseSchema,
+    departamentoQuerySchema,
+    errorResponseSchema,
+    idParamSchema,
+    listarCursosQuerySchema,
+    listCursosResponseSchema,
+    singleCursoResponseSchema,
+    updateCursoResponseSchema,
+    updateCursoSchema,
+} from "../schemas/cursos.schema";
 
 export default async function cursoRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -58,8 +58,7 @@ export default async function cursoRoutes(app: FastifyInstance) {
           "Lista todos os cursos com filtros opcionais de busca e departamento",
         querystring: listarCursosQuerySchema,
         response: {
-          // erro com o ststus 200 bloquiando o response
-          // 200: listCursosResponseSchema,
+          200: listCursosResponseSchema,
           400: errorResponseSchema,
           500: errorResponseSchema,
         },

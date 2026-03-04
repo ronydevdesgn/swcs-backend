@@ -1,28 +1,26 @@
 import { FastifyInstance } from "fastify";
 import {
-  updateUsuarioSchema,
-  updateSenhaSchema,
-  idParamSchema,
-  idParamSchemaSwagger,
-  usuarioSchema,
-  createUsuarioResponseSchema,
-  usuarioListResponseSchema,
-  singleUsuarioResponseSchema,
-  updateUsuarioResponseSchema,
-  updateSenhaSchemaSwagger,
-  updateSenhaResponseSchema,
-  errorResponseSchema,
-  deleteUsuarioResponseSchema,
-} from "../schemas/usuario.schema";
-import {
-  listarUsuarios,
-  buscarUsuario,
-  atualizarUsuario,
-  atualizarSenha,
-  criarUsuario,
-  deletarUsuario,
+    atualizarSenha,
+    atualizarUsuario,
+    buscarUsuario,
+    criarUsuario,
+    deletarUsuario,
+    listarUsuarios,
 } from "../controllers/usuario.controller";
 import { autenticar } from "../middlewares/authMiddleware";
+import {
+    createUsuarioResponseSchema,
+    deleteUsuarioResponseSchema,
+    errorResponseSchema,
+    idParamSchema,
+    singleUsuarioResponseSchema,
+    updateSenhaResponseSchema,
+    updateSenhaSchemaSwagger,
+    updateUsuarioResponseSchema,
+    updateUsuarioSchema,
+    usuarioListResponseSchema,
+    usuarioSchema
+} from "../schemas/usuario.schema";
 
 export default async function usuarioRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -33,7 +31,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Criar um novo usuário",
         description:
           "Cria um novo usuário (Professor ou Funcionário) com dados de acesso.",
@@ -56,7 +54,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     {
       onRequest: [autenticar],
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Listar todos os usuários",
         description:
           "Retorna uma lista de todos os usuários cadastrados, incluindo suas permissões.",
@@ -76,7 +74,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     {
       onRequest: [autenticar],
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Buscar usuário por ID",
         description: "Retorna um usuário específico com base no ID fornecido.",
         params: idParamSchema,
@@ -97,7 +95,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     {
       onRequest: [autenticar],
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Atualizar um usuário existente",
         description:
           "Atualiza as informações de um usuário (nome e email) com base no ID.",
@@ -122,7 +120,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     {
       onRequest: [autenticar],
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Atualizar a senha de um usuário",
         description:
           "Permite que um usuário altere sua senha, exigindo a senha atual para validação.",
@@ -147,7 +145,7 @@ export default async function usuarioRoutes(app: FastifyInstance) {
     {
       onRequest: [autenticar],
       schema: {
-        tags: ["Usuários"],
+        tags: ["usuarios"],
         summary: "Deletar um usuário",
         description: "Remove um usuário do sistema com base no ID fornecido.",
         params: idParamSchema,
