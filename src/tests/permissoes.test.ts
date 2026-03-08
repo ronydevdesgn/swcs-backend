@@ -20,8 +20,8 @@ describe("Permissao Routes", () => {
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("PermissaoID");
-    permissaoId = body.data.PermissaoID;
+    expect(body.data).toHaveProperty("permissaoId");
+    permissaoId = body.data.permissaoId;
   });
 
   it("should list all permissoes", async () => {
@@ -40,7 +40,7 @@ describe("Permissao Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.PermissaoID).toBe(permissaoId);
+    expect(response.data.permissaoId).toBe(permissaoId);
   });
 
   it("should update a permissao", async () => {

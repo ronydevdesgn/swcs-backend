@@ -5,6 +5,7 @@ import {
     atualizarProfessor,
     buscarProfessor,
     criarProfessor,
+    deletarProfessor,
     listarProfessores,
 } from "../controllers/professor.controller";
 import { autenticar } from "../middlewares/authMiddleware";
@@ -118,5 +119,25 @@ export default async function professorRoutes(app: FastifyInstance) {
       },
     },
     atualizarProfessor
+  );
+
+  // Deletar professor
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["professores"],
+        summary: "Remover um professor",
+        description: "Remove um professor e seu usuário associado.",
+        params: idParamSchema,
+        response: {
+          200: z.object({ mensagem: z.string() }),
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    deletarProfessor
   );
 }

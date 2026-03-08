@@ -1,8 +1,8 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { verificarToken } from "../utils/jwt";
-import type { JwtPayload } from "jsonwebtoken";
 import { TipoUsuario } from "@prisma/client";
+import { FastifyReply } from "fastify";
+import type { JwtPayload } from "jsonwebtoken";
 import { AuthenticatedUser, FastifyRequestWithUser } from "../utils/http";
+import { verificarToken } from "../utils/jwt";
 
 // Helper para padronizar respostas de erro
 const sendAuthError = (
@@ -86,17 +86,17 @@ export async function autenticar(
       try {
         const userPermissions = await req.server.prisma.usuarioPermissao.findMany(
           {
-            where: { UsuarioID: normalizedUser.id },
+            where: { usuarioId: normalizedUser.id },
             include: {
-              Permissao: {
-                select: { Descricao: true },
+              permissao: {
+                select: { descricao: true },
               },
             },
           }
         );
 
         normalizedUser.permissoes = userPermissions
-          .map((p) => p.Permissao?.Descricao)
+          .map((p) => p.permissao?.descricao)
           .filter((desc): desc is string => typeof desc === "string");
           
       } catch (permError) {

@@ -1,9 +1,9 @@
-import { z } from "zod";
 import { Departamento } from "@prisma/client";
+import { z } from "zod";
 
 // Esquema base para propriedades de professor
 const professorBase = {
-  Nome: z
+  nome: z
     .string({
       required_error: "Nome é obrigatório",
       invalid_type_error: "Nome deve ser uma string",
@@ -11,7 +11,7 @@ const professorBase = {
     .min(3, "Nome deve ter no mínimo 3 caracteres")
     .max(100, "Nome muito longo")
     .describe("Nome completo do professor"),
-  Departamento: z
+  departamento: z
     .nativeEnum(Departamento, {
       required_error: "Departamento é obrigatório",
       invalid_type_error: "Departamento inválido",
@@ -19,7 +19,7 @@ const professorBase = {
     .describe(
       "Departamento do professor (ex: CIENCIAS_DA_COMPUTACAO, MATEMATICA)"
     ),
-  CargaHoraria: z
+  cargaHoraria: z
     .number({
       required_error: "Carga horária é obrigatória",
       invalid_type_error: "Carga horária deve ser um número",
@@ -28,7 +28,7 @@ const professorBase = {
     .min(1, "Carga horária deve ser maior que 0")
     .max(40, "Carga horária não pode exceder 40 horas")
     .describe("Carga horária semanal do professor"),
-  Email: z
+  email: z
     .string({
       required_error: "Email é obrigatório",
       invalid_type_error: "Email deve ser uma string",
@@ -41,7 +41,7 @@ const professorBase = {
 // Esquema para criação de professor
 export const createProfessorSchema = z.object({
   ...professorBase,
-  Senha: z
+  senha: z
     .string({
       required_error: "Senha é obrigatória",
       invalid_type_error: "Senha deve ser uma string",
@@ -73,35 +73,35 @@ export const idParamSchemaSwagger = z.object({
 
 // Esquemas de resposta
 export const cursoDetailsSchema = z.object({
-  CursoID: z.number().describe("ID do curso"),
-  Nome: z.string().describe("Nome do curso"),
+  cursoId: z.number().describe("ID do curso"),
+  nome: z.string().describe("Nome do curso"),
 });
 
 export const sumarioDetailsSchema = z.object({
-  SumarioID: z.number().describe("ID do sumário"),
-  Data: z.string().datetime().describe("Data do sumário"),
-  Conteudo: z.string().describe("Conteúdo do sumário"),
+  sumarioId: z.number().describe("ID do sumário"),
+  data: z.string().datetime().describe("Data do sumário"),
+  conteudo: z.string().describe("Conteúdo do sumário"),
 });
 
 export const presencaDetailsSchema = z.object({
-  PresencaID: z.number().describe("ID da presença"),
-  Data: z.string().datetime().describe("Data da presença"),
-  Estado: z.string().describe("Estado da presença (PRESENTE/FALTA)"),
+  presencaId: z.number().describe("ID da presença"),
+  data: z.string().datetime().describe("Data da presença"),
+  estado: z.string().describe("Estado da presença (PRESENTE/FALTA)"),
 });
 
 export const efetividadeDetailsSchema = z.object({
-  EfetividadeID: z.number().describe("ID da efetividade"),
-  Data: z.string().datetime().describe("Data da efetividade"),
-  Horas: z.number().describe("Horas de efetividade"),
+  efetividadeId: z.number().describe("ID da efetividade"),
+  data: z.string().datetime().describe("Data da efetividade"),
+  horas: z.number().describe("Horas de efetividade"),
 });
 
 export const usuarioDetailsSchema = z.object({
-  Email: z.string().email().describe("Email do usuário associado"),
-  Permissoes: z
+  email: z.string().email().describe("Email do usuário associado"),
+  permissoes: z
     .array(
       z.object({
-        Permissao: z.object({
-          Descricao: z.string().describe("Descrição da permissão"),
+        permissao: z.object({
+          descricao: z.string().describe("Descrição da permissão"),
         }),
       })
     )
@@ -109,32 +109,32 @@ export const usuarioDetailsSchema = z.object({
 });
 
 export const professorResponseSchema = z.object({
-  ProfessorID: z.number().describe("ID único do professor"),
-  Nome: z.string().describe("Nome completo do professor"),
-  Departamento: z
+  professorId: z.number().describe("ID único do professor"),
+  nome: z.string().describe("Nome completo do professor"),
+  departamento: z
     .nativeEnum(Departamento)
     .describe("Departamento do professor"),
-  CargaHoraria: z.number().describe("Carga horária semanal do professor"),
-  Usuario: usuarioDetailsSchema
+  cargaHoraria: z.number().describe("Carga horária semanal do professor"),
+  usuario: usuarioDetailsSchema
     .optional()
     .describe("Informações do usuário associado"),
-  Cursos: z
+  cursos: z
     .array(
       z.object({
-        Curso: cursoDetailsSchema,
+        curso: cursoDetailsSchema,
       })
     )
     .optional()
     .describe("Cursos associados ao professor"),
-  Sumarios: z
+  sumarios: z
     .array(sumarioDetailsSchema)
     .optional()
     .describe("Últimos sumários do professor"),
-  Presencas: z
+  presencas: z
     .array(presencaDetailsSchema)
     .optional()
     .describe("Últimas presenças do professor"),
-  Efetividades: z
+  efetividades: z
     .array(efetividadeDetailsSchema)
     .optional()
     .describe("Últimas efetividades do professor"),

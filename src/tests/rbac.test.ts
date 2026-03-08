@@ -1,6 +1,6 @@
-import { app } from "../server";
-import { generateTestToken, createTestUser, cleanupTestData } from "./testHelpers";
 import { PERMISSIONS } from "../consts/permissions";
+import { app } from "../server";
+import { createTestUser, generateTestToken } from "./testHelpers";
 
 describe("RBAC Authorization", () => {
   let userWithPermission: any;
@@ -16,9 +16,9 @@ describe("RBAC Authorization", () => {
       permissions: [PERMISSIONS.REGISTRAR_SUMARIO]
     });
     tokenWithPermission = generateTestToken(
-      userWithPermission.UsuarioID,
-      userWithPermission.Email,
-      userWithPermission.Tipo,
+      userWithPermission.usuarioId,
+      userWithPermission.email,
+      userWithPermission.tipo,
       userWithPermission.permissions
     );
 
@@ -27,9 +27,9 @@ describe("RBAC Authorization", () => {
       permissions: [] 
     });
     tokenWithoutPermission = generateTestToken(
-      userWithoutPermission.UsuarioID,
-      userWithoutPermission.Email,
-      userWithoutPermission.Tipo,
+      userWithoutPermission.usuarioId,
+      userWithoutPermission.email,
+      userWithoutPermission.tipo,
       userWithoutPermission.permissions
     );
   });
@@ -44,12 +44,12 @@ describe("RBAC Authorization", () => {
     // If we get 400, it means we passed authorization.
 
     const validPayload = {
-        ProfessorID: 1, // Assumptions: IDs might need to be valid based on seed? Or just type check?
+        professorId: 1, // Assumptions: IDs might need to be valid based on seed? Or just type check?
         // Actually, if validation checks DB existence (refinement), it might fail 400.
         // But let's try to satisfy types first.
-        CursoID: 1,
-        Data: new Date().toISOString(),
-        Conteudo: "Conteúdo teste RBAC"
+        cursoId: 1,
+        data: new Date().toISOString(),
+        conteudo: "Conteúdo teste RBAC"
     };
 
     const res = await app.inject({
@@ -69,10 +69,10 @@ describe("RBAC Authorization", () => {
 
   it("should deny access (403) if user lacks permission", async () => {
     const validPayload = {
-        ProfessorID: 1,
-        CursoID: 1,
-        Data: new Date().toISOString(),
-        Conteudo: "Conteúdo teste RBAC"
+        professorId: 1,
+        cursoId: 1,
+        data: new Date().toISOString(),
+        conteudo: "Conteúdo teste RBAC"
     };
 
     const res = await app.inject({

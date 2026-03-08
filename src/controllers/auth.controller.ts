@@ -1,18 +1,18 @@
+import { randomBytes } from "crypto";
 import { FastifyReply, FastifyRequest } from "fastify";
 import {
-  LoginInput,
-  PasswordResetRequestInput,
-  PasswordResetInput,
-  RefreshTokenInput,
+    LoginInput,
+    PasswordResetInput,
+    PasswordResetRequestInput,
+    RefreshTokenInput,
 } from "../schemas/auth.schema";
 import { compararSenha, hashSenha } from "../utils/hash";
-import { gerarToken, gerarRefreshToken } from "../utils/jwt";
-import { randomBytes } from "crypto";
+import { gerarRefreshToken, gerarToken } from "../utils/jwt";
 
 import {
-  AuthenticatedUser,
-  FastifyRequestWithUser,
-  sendError,
+    AuthenticatedUser,
+    FastifyRequestWithUser,
+    sendError,
 } from "../utils/http";
 
 export async function loginHandler(
@@ -29,13 +29,13 @@ export async function loginHandler(
       // Se o tipo foi fornecido, buscar diretamente
       usuario = await prisma.usuario.findFirst({
         where: {
-          AND: [{ Email: email }, { Tipo: tipo }],
+          AND: [{ email: email }, { tipo: tipo }],
         },
         include: {
-          Professor: true,
-          Permissoes: {
+          professor: true,
+          permissoes: {
             include: {
-              Permissao: true,
+              permissao: true,
             },
           },
         },
@@ -44,13 +44,13 @@ export async function loginHandler(
       // Se o tipo não foi fornecido, detectar automaticamente
       usuario = await prisma.usuario.findUnique({
         where: {
-          Email: email,
+          email: email,
         },
         include: {
-          Professor: true,
-          Permissoes: {
+          professor: true,
+          permissoes: {
             include: {
-              Permissao: true,
+              permissao: true,
             },
           },
         },
@@ -62,46 +62,46 @@ export async function loginHandler(
     }
 
     // Verificar senha
-    const senhaValida = await compararSenha(senha, usuario.SenhaHash);
+    const senhaValida = await compararSenha(senha, usuario.senhaHash);
     if (!senhaValida) {
       return sendError(reply, 401, "Credenciais inválidas");
     }
 
     // Criar payload do usuário
     const payload: AuthenticatedUser = {
-      id: usuario.UsuarioID,
-      email: usuario.Email,
-      tipo: usuario.Tipo,
-      nome: usuario.Nome,
-      permissoes: usuario.Permissoes.map((p) => p.Permissao.Descricao),
+      id: usuario.usuarioId,
+      email: usuario.email,
+      tipo: usuario.tipo,
+      nome: usuario.nome,
+      permissoes: usuario.permissoes.map((p) => p.permissao.descricao),
     };
 
     // Gerar tokens
     const accessToken = await gerarToken(payload);
-    const refreshToken = await gerarRefreshToken(usuario.UsuarioID);
+    const refreshToken = await gerarRefreshToken(usuario.usuarioId);
 
     // Salvar refresh token no banco
     await prisma.refreshToken.create({
       data: {
         token: refreshToken,
-        UsuarioID: usuario.UsuarioID,
-        ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+        usuarioId: usuario.usuarioId,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
       },
     });
 
-    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+    const permissoes = usuario.permissoes.map((p) => p.permissao.descricao);
 
-    req.log.info(`Login realizado com sucesso para usuário ${usuario.Email} (Tipo: ${usuario.Tipo})`);
+    req.log.info(`Login realizado com sucesso para usuário ${usuario.email} (Tipo: ${usuario.tipo})`);
 
     return reply.send({
       usuario: {
-        id: usuario.UsuarioID,
-        nome: usuario.Nome,
-        email: usuario.Email,
-        tipo: usuario.Tipo,
-        professor: usuario.Professor ? {
-          professorId: usuario.Professor.ProfessorID,
-          nome: usuario.Professor.Nome
+        id: usuario.usuarioId,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
+        professor: usuario.professor ? {
+          professorId: usuario.professor.professorId,
+          nome: usuario.professor.nome
         } : null,
         permissoes,
       },
@@ -126,16 +126,16 @@ export async function refreshTokenHandler(
     const storedToken = await prisma.refreshToken.findFirst({
       where: {
         token: refreshToken,
-        ExpiresAt: {
+        expiresAt: {
           gt: new Date(),
         },
       },
       include: {
-        Usuario: {
+        usuario: {
           include: {
-            Permissoes: {
+            permissoes: {
               include: {
-                Permissao: true,
+                permissao: true,
               },
             },
           },
@@ -147,41 +147,41 @@ export async function refreshTokenHandler(
       return sendError(reply, 401, "Refresh token inválido ou expirado");
     }
 
-    const usuario = storedToken.Usuario;
+    const usuario = storedToken.usuario;
     const payload: AuthenticatedUser = {
-      id: usuario.UsuarioID,
-      nome: usuario.Nome,
-      email: usuario.Email,
-      tipo: usuario.Tipo,
-      permissoes: usuario.Permissoes.map((p) => p.Permissao.Descricao),
+      id: usuario.usuarioId,
+      nome: usuario.nome,
+      email: usuario.email,
+      tipo: usuario.tipo,
+      permissoes: usuario.permissoes.map((p) => p.permissao.descricao),
     };
 
     // Gerar novos tokens
     const newAccessToken = await gerarToken(payload);
-    const newRefreshToken = await gerarRefreshToken(usuario.UsuarioID);
+    const newRefreshToken = await gerarRefreshToken(usuario.usuarioId);
 
     // Rotação do refresh token (maior segurança)
     await prisma.$transaction([
       prisma.refreshToken.delete({
-        where: { TokenID: storedToken.TokenID },
+        where: { tokenId: storedToken.tokenId },
       }),
       prisma.refreshToken.create({
         data: {
           token: newRefreshToken,
-          UsuarioID: usuario.UsuarioID,
-          ExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          usuarioId: usuario.usuarioId,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         },
       }),
     ]);
 
-    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+    const permissoes = usuario.permissoes.map((p) => p.permissao.descricao);
 
     return reply.send({
       usuario: {
-        id: usuario.UsuarioID,
-        nome: usuario.Nome,
-        email: usuario.Email,
-        tipo: usuario.Tipo,
+        id: usuario.usuarioId,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
         permissoes,
       },
       accessToken: newAccessToken,
@@ -203,7 +203,7 @@ export async function requestPasswordResetHandler(
 
     // Verificar se o usuário existe
     const usuario = await prisma.usuario.findUnique({
-      where: { Email: email },
+      where: { email: email },
     });
 
     // Sempre retornar sucesso por segurança (não revelar se email existe)
@@ -217,11 +217,11 @@ export async function requestPasswordResetHandler(
     // Invalidar tokens de reset anteriores
     await prisma.passwordReset.updateMany({
       where: {
-        UsuarioID: usuario.UsuarioID,
-        Used: false,
-        ExpiresAt: { gt: new Date() },
+        usuarioId: usuario.usuarioId,
+        used: false,
+        expiresAt: { gt: new Date() },
       },
-      data: { Used: true },
+      data: { used: true },
     });
 
     // Gerar novo token de reset
@@ -231,17 +231,17 @@ export async function requestPasswordResetHandler(
     // Salvar token no banco
     await prisma.passwordReset.create({
       data: {
-        UsuarioID: usuario.UsuarioID,
-        Token: tokenHash,
-        ExpiresAt: new Date(Date.now() + 3600000), // 1 hora
+        usuarioId: usuario.usuarioId,
+        token: tokenHash,
+        expiresAt: new Date(Date.now() + 3600000), // 1 hora
       },
     });
 
     // TODO: Implementar envio de email
-    // await enviarEmailRecuperacao(usuario.Email, resetToken);
+    // await enviarEmailRecuperacao(usuario.email, resetToken);
 
     req.log.info(
-      `Token de reset gerado para usuário ${usuario.Email}: ${resetToken}`
+      `Token de reset gerado para usuário ${usuario.email}: ${resetToken}`
     );
 
     return reply.send({ mensagem });
@@ -267,11 +267,11 @@ export async function resetPasswordHandler(
     // Buscar token de reset válido
     const resetRequest = await prisma.passwordReset.findFirst({
       where: {
-        Token: token,
-        Used: false,
-        ExpiresAt: { gt: new Date() },
+        token: token,
+        used: false,
+        expiresAt: { gt: new Date() },
       },
-      include: { Usuario: true },
+      include: { usuario: true },
     });
 
     if (!resetRequest) {
@@ -284,20 +284,20 @@ export async function resetPasswordHandler(
     // Transação para atualizar senha e marcar token como usado
     await prisma.$transaction([
       prisma.usuario.update({
-        where: { UsuarioID: resetRequest.UsuarioID },
-        data: { SenhaHash: senhaHash },
+        where: { usuarioId: resetRequest.usuarioId },
+        data: { senhaHash: senhaHash },
       }),
       prisma.passwordReset.update({
-        where: { PasswordResetID: resetRequest.PasswordResetID },
-        data: { Used: true },
+        where: { passwordResetId: resetRequest.passwordResetId },
+        data: { used: true },
       }),
       // Invalidar todos os refresh tokens do usuário por segurança
       prisma.refreshToken.deleteMany({
-        where: { UsuarioID: resetRequest.UsuarioID },
+        where: { usuarioId: resetRequest.usuarioId },
       }),
     ]);
 
-    req.log.info(`Senha resetada para usuário ID: ${resetRequest.UsuarioID}`);
+    req.log.info(`Senha resetada para usuário ID: ${resetRequest.usuarioId}`);
 
     return reply.send({
       mensagem: "Senha atualizada com sucesso",
@@ -323,7 +323,7 @@ export async function logoutHandler(
     // Invalidar todos os refresh tokens do usuário
     await prisma.refreshToken.deleteMany({
       where: {
-        UsuarioID: req.user.id,
+        usuarioId: req.user.id,
       },
     });
 
@@ -352,12 +352,12 @@ export async function meHandler(
 
     // Buscar dados atualizados do usuário no banco
     const usuario = await prisma.usuario.findUnique({
-      where: { UsuarioID: req.user.id },
+      where: { usuarioId: req.user.id },
       include: {
-        Professor: true,
-        Permissoes: {
+        professor: true,
+        permissoes: {
           include: {
-            Permissao: true,
+            permissao: true,
           },
         },
       },
@@ -367,18 +367,18 @@ export async function meHandler(
       return sendError(reply, 404, "Usuário não encontrado");
     }
 
-    const permissoes = usuario.Permissoes.map((p) => p.Permissao.Descricao);
+    const permissoes = usuario.permissoes.map((p) => p.permissao.descricao);
 
     return reply.send({
       data: {
-        id: usuario.UsuarioID,
-        nome: usuario.Nome,
-        email: usuario.Email,
-        tipo: usuario.Tipo,
-        professor: usuario.Professor ? {
-          nome: usuario.Professor?.Nome,
-          professorId: usuario.Professor?.ProfessorID,
-        } : null, 
+        id: usuario.usuarioId,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
+        professor: usuario.professor ? {
+          nome: usuario.professor?.nome,
+          professorId: usuario.professor?.professorId,
+        } : null,
         permissoes,
       },
     });
@@ -398,10 +398,10 @@ export async function verificarTipoUsuarioHandler(
     const prisma = req.server.prisma;
 
     const usuario = await prisma.usuario.findUnique({
-      where: { Email: email },
+      where: { email: email },
       select: {
-        Tipo: true,
-        Nome: true,
+        tipo: true,
+        nome: true,
       },
     });
 
@@ -410,8 +410,8 @@ export async function verificarTipoUsuarioHandler(
     }
 
     return reply.send({
-      tipo: usuario.Tipo,
-      nome: usuario.Nome,
+      tipo: usuario.tipo,
+      nome: usuario.nome,
       existe: true,
     });
   } catch (error) {

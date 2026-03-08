@@ -1,7 +1,7 @@
 // src/tests/testHelpers.ts
-import { app } from "../server";
 import { PrismaClient, TipoUsuario } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { app } from "../server";
 
 let prismaInstance: PrismaClient;
 
@@ -34,9 +34,9 @@ export async function createTestProfessor() {
   const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
   const professor = await getPrisma().professor.create({
     data: {
-      Nome: `Professor Teste ${uniqueId}`,
-      Departamento: "INFORMATICA",
-      CargaHoraria: 20,
+      nome: `Professor Teste ${uniqueId}`,
+      departamento: "INFORMATICA",
+      cargaHoraria: 20,
     },
   });
   return { professor };
@@ -46,8 +46,8 @@ export async function createTestCurso() {
   const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
   const curso = await getPrisma().curso.create({
     data: {
-      Nome: `Curso Teste ${uniqueId}`,
-      Descricao: "Curso para testes",
+      nome: `Curso Teste ${uniqueId}`,
+      descricao: "Curso para testes",
     },
   });
   return curso;
@@ -57,9 +57,9 @@ export async function createTestFuncionario() {
   const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(7);
   const funcionario = await getPrisma().funcionario.create({
     data: {
-      Nome: `Funcionário Teste ${uniqueId}`,
-      Email: `funcionario${uniqueId}@test.com`,
-      Cargo: "SECRETARIO",
+      nome: `Funcionário Teste ${uniqueId}`,
+      email: `funcionario${uniqueId}@test.com`,
+      cargo: "SECRETARIO",
     },
   });
   return { funcionario };
@@ -81,10 +81,10 @@ export async function makeAuthenticatedRequest(
   // NOTE: For parallel tests, we almost always want a NEW user to avoid collisions.
   let user = await getPrisma().usuario.create({
       data: {
-        Nome: "Usuário Teste Padrão",
-        Email: usuarioInfo.email,
-        SenhaHash: "hashvalidoparateste",
-        Tipo: usuarioInfo.tipo,
+        nome: "Usuário Teste Padrão",
+        email: usuarioInfo.email,
+        senhaHash: "hashvalidoparateste",
+        tipo: usuarioInfo.tipo,
       }
     });
   
@@ -93,20 +93,20 @@ export async function makeAuthenticatedRequest(
   const assignedPermissions = [];
   
   for (const pDesc of permissionsToAssign) {
-     let perm = await getPrisma().permissao.findFirst({ where: { Descricao: pDesc } });
+     let perm = await getPrisma().permissao.findFirst({ where: { descricao: pDesc } });
      if (!perm) {
-       perm = await getPrisma().permissao.create({ data: { Descricao: pDesc } });
+       perm = await getPrisma().permissao.create({ data: { descricao: pDesc } });
      }
      await getPrisma().usuarioPermissao.create({
        data: {
-         UsuarioID: user.UsuarioID,
-         PermissaoID: perm.PermissaoID
+         usuarioId: user.usuarioId,
+         permissaoId: perm.permissaoId
        }
      });
      assignedPermissions.push(pDesc);
   }
 
-  token = generateTestToken(user.UsuarioID, user.Email, user.Tipo, assignedPermissions);
+  token = generateTestToken(user.usuarioId, user.email, user.tipo, assignedPermissions);
 
   return app.inject({
     method,
@@ -125,24 +125,24 @@ export async function createTestUser(opts: { permissions?: string[], tipo?: Tipo
   
   const user = await getPrisma().usuario.create({
     data: {
-      Nome: "Usuário Teste com Permissões",
-      Email: email,
-      SenhaHash: "hash123",
-      Tipo: tipo,
+      nome: "Usuário Teste com Permissões",
+      email: email,
+      senhaHash: "hash123",
+      tipo: tipo,
     }
   });
 
   if (opts.permissions && opts.permissions.length > 0) {
     // Ensure permissions exist or find them by description
     for (const pDesc of opts.permissions) {
-      let perm = await getPrisma().permissao.findFirst({ where: { Descricao: pDesc } });
+      let perm = await getPrisma().permissao.findFirst({ where: { descricao: pDesc } });
       if (!perm) {
-        perm = await getPrisma().permissao.create({ data: { Descricao: pDesc } });
+        perm = await getPrisma().permissao.create({ data: { descricao: pDesc } });
       }
       await getPrisma().usuarioPermissao.create({
         data: {
-          UsuarioID: user.UsuarioID,
-          PermissaoID: perm.PermissaoID
+          usuarioId: user.usuarioId,
+          permissaoId: perm.permissaoId
         }
       });
     }
@@ -158,8 +158,8 @@ export async function createTestUser(opts: { permissions?: string[], tipo?: Tipo
 export async function createProfessorCurso(professorId: number, cursoId: number) {
   return await getPrisma().professorCurso.create({
     data: {
-      ProfessorID: professorId,
-      CursoID: cursoId,
+      professorId: professorId,
+      cursoId: cursoId,
     }
   });
 }
@@ -174,13 +174,13 @@ export async function cleanupTestData() {
 export async function seedTestPermissions() {
   // Garantir que permissões 1 e 2 existem para o controller de professor
   const permissoes = [
-    { PermissaoID: 1, Descricao: "Registrar Sumário" },
-    { PermissaoID: 2, Descricao: "Gerir Presenças" },
-    { PermissaoID: 3, Descricao: "Visualizar Efetividades" }, // Opcional
+    { permissaoId: 1, descricao: "Registrar Sumário" },
+    { permissaoId: 2, descricao: "Gerir Presenças" },
+    { permissaoId: 3, descricao: "Visualizar Efetividades" }, // Opcional
   ];
 
   for (const p of permissoes) {
-    const exists = await getPrisma().permissao.findUnique({ where: { PermissaoID: p.PermissaoID } });
+    const exists = await getPrisma().permissao.findUnique({ where: { permissaoId: p.permissaoId } });
     if (!exists) {
         // Tenta criar com ID específico. Se o banco rejeitar (autoincrement), pode ser um problema,
         // mas MySQL permite se nao houver conflito.
@@ -188,8 +188,8 @@ export async function seedTestPermissions() {
         try {
             await getPrisma().permissao.create({ data: p });
         } catch (e) {
-            console.warn(`Failed to seed permission ${p.PermissaoID}, trying without ID`, e);
-            await getPrisma().permissao.create({ data: { Descricao: p.Descricao } });
+            console.warn(`Failed to seed permission ${p.permissaoId}, trying without ID`, e);
+            await getPrisma().permissao.create({ data: { descricao: p.descricao } });
         }
     }
   }

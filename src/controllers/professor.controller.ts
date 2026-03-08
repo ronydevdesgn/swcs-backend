@@ -1,11 +1,11 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { Departamento, Prisma, TipoUsuario } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
 import {
   CreateProfessorInput,
-  UpdateProfessorInput,
   IdParam,
+  UpdateProfessorInput,
 } from "../schemas/professor.schema";
 import { hashSenha } from "../utils/hash";
-import { TipoUsuario, Departamento, Prisma } from "@prisma/client";
 import { sendError } from "../utils/http";
 
 export async function criarProfessor(
@@ -15,11 +15,11 @@ export async function criarProfessor(
   const prisma = req.server.prisma;
 
   try {
-    const { Nome, Email, Senha, Departamento, CargaHoraria } = req.body;
+    const { nome, email, senha, departamento, cargaHoraria } = req.body;
 
     // Verificar email único
     const emailExiste = await prisma.usuario.findUnique({
-      where: { Email },
+      where: { email },
     });
 
     if (emailExiste) {
@@ -31,31 +31,31 @@ export async function criarProfessor(
       // Criar professor
       const professor = await tx.professor.create({
         data: {
-          Nome,
-          Departamento: Departamento as Departamento,
-          CargaHoraria,
+          nome,
+          departamento: departamento as Departamento,
+          cargaHoraria,
         },
       });
 
       // Hash da senha
-      const senhaHash = await hashSenha(Senha);
+      const senhaHash = await hashSenha(senha);
 
       // Criar usuário associado
       await tx.usuario.create({
         data: {
-          Nome,
-          Email,
-          SenhaHash: senhaHash,
-          Tipo: TipoUsuario.PROFESSOR,
-          Professor: {
+          nome,
+          email,
+          senhaHash: senhaHash,
+          tipo: TipoUsuario.PROFESSOR,
+          professor: {
             connect: {
-              ProfessorID: professor.ProfessorID,
+              professorId: professor.professorId,
             },
           },
-          Permissoes: {
+          permissoes: {
             create: [
-              { PermissaoID: 1 }, // Registrar Sumário
-              { PermissaoID: 2 }, // Gerir Presenças
+              { permissaoId: 1 }, // Registrar Sumário
+              { permissaoId: 2 }, // Gerir Presenças
             ],
           },
         },
@@ -87,34 +87,34 @@ export async function listarProfessores(
   try {
     const professores = await req.server.prisma.professor.findMany({
       include: {
-        Usuario: {
+        usuario: {
           select: {
-            Email: true,
-            Permissoes: {
+            email: true,
+            permissoes: {
               include: {
-                Permissao: true,
+                permissao: true,
               },
             },
           },
         },
-        Cursos: {
+        cursos: {
           select: {
-            CursoID: true,
-            Curso: {
+            cursoId: true,
+            curso: {
               select: {
-                Nome: true,
+                nome: true,
               },
             },
           },
         },
-        Sumarios: {
+        sumarios: {
           select: {
-            SumarioID: true,
-            Data: true,
-            Conteudo: true,
+            sumarioId: true,
+            data: true,
+            conteudo: true,
           },
           orderBy: {
-            Data: "desc",
+            data: "desc",
           },
           take: 5, // Últimos 5 sumários
         },
@@ -137,33 +137,33 @@ export async function buscarProfessor(
 
 
     const professor = await req.server.prisma.professor.findUnique({
-      where: { ProfessorID: id },
+      where: { professorId: id },
       include: {
-        Usuario: {
+        usuario: {
           select: {
-            Email: true,
-            Permissoes: {
+            email: true,
+            permissoes: {
               include: {
-                Permissao: true,
+                permissao: true,
               },
             },
           },
         },
-        Cursos: true,
-        Sumarios: {
+        cursos: true,
+        sumarios: {
           orderBy: {
-            Data: "desc",
+            data: "desc",
           },
         },
-        Presencas: {
+        presencas: {
           orderBy: {
-            Data: "desc",
+            data: "desc",
           },
           take: 30, // Últimos 30 dias
         },
-        Efetividades: {
+        efetividades: {
           orderBy: {
-            Data: "desc",
+            data: "desc",
           },
           take: 30, // Últimos 30 dias
         },
@@ -193,9 +193,9 @@ export async function atualizarProfessor(
 
     // Verificar se o professor existe
     const professorExiste = await prisma.professor.findUnique({
-      where: { ProfessorID: id },
+      where: { professorId: id },
       include: {
-        Usuario: true,
+        usuario: true,
       },
     });
 
@@ -204,9 +204,9 @@ export async function atualizarProfessor(
     }
 
     // Verificar email único se estiver sendo atualizado
-    if (dados.Email && dados.Email !== professorExiste.Usuario?.Email) {
+    if (dados.email && dados.email !== professorExiste.usuario?.email) {
       const emailExiste = await prisma.usuario.findUnique({
-        where: { Email: dados.Email },
+        where: { email: dados.email },
       });
 
       if (emailExiste) {
@@ -217,22 +217,22 @@ export async function atualizarProfessor(
     // Atualizar professor e usuário em uma transação
     const result = await prisma.$transaction(async (tx) => {
       const professor = await tx.professor.update({
-        where: { ProfessorID: id },
+        where: { professorId: id },
         data: {
-          Nome: dados.Nome,
-          Departamento: dados.Departamento
-            ? (dados.Departamento as Departamento)
+          nome: dados.nome,
+          departamento: dados.departamento
+            ? (dados.departamento as Departamento)
             : undefined,
-          CargaHoraria: dados.CargaHoraria,
+          cargaHoraria: dados.cargaHoraria,
         },
       });
 
-      if (dados.Email && professorExiste.Usuario) {
+      if (dados.email && professorExiste.usuario) {
         await tx.usuario.update({
-          where: { UsuarioID: professorExiste.Usuario.UsuarioID },
+          where: { usuarioId: professorExiste.usuario.usuarioId },
           data: {
-            Email: dados.Email,
-            Nome: dados.Nome,
+            email: dados.email,
+            nome: dados.nome,
           },
         });
       }
@@ -274,7 +274,7 @@ export async function deletarProfessor(
 
     // Verificar se o professor existe
     const professorExiste = await prisma.professor.findUnique({
-      where: { ProfessorID: id },
+      where: { professorId: id },
     });
     console.log("[DEBUG] findUnique result:", professorExiste);
 
@@ -282,13 +282,19 @@ export async function deletarProfessor(
       return sendError(reply, 404, "Professor não encontrado");
     }
 
-    // Excluir (transação se necessário para limpar dependências, mas delete cascade pode cuidar disso)
-    // Se houver dependências sem cascade, precisamos deletar antes?
-    // Usuario está vinculado.
-    // Vamos usar delete simples por enquanto, assumindo cascade no banco ou sem restrição forte.
-    
-    await prisma.professor.delete({
-      where: { ProfessorID: id },
+    // Excluir usando transação para limpar o usuário associado
+    await prisma.$transaction(async (tx) => {
+      // Remover o professor
+      await tx.professor.delete({
+        where: { professorId: id },
+      });
+
+      // Se houver um usuário associado, removê-lo também
+      if (professorExiste.usuarioId) {
+        await tx.usuario.delete({
+          where: { usuarioId: professorExiste.usuarioId },
+        });
+      }
     });
 
     return reply.send({

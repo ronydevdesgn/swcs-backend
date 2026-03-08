@@ -1,20 +1,25 @@
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 import {
-    atribuirPermissaoUsuario,
-    buscarPermissoesPorUsuario,
-    criarPermissao,
-    listarPermissoes,
+  atribuirPermissaoUsuario,
+  atualizarPermissao,
+  buscarPermissao,
+  buscarPermissoesPorUsuario,
+  criarPermissao,
+  deletarPermissao,
+  listarPermissoes,
 } from "../controllers/permissoes.controller";
 import { autenticar } from "../middlewares/authMiddleware";
 import {
-    atribuirPermissaoResponseSchema,
-    createPermissaoResponseSchema,
-    errorResponseSchema,
-    idParamSchema,
-    permissaoListResponseSchema,
-    permissaoSchema,
-    usuarioPermissaoListResponseSchema,
-    usuarioPermissaoSchema
+  atribuirPermissaoResponseSchema,
+  createPermissaoResponseSchema,
+  errorResponseSchema,
+  idParamSchema,
+  permissaoListResponseSchema,
+  permissaoSchema,
+  singlePermissaoResponseSchema,
+  usuarioPermissaoListResponseSchema,
+  usuarioPermissaoSchema
 } from "../schemas/permissoes.schema";
 
 export default async function permissoesRoutes(app: FastifyInstance) {
@@ -80,6 +85,26 @@ export default async function permissoesRoutes(app: FastifyInstance) {
     listarPermissoes
   );
 
+  // Buscar permissão por ID
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["permissoes"],
+        summary: "Buscar permissão por ID",
+        description: "Retorna uma permissão específica com base no ID fornecido.",
+        params: idParamSchema,
+        response: {
+          200: singlePermissaoResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    buscarPermissao
+  );
+
   // Buscar permissões por usuário
   app.get(
     "/usuario/:id",
@@ -98,5 +123,49 @@ export default async function permissoesRoutes(app: FastifyInstance) {
       },
     },
     buscarPermissoesPorUsuario
+  );
+
+  // Atualizar permissão
+  app.put(
+    "/:id",
+    {
+      schema: {
+        tags: ["permissoes"],
+        summary: "Atualizar uma permissão",
+        description: "Atualiza a descrição de uma permissão existente.",
+        params: idParamSchema,
+        body: permissaoSchema,
+        response: {
+          200: z.object({
+            mensagem: z.string(),
+            data: z.any()
+          }),
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    atualizarPermissao
+  );
+
+  // Deletar permissão
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["permissoes"],
+        summary: "Remover uma permissão",
+        description: "Remove uma permissão permanentemente do sistema.",
+        params: idParamSchema,
+        response: {
+          200: z.object({ mensagem: z.string() }),
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    deletarPermissao
   );
 }

@@ -1,10 +1,10 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  CreatePermissaoInput,
-  UsuarioPermissaoInput,
-  IdParam,
-} from "../schemas/permissoes.schema";
 import { Prisma } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
+import {
+    CreatePermissaoInput,
+    IdParam,
+    UsuarioPermissaoInput,
+} from "../schemas/permissoes.schema";
 import { sendError } from "../utils/http";
 
 export async function criarPermissao(
@@ -12,11 +12,11 @@ export async function criarPermissao(
   reply: FastifyReply
 ) {
   try {
-    const { Descricao } = req.body;
+    const { descricao } = req.body;
     const prisma = req.server.prisma;
 
     const permissao = await prisma.permissao.create({
-      data: { Descricao },
+      data: { descricao },
     });
 
     return reply.status(201).send({
@@ -40,13 +40,13 @@ export async function atribuirPermissaoUsuario(
   reply: FastifyReply
 ) {
   try {
-    const { UsuarioID, PermissaoID } = req.body;
+    const { usuarioId, permissaoId } = req.body;
     const prisma = req.server.prisma;
 
     await prisma.usuarioPermissao.create({
       data: {
-        UsuarioID,
-        PermissaoID,
+        usuarioId,
+        permissaoId,
       },
     });
 
@@ -72,13 +72,13 @@ export async function listarPermissoes(
   try {
     const permissoes = await req.server.prisma.permissao.findMany({
       include: {
-        Usuarios: {
+        usuarios: {
           include: {
-            Usuario: {
+            usuario: {
               select: {
-                Nome: true,
-                Email: true,
-                Tipo: true,
+                nome: true,
+                email: true,
+                tipo: true,
               },
             },
           },
@@ -100,9 +100,9 @@ export async function buscarPermissoesPorUsuario(
   try {
     const { id } = req.params;
     const permissoes = await req.server.prisma.usuarioPermissao.findMany({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
       include: {
-        Permissao: true,
+        permissao: true,
       },
     });
 
@@ -114,5 +114,98 @@ export async function buscarPermissoesPorUsuario(
       500,
       "Erro interno ao buscar permissões do usuário"
     );
+  }
+}
+
+export async function buscarPermissao(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const prisma = req.server.prisma;
+
+    const permissao = await prisma.permissao.findUnique({
+      where: { permissaoId: id },
+      include: {
+        usuarios: {
+          include: {
+            usuario: {
+              select: {
+                nome: true,
+                email: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!permissao) {
+      return sendError(reply, 404, "Permissão não encontrada");
+    }
+
+    return reply.send({ data: permissao });
+  } catch (error) {
+    req.log.error("Erro ao buscar permissão:", error);
+    return sendError(reply, 500, "Erro interno ao buscar permissão");
+  }
+}
+
+export async function atualizarPermissao(
+  req: FastifyRequest<{ Params: IdParam; Body: CreatePermissaoInput }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const { descricao } = req.body;
+    const prisma = req.server.prisma;
+
+    const permissao = await prisma.permissao.update({
+      where: { permissaoId: id },
+      data: { descricao },
+    });
+
+    return reply.send({
+      mensagem: "Permissão atualizada com sucesso",
+      data: permissao,
+    });
+  } catch (error) {
+    req.log.error("Erro ao atualizar permissão:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return sendError(reply, 404, "Permissão não encontrada");
+    }
+    return sendError(reply, 500, "Erro interno ao atualizar permissão");
+  }
+}
+
+export async function deletarPermissao(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  try {
+    const { id } = req.params;
+    const prisma = req.server.prisma;
+
+    await prisma.permissao.delete({
+      where: { permissaoId: id },
+    });
+
+    return reply.send({
+      mensagem: "Permissão removida com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar permissão:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return sendError(reply, 404, "Permissão não encontrada");
+    }
+    return sendError(reply, 500, "Erro interno ao remover permissão");
   }
 }

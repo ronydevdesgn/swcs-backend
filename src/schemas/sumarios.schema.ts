@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { Curso, Professor } from "@prisma/client";
 
 // Esquema base para campos comuns de sumário
 const sumarioBase = {
-  Conteudo: z
+  conteudo: z
     .string({
       required_error: "Conteúdo é obrigatório",
       invalid_type_error: "Conteúdo deve ser uma string",
@@ -11,21 +10,21 @@ const sumarioBase = {
     .min(3, "Conteúdo deve ter no mínimo 3 caracteres")
     .max(2000, "Conteúdo muito longo")
     .describe("Conteúdo do sumário da aula"),
-  Data: z
+  data: z
     .string({
       required_error: "Data é obrigatória",
       invalid_type_error: "Data deve ser uma string",
     })
     .datetime("Data inválida")
     .describe("Data do sumário (ISO 8601)"),
-  CursoID: z
+  cursoId: z
     .number({
       required_error: "ID do curso é obrigatório",
       invalid_type_error: "ID do curso deve ser um número",
     })
     .positive("ID do curso deve ser positivo")
     .describe("ID do curso associado ao sumário"),
-  ProfessorID: z
+  professorId: z
     .number({
       required_error: "ID do professor é obrigatório",
       invalid_type_error: "ID do professor deve ser um número",
@@ -61,31 +60,31 @@ export const idParamSchemaSwagger = z.object({
 
 // Esquemas de Resposta
 export const cursoDetailsSchema = z.object({
-  CursoID: z.number().describe("ID do curso"),
-  Nome: z.string().describe("Nome do curso"),
-  Descricao: z.string().optional().describe("Descrição do curso"),
+  cursoId: z.number().describe("ID do curso"),
+  nome: z.string().describe("Nome do curso"),
+  descricao: z.string().optional().describe("Descrição do curso"),
 });
 
 export const professorDetailsSchema = z.object({
-  ProfessorID: z.number().describe("ID do professor"),
-  Nome: z.string().describe("Nome do professor"),
-  Departamento: z.string().optional().describe("Departamento do professor"),
-  Usuario: z
+  professorId: z.number().describe("ID do professor"),
+  nome: z.string().describe("Nome do professor"),
+  departamento: z.string().optional().describe("Departamento do professor"),
+  usuario: z
     .object({
-      Email: z.string().email().describe("Email do usuário associado"),
+      email: z.string().email().describe("Email do usuário associado"),
     })
     .optional()
     .describe("Informações de usuário do professor"),
 });
 
 export const sumarioResponseSchema = z.object({
-  SumarioID: z.number().describe("ID único do sumário"),
-  Conteudo: z.string().describe("Conteúdo do sumário"),
-  Data: z.string().datetime().describe("Data do sumário"),
-  CursoID: z.number().describe("ID do curso"),
-  ProfessorID: z.number().describe("ID do professor"),
-  Curso: cursoDetailsSchema.optional().describe("Detalhes do curso associado"),
-  Professor: professorDetailsSchema
+  sumarioId: z.number().describe("ID único do sumário"),
+  conteudo: z.string().describe("Conteúdo do sumário"),
+  data: z.string().datetime().describe("Data do sumário"),
+  cursoId: z.number().describe("ID do curso"),
+  professorId: z.number().describe("ID do professor"),
+  curso: cursoDetailsSchema.optional().describe("Detalhes do curso associado"),
+  professor: professorDetailsSchema
     .optional()
     .describe("Detalhes do professor associado"),
 });

@@ -5,6 +5,7 @@ import {
     atualizarFuncionario,
     buscarFuncionario,
     criarFuncionario,
+    deletarFuncionario,
     listarFuncionarios,
 } from "../controllers/funcionario.controller";
 import { autenticar } from "../middlewares/authMiddleware";
@@ -118,5 +119,25 @@ export default async function funcionarioRoutes(app: FastifyInstance) {
       },
     },
     atualizarFuncionario
+  );
+
+  // Deletar funcionário
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["funcionarios"],
+        summary: "Remover um funcionário",
+        description: "Remove um funcionário e seu usuário associado.",
+        params: idParamSchema,
+        response: {
+          200: z.object({ mensagem: z.string() }),
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    },
+    deletarFuncionario
   );
 }

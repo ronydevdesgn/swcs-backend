@@ -1,8 +1,8 @@
 import { app } from "../server";
 import {
-  makeAuthenticatedRequest,
-  createTestProfessor,
   createTestCurso,
+  createTestProfessor,
+  makeAuthenticatedRequest,
 } from "./testHelpers";
 
 describe("Efetividade Routes", () => {
@@ -16,8 +16,8 @@ describe("Efetividade Routes", () => {
     // Criar dados de teste necessários
     const { professor } = await createTestProfessor();
     const curso = await createTestCurso();
-    professorId = professor.ProfessorID;
-    cursoId = curso.CursoID;
+    professorId = professor.professorId;
+    cursoId = curso.cursoId;
   });
 
   afterAll(async () => {
@@ -28,15 +28,15 @@ describe("Efetividade Routes", () => {
     const res = await makeAuthenticatedRequest("POST", "/efetividades", {
       data: new Date().toISOString(),
       horasTrabalhadas: 5,
-      professorID: professorId,
-      cursoID: cursoId,
+      professorId: professorId,
+      cursoId: cursoId,
     });
 
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("EfetividadeID");
-    efetividadeId = body.data.EfetividadeID;
+    expect(body.data).toHaveProperty("efetividadeId");
+    efetividadeId = body.data.efetividadeId;
   });
 
   it("should list all efetividades", async () => {
@@ -57,7 +57,7 @@ describe("Efetividade Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.EfetividadeID).toBe(efetividadeId);
+    expect(response.data.efetividadeId).toBe(efetividadeId);
   });
 
   it("should update an efetividade", async () => {

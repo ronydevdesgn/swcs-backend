@@ -1,11 +1,10 @@
+import { Estado } from "@prisma/client";
 import { app } from "../server";
 import {
-  makeAuthenticatedRequest,
-  createTestProfessor,
   createTestCurso,
-  cleanupTestData,
+  createTestProfessor,
+  makeAuthenticatedRequest
 } from "./testHelpers";
-import { Estado } from "@prisma/client";
 
 describe("Presenca Routes", () => {
   let presencaId: number;
@@ -18,8 +17,8 @@ describe("Presenca Routes", () => {
     // Criar dados de teste necessários
     const { professor } = await createTestProfessor();
     const curso = await createTestCurso();
-    professorId = professor.ProfessorID;
-    cursoId = curso.CursoID;
+    professorId = professor.professorId;
+    cursoId = curso.cursoId;
   });
 
   afterAll(async () => {
@@ -30,15 +29,15 @@ describe("Presenca Routes", () => {
     const res = await makeAuthenticatedRequest("POST", "/presencas", {
       data: new Date().toISOString(),
       estado: Estado.PRESENTE,
-      professorID: professorId,
-      cursoID: cursoId,
+      professorId: professorId,
+      cursoId: cursoId,
     });
 
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("PresencaID");
-    presencaId = body.data.PresencaID;
+    expect(body.data).toHaveProperty("presencaId");
+    presencaId = body.data.presencaId;
   });
 
   it("should list all presencas", async () => {
@@ -59,7 +58,7 @@ describe("Presenca Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.PresencaID).toBe(presencaId);
+    expect(response.data.presencaId).toBe(presencaId);
   });
 
   it("should update a presenca", async () => {

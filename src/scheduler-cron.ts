@@ -1,7 +1,11 @@
-import cron from 'node-cron'
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import cron from 'node-cron';
+import pg from "pg";
 
-const prisma = new PrismaClient()
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function adicionarFaltasAoProfessoresAutomaticamente(){
     const professorSumario: Array<{professorId: number, isSumario: boolean}> = [] 
@@ -11,30 +15,31 @@ async function adicionarFaltasAoProfessoresAutomaticamente(){
         throw new Error("Nenhum professor existente no banco!")
     }
 
-    const professores_ids = professoresExists.map((professor)=> professor.ProfessorID)
+    const professores_ids = professoresExists.map((professor)=> professor.professorId)
     const date = new Date()
     date.setDate(date.getDate() - 1)
 
-    professores_ids.forEach(async (professorId)=> {
+    for (const professorId of professores_ids) {
         const hasSumario = await prisma.sumario.findFirst({
             where: {
-                ProfessorID: professorId,
-                Data: date
+                professorId: professorId,
+                data: date
             }
-        })
+        });
 
-        professorSumario.push({professorId: professorId, isSumario: !!hasSumario})
+        professorSumario.push({ professorId: professorId, isSumario: !!hasSumario });
 
         const response = await prisma.presenca.create({
             data: {
-                Data: date,
-                Estado: !!hasSumario ? 'PRESENTE' : 'FALTA',
-                ProfessorID: professorId
+                data: date,
+                estado: !!hasSumario ? 'PRESENTE' : 'FALTA',
+                professorId: professorId,
+                cursoId: 1 // Default cursoId as per schema
             }
-        })
+        });
 
-        console.log(response)
-    })    
+        console.log(`Presença registrada para professor ${professorId}: ${response.estado}`);
+    }
 }
 
 

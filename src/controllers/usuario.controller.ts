@@ -1,13 +1,13 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import type {
-  CreateUsuarioInput,
-  UpdateUsuarioInput,
-  UpdateSenhaInput,
-  IdParam,
-} from "../schemas/usuario.schema";
-import { hashSenha, compararSenha } from "../utils/hash";
-import { FastifyRequestWithUser, sendError } from "../utils/http";
 import { Prisma } from "@prisma/client";
+import { FastifyReply } from "fastify";
+import type {
+    CreateUsuarioInput,
+    IdParam,
+    UpdateSenhaInput,
+    UpdateUsuarioInput,
+} from "../schemas/usuario.schema";
+import { compararSenha, hashSenha } from "../utils/hash";
+import { FastifyRequestWithUser, sendError } from "../utils/http";
 
 export async function criarUsuario(
   req: FastifyRequestWithUser,
@@ -16,16 +16,16 @@ export async function criarUsuario(
   try {
     const prisma = req.server.prisma;
     const { nome, email, senha, tipo } = req.body as CreateUsuarioInput;
-    const SenhaHash = await hashSenha(senha);
+    const senhaHash = await hashSenha(senha);
 
     const usuario = await prisma.usuario.create({
       data: {
-        Nome: nome,
-        Email: email,
-        SenhaHash: SenhaHash,
-        Tipo: tipo,
+        nome: nome,
+        email: email,
+        senhaHash: senhaHash,
+        tipo: tipo,
       },
-      include: { Permissoes: true },
+      include: { permissoes: true },
     });
     return reply.status(201).send({
       mensagem: "Usuário criado com sucesso",
@@ -50,23 +50,23 @@ export async function listarUsuarios(
   try {
     const usuarios = await req.server.prisma.usuario.findMany({
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
-        Permissoes: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        permissoes: {
           include: {
-            Permissao: true,
+            permissao: true,
           },
         },
-        Professor: {
+        professor: {
           select: {
-            Departamento: true,
+            departamento: true,
           },
         },
-        Funcionario: {
+        funcionario: {
           select: {
-            Cargo: true,
+            cargo: true,
           },
         },
       },
@@ -86,19 +86,19 @@ export async function buscarUsuario(
   try {
     const { id } = req.params as IdParam;
     const usuario = await req.server.prisma.usuario.findUnique({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
-        Permissoes: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        permissoes: {
           include: {
-            Permissao: true,
+            permissao: true,
           },
         },
-        Professor: true,
-        Funcionario: true,
+        professor: true,
+        funcionario: true,
       },
     });
 
@@ -122,12 +122,12 @@ export async function atualizarUsuario(
     const dados = req.body as UpdateUsuarioInput;
 
     // Verificar se o email já está em uso por outro usuário
-    if (dados.Email) {
+    if (dados.email) {
       const emailExiste = await req.server.prisma.usuario.findFirst({
         where: {
-          Email: dados.Email,
+          email: dados.email,
           NOT: {
-            UsuarioID: id,
+            usuarioId: id,
           },
         },
       });
@@ -138,13 +138,13 @@ export async function atualizarUsuario(
     }
 
     const usuario = await req.server.prisma.usuario.update({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
       data: dados,
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
       },
     });
 
@@ -179,22 +179,22 @@ export async function atualizarSenha(
     const { senhaAtual, novaSenha } = req.body as UpdateSenhaInput;
 
     const usuario = await req.server.prisma.usuario.findUnique({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
     });
 
     if (!usuario) {
       return sendError(reply, 404, "Usuário não encontrado");
     }
 
-    const senhaCorreta = await compararSenha(senhaAtual, usuario.SenhaHash);
+    const senhaCorreta = await compararSenha(senhaAtual, usuario.senhaHash);
     if (!senhaCorreta) {
       return sendError(reply, 401, "Senha atual incorreta");
     }
 
     const novaSenhaHash = await hashSenha(novaSenha);
     await req.server.prisma.usuario.update({
-      where: { UsuarioID: id },
-      data: { SenhaHash: novaSenhaHash },
+      where: { usuarioId: id },
+      data: { senhaHash: novaSenhaHash },
     });
 
     return reply.send({
@@ -215,7 +215,7 @@ export async function deletarUsuario(
     const { id } = req.params as IdParam;
 
     const usuario = await prisma.usuario.delete({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
     });
 
     if (!usuario) {

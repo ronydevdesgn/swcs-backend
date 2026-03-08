@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const cursoBaseSchema = {
-  Nome: z
+  nome: z
     .string({
       required_error: "Nome do curso é obrigatório",
       invalid_type_error: "Nome deve ser uma string",
@@ -9,7 +9,7 @@ const cursoBaseSchema = {
     .min(3, "Nome do curso deve ter no mínimo 3 caracteres")
     .max(100, "Nome do curso muito longo")
     .describe("Nome do curso"),
-  Descricao: z
+  descricao: z
     .string({
       invalid_type_error: "Descrição deve ser uma string",
     })
@@ -17,7 +17,7 @@ const cursoBaseSchema = {
     .max(500, "Descrição muito longa")
     .optional()
     .describe("Descrição opcional do curso"),
-  ProfessorID: z
+  professorId: z
     .number({
       required_error: "ID do professor é obrigatório",
       invalid_type_error: "ID do professor deve ser um número",
@@ -32,9 +32,9 @@ export const createCursoSchema = z.object(cursoBaseSchema);
 
 // Schema para atualizar curso (todos os campos opcionais)
 export const updateCursoSchema = z.object({
-  Nome: cursoBaseSchema.Nome.optional(),
-  Descricao: cursoBaseSchema.Descricao,
-  ProfessorID: cursoBaseSchema.ProfessorID.optional(),
+  nome: cursoBaseSchema.nome.optional(),
+  descricao: cursoBaseSchema.descricao,
+  professorId: cursoBaseSchema.professorId.optional(),
 });
 
 // Schema para parâmetro ID
@@ -74,35 +74,35 @@ export const departamentoQuerySchema = z.object({
 
 // Schemas de resposta
 export const professorResponseSchema = z.object({
-  ProfessorID: z.number().describe("ID único do professor"),
-  Nome: z.string().describe("Nome completo do professor"),
-  Email: z.string().email().describe("Email do professor"),
-  Departamento: z.string().describe("Departamento do professor"),
+  professorId: z.number().describe("ID único do professor"),
+  nome: z.string().describe("Nome completo do professor"),
+  email: z.string().email().describe("Email do professor"),
+  departamento: z.string().describe("Departamento do professor"),
 });
 
 export const sumarioResponseSchema = z.object({
-  SumarioID: z.number().describe("ID único do sumário"),
-  Data: z.string().describe("Data do sumário"),
-  Conteudo: z.string().describe("Conteúdo do sumário"),
+  sumarioId: z.number().describe("ID único do sumário"),
+  data: z.string().describe("Data do sumário"),
+  conteudo: z.string().describe("Conteúdo do sumário"),
 });
 
 export const cursoResponseSchema = z.object({
-  CursoID: z.number().describe("ID único do curso"),
-  Nome: z.string().describe("Nome do curso"),
-  Descricao: z.string().nullable().describe("Descrição do curso"),
-  CreatedAt: z.string().datetime(),
-  UpdatedAt: z.string().datetime(),
-  Professores: z
+  cursoId: z.number().describe("ID único do curso"),
+  nome: z.string().describe("Nome do curso"),
+  descricao: z.string().nullable().describe("Descrição do curso"),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  professores: z
     .array(professorResponseSchema)
     .describe("Lista de professores do curso")
     .optional(),
-  Sumarios: z
+  sumarios: z
     .array(sumarioResponseSchema)
     .optional()
     .describe("Lista de sumários do curso"),
   _count: z
     .object({
-      Sumarios: z.number().describe("Total de sumários do curso"),
+      sumarios: z.number().describe("Total de sumários do curso"),
     })
     .optional(),
 });

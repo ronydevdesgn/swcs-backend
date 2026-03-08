@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { Departamento, Estado } from "@prisma/client";
+import { z } from "zod";
 
 /**
  * Esquema de validação para criar uma nova presença
@@ -29,28 +29,28 @@ export const reportSchema = z.object({
 });
 
 export const presencaSchema = z.object({
-  Data: z
+  data: z
     .string({
       required_error: "Data é obrigatória",
       invalid_type_error: "Data deve ser uma string",
     })
     .datetime("Data inválida")
     .describe("Data e hora da presença (ISO 8601)"),
-  ProfessorID: z
+  professorId: z
     .number({
       required_error: "ID do professor é obrigatório",
       invalid_type_error: "ID do professor deve ser um número",
     })
     .positive("ID do professor deve ser positivo")
     .describe("ID numérico do professor"),
-  CursoID: z
+  cursoId: z
     .number({
       required_error: "ID do curso é obrigatório",
       invalid_type_error: "ID do curso deve ser um número",
     })
     .positive("ID do curso deve ser positivo")
     .describe("ID numérico do curso"),
-  Estado: z
+  estado: z
     .nativeEnum(Estado, {
       required_error: "Estado é obrigatório",
       invalid_type_error: "Estado inválido",
@@ -68,22 +68,22 @@ export const batchPresencaSchema = z.object({
 
 // Esquema para atualização de presença (todas as propriedades opcionais)
 export const updatePresencaSchema = z.object({
-  Data: z
+  data: z
     .string()
     .datetime("Data inválida")
     .optional()
     .describe("Nova data e hora da presença (ISO 8601)"),
-  ProfessorID: z
+  professorId: z
     .number()
     .positive("ID do professor deve ser positivo")
     .optional()
     .describe("Novo ID numérico do professor"),
-  CursoID: z
+  cursoId: z
     .number()
     .positive("ID do curso deve ser positivo")
     .optional()
     .describe("Novo ID numérico do curso"),
-  Estado: z
+  estado: z
     .nativeEnum(Estado, {
       invalid_type_error: "Estado inválido",
     })
@@ -107,16 +107,16 @@ export const idParamSchemaSwagger = z.object({
 
 // Esquemas de resposta
 export const professorDetailsSchema = z.object({
-  Nome: z.string().describe("Nome do professor"),
-  Departamento: z.string().describe("Departamento do professor"),
+  nome: z.string().describe("Nome do professor"),
+  departamento: z.string().describe("Departamento do professor"),
 });
 
 export const presencaResponseSchema = z.object({
-  PresencaID: z.number().describe("ID único da presença"),
-  Data: z.string().datetime().describe("Data e hora da presença"),
-  Estado: z.nativeEnum(Estado).describe("Estado da presença"),
-  ProfessorID: z.number().describe("ID do professor"),
-  Professor: professorDetailsSchema
+  presencaId: z.number().describe("ID único da presença"),
+  data: z.string().datetime().describe("Data e hora da presença"),
+  estado: z.nativeEnum(Estado).describe("Estado da presença"),
+  professorId: z.number().describe("ID do professor"),
+  professor: professorDetailsSchema
     .optional()
     .describe("Detalhes do professor associado"),
 });

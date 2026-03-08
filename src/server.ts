@@ -41,38 +41,8 @@ export const app = Fastify({
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Normalização de payloads (aceita campos em caixa baixa vindos dos testes)
-app.addHook("preValidation", async (req) => {
-  const body = req.body as any;
-  if (body && typeof body === "object" && !Array.isArray(body)) {
-    const mapping: Record<string, string> = {
-      email: "Email",
-      senha: "Senha",
-      nome: "Nome",
-      tipo: "Tipo",
-      descricao: "Descricao",
-      cargo: "Cargo",
-      data: "Data",
-      conteudo: "Conteudo",
-      horasTrabalhadas: "HorasTrabalhadas",
-      professorID: "ProfessorID",
-      cursoID: "CursoID",
-      sumarioID: "SumarioID",
-      presencaID: "PresencaID",
-      efetividadeID: "EfetividadeID",
-      funcionarioID: "FuncionarioID",
-      departamento: "Departamento",
-      cargaHoraria: "CargaHoraria",
-      permissoes: "Permissoes",
-    };
-    for (const [key, val] of Object.entries(mapping)) {
-      if (body[key] !== undefined && body[val] === undefined) {
-        body[val] = body[key];
-      }
-    }
-    req.body = body;
-  }
-});
+// Normalização de payloads Removida (Agora usamos camelCase diretamente)
+
 
 // Habilita/Desabilita Swagger conforme ambiente (desabilitado por padrão)
 const enableSwagger = process.env.SWAGGER_ENABLED === "true";

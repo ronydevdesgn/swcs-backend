@@ -1,6 +1,6 @@
+import { TipoUsuario } from "@prisma/client";
 import { app } from "../server";
 import { makeAuthenticatedRequest } from "./testHelpers";
-import { TipoUsuario } from "@prisma/client";
 
 describe("Usuario Routes", () => {
   let usuarioId: number;
@@ -24,8 +24,8 @@ describe("Usuario Routes", () => {
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("UsuarioID");
-    usuarioId = body.data.UsuarioID;
+    expect(body.data).toHaveProperty("usuarioId");
+    usuarioId = body.data.usuarioId;
   });
 
   it("should get all usuarios", async () => {
@@ -41,7 +41,7 @@ describe("Usuario Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.UsuarioID).toBe(usuarioId);
+    expect(response.data.usuarioId).toBe(usuarioId);
   });
 
   it("should update a usuario", async () => {

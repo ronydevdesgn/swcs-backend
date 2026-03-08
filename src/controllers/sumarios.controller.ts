@@ -1,10 +1,10 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { Prisma } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
 import {
   CreateSumarioInput,
-  UpdateSumarioInput,
   IdParam,
+  UpdateSumarioInput,
 } from "../schemas/sumarios.schema";
-import { Prisma } from "@prisma/client";
 import { sendError } from "../utils/http";
 
 export async function criarSumario(
@@ -14,10 +14,10 @@ export async function criarSumario(
   const prisma = req.server.prisma;
 
   try {
-    const { Conteudo, Data, CursoID, ProfessorID } = req.body;
+    const { conteudo, data, cursoId, professorId } = req.body;
 
     // Validar data
-    const dataSumario = new Date(Data);
+    const dataSumario = new Date(data);
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999);
 
@@ -34,15 +34,15 @@ export async function criarSumario(
       // Verificar se o curso e professor existem
       const [curso, professor] = await Promise.all([
         tx.curso.findUnique({
-          where: { CursoID },
+          where: { cursoId: cursoId },
           select: {
-            Nome: true,
-            Professores: {
+            nome: true,
+            professores: {
               select: {
-                Professor: {
+                professor: {
                   select: {
-                    Nome: true,
-                    Departamento: true,
+                    nome: true,
+                    departamento: true,
                   },
                 },
               },
@@ -50,12 +50,12 @@ export async function criarSumario(
           },
         }),
         tx.professor.findUnique({
-          where: { ProfessorID },
+          where: { professorId: professorId },
           select: {
-            Nome: true,
-            Cursos: {
+            nome: true,
+            cursos: {
               select: {
-                CursoID: true,
+                cursoId: true,
               },
             },
           },
@@ -63,52 +63,44 @@ export async function criarSumario(
       ]);
 
       if (!curso) {
-        return sendError(reply, 404, "Curso não encontrado");
+        throw new Error("Curso não encontrado");
       }
 
       if (!professor) {
-        return sendError(reply, 404, "Professor não encontrado");
+        throw new Error("Professor não encontrado");
       }
 
       // Verificar se o professor está associado ao curso
-      const professorNoCurso = professor.Cursos.some(
-        (c) => c.CursoID === CursoID
+      const professorNoCurso = professor.cursos.some(
+        (c) => c.cursoId === cursoId
       );
       if (!professorNoCurso) {
-        return sendError(
-          reply,
-          403,
-          "Professor não está associado a este curso"
-        );
+        throw new Error("Professor não está associado a este curso");
       }
 
       // Verificar se já existe sumário para esta data e curso
       const sumarioExistente = await tx.sumario.findFirst({
         where: {
-          Data: dataSumario,
-          CursoID,
+          data: dataSumario,
+          cursoId,
         },
       });
 
       if (sumarioExistente) {
-        return sendError(
-          reply,
-          409,
-          "Já existe um sumário para este curso nesta data"
-        );
+        throw new Error("Já existe um sumário para este curso nesta data");
       }
 
       // Criar o sumário
       return await tx.sumario.create({
         data: {
-          Conteudo,
-          Data: dataSumario,
-          CursoID,
-          ProfessorID,
+          conteudo,
+          data: dataSumario,
+          cursoId,
+          professorId,
         },
         include: {
-          Curso: true,
-          Professor: true,
+          curso: true,
+          professor: true,
         },
       });
     });
@@ -119,6 +111,21 @@ export async function criarSumario(
     });
   } catch (error) {
     req.log.error("Erro ao criar sumário:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+
+    if (errorMessage === "Curso não encontrado" || errorMessage === "Professor não encontrado") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    if (errorMessage === "Professor não está associado a este curso") {
+      return sendError(reply, 403, errorMessage);
+    }
+
+    if (errorMessage === "Já existe um sumário para este curso nesta data") {
+      return sendError(reply, 409, errorMessage);
+    }
+
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
@@ -166,13 +173,13 @@ export async function listarSumarios(
     // Construir filtros
     const where: Prisma.SumarioWhereInput = {
       ...(search && {
-        Conteudo: { contains: search },
+        conteudo: { contains: search },
       }),
-      ...(cursoId && { CursoID: parseInt(cursoId, 10) }),
-      ...(professorId && { ProfessorID: parseInt(professorId, 10) }),
+      ...(cursoId && { cursoId: parseInt(cursoId, 10) }),
+      ...(professorId && { professorId: parseInt(professorId, 10) }),
       ...(dataInicio || dataFim
         ? {
-            Data: {
+            data: {
               ...(dataInicio && { gte: new Date(dataInicio) }),
               ...(dataFim && { lte: new Date(dataFim) }),
             },
@@ -185,36 +192,36 @@ export async function listarSumarios(
       prisma.sumario.findMany({
         where,
         include: {
-          Curso: {
+          curso: {
             select: {
-              Nome: true,
-              Descricao: true,
-              Professores: {
+              nome: true,
+              descricao: true,
+              professores: {
                 select: {
-                  Professor: {
+                  professor: {
                     select: {
-                      Nome: true,
-                      Departamento: true,
+                      nome: true,
+                      departamento: true,
                     },
                   },
                 },
               },
             },
           },
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
-              Usuario: {
+              nome: true,
+              departamento: true,
+              usuario: {
                 select: {
-                  Email: true,
+                  email: true,
                 },
               },
             },
           },
         },
         orderBy: {
-          Data: "desc",
+          data: "desc",
         },
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
@@ -251,31 +258,31 @@ export async function buscarSumario(
     const { id } = req.params;
 
     const sumario = await prisma.sumario.findUnique({
-      where: { SumarioID: id },
+      where: { sumarioId: id },
       include: {
-        Curso: {
+        curso: {
           select: {
-            Nome: true,
-            Descricao: true,
-            Professores: {
+            nome: true,
+            descricao: true,
+            professores: {
               select: {
-                Professor: {
+                professor: {
                   select: {
-                    Nome: true,
-                    Departamento: true,
+                    nome: true,
+                    departamento: true,
                   },
                 },
               },
             },
           },
         },
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
-            Usuario: {
+            nome: true,
+            departamento: true,
+            usuario: {
               select: {
-                Email: true,
+                email: true,
               },
             },
           },
@@ -305,8 +312,8 @@ export async function atualizarSumario(
     const dados = req.body;
 
     // Validar data se fornecida
-    if (dados.Data) {
-      const dataSumario = new Date(dados.Data);
+    if (dados.data) {
+      const dataSumario = new Date(dados.data);
       const hoje = new Date();
       hoje.setHours(23, 59, 59, 999);
 
@@ -323,11 +330,11 @@ export async function atualizarSumario(
     const sumario = await prisma.$transaction(async (tx) => {
       // Verificar se o sumário existe
       const sumarioExiste = await tx.sumario.findUnique({
-        where: { SumarioID: id },
+        where: { sumarioId: id },
         include: {
-          Curso: {
+          curso: {
             select: {
-              CursoID: true,
+              cursoId: true,
             },
           },
         },
@@ -338,21 +345,21 @@ export async function atualizarSumario(
       }
 
       // Se houver mudança de curso ou professor, fazer validações
-      if (dados.CursoID || dados.ProfessorID) {
-        const cursoId = dados.CursoID || sumarioExiste.Curso.CursoID;
-        const professorId = dados.ProfessorID || sumarioExiste.ProfessorID;
+      if (dados.cursoId || dados.professorId) {
+        const cursoId = dados.cursoId || sumarioExiste.curso.cursoId;
+        const professorId = dados.professorId || sumarioExiste.professorId;
 
         const [curso, professor] = await Promise.all([
-          dados.CursoID
-            ? tx.curso.findUnique({ where: { CursoID: dados.CursoID } })
+          dados.cursoId
+            ? tx.curso.findUnique({ where: { cursoId: dados.cursoId } })
             : null,
-          dados.ProfessorID
+          dados.professorId
             ? tx.professor.findUnique({
-                where: { ProfessorID: dados.ProfessorID },
+                where: { professorId: dados.professorId },
                 include: {
-                  Cursos: {
+                  cursos: {
                     select: {
-                      CursoID: true,
+                      cursoId: true,
                     },
                   },
                 },
@@ -360,18 +367,18 @@ export async function atualizarSumario(
             : null,
         ]);
 
-        if (dados.CursoID && !curso) {
+        if (dados.cursoId && !curso) {
           return sendError(reply, 404, "Curso não encontrado");
         }
 
-        if (dados.ProfessorID) {
+        if (dados.professorId) {
           if (!professor) {
             return sendError(reply, 404, "Professor não encontrado");
           }
 
           // Verificar se o professor está associado ao curso
-          const professorNoCurso = professor.Cursos.some(
-            (c) => c.CursoID === cursoId
+          const professorNoCurso = professor.cursos.some(
+            (c) => c.cursoId === cursoId
           );
           if (!professorNoCurso) {
             return sendError(
@@ -383,13 +390,13 @@ export async function atualizarSumario(
         }
 
         // Verificar se já existe sumário para a data no curso
-        if (dados.Data) {
+        if (dados.data) {
           const sumarioExistente = await tx.sumario.findFirst({
             where: {
-              Data: new Date(dados.Data),
-              CursoID: cursoId,
+              data: new Date(dados.data),
+              cursoId: cursoId,
               NOT: {
-                SumarioID: id,
+                sumarioId: id,
               },
             },
           });
@@ -406,24 +413,24 @@ export async function atualizarSumario(
 
       // Atualizar o sumário
       return await tx.sumario.update({
-        where: { SumarioID: id },
+        where: { sumarioId: id },
         data: {
-          Conteudo: dados.Conteudo,
-          Data: dados.Data ? new Date(dados.Data) : undefined,
-          CursoID: dados.CursoID,
-          ProfessorID: dados.ProfessorID,
+          conteudo: dados.conteudo,
+          data: dados.data ? new Date(dados.data) : undefined,
+          cursoId: dados.cursoId,
+          professorId: dados.professorId,
         },
         include: {
-          Curso: {
+          curso: {
             select: {
-              Nome: true,
-              Descricao: true,
+              nome: true,
+              descricao: true,
             },
           },
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
+              nome: true,
+              departamento: true,
             },
           },
         },
@@ -461,11 +468,11 @@ export async function deletarSumario(
 
     // Verificar se o sumário existe antes de tentar excluir
     const sumario = await prisma.sumario.findUnique({
-      where: { SumarioID: id },
+      where: { sumarioId: id },
       include: {
-        Curso: {
+        curso: {
           select: {
-            Nome: true,
+            nome: true,
           },
         },
       },
@@ -477,15 +484,15 @@ export async function deletarSumario(
 
     // Excluir o sumário
     await prisma.sumario.delete({
-      where: { SumarioID: id },
+      where: { sumarioId: id },
     });
 
     return reply.send({
       mensagem: "Sumário removido com sucesso",
       data: {
         id,
-        curso: sumario.Curso.Nome,
-        data: sumario.Data,
+        curso: sumario.curso.nome,
+        data: sumario.data,
       },
     });
   } catch (error) {

@@ -1,6 +1,6 @@
-import { app } from "../server";
-import { makeAuthenticatedRequest, cleanupTestData, seedTestPermissions } from "./testHelpers";
 import { Cargo } from "@prisma/client";
+import { app } from "../server";
+import { makeAuthenticatedRequest, seedTestPermissions } from "./testHelpers";
 
 describe("Funcionario Routes", () => {
   let funcionarioId: number;
@@ -25,8 +25,8 @@ describe("Funcionario Routes", () => {
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("FuncionarioID");
-    funcionarioId = body.data.FuncionarioID;
+    expect(body.data).toHaveProperty("funcionarioId");
+    funcionarioId = body.data.funcionarioId;
   });
 
   it("should list all funcionarios", async () => {
@@ -45,7 +45,7 @@ describe("Funcionario Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.FuncionarioID).toBe(funcionarioId);
+    expect(response.data.funcionarioId).toBe(funcionarioId);
   });
 
   it("should update a funcionario", async () => {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Esquema para criação de permissão
 export const permissaoSchema = z.object({
-  Descricao: z
+  descricao: z
     .string({
       required_error: "Descrição é obrigatória",
       invalid_type_error: "Descrição deve ser uma string",
@@ -14,14 +14,14 @@ export const permissaoSchema = z.object({
 
 // Esquema para atribuição/remoção de permissão a usuário
 export const usuarioPermissaoSchema = z.object({
-  UsuarioID: z
+  usuarioId: z
     .number({
       required_error: "ID do usuário é obrigatório",
       invalid_type_error: "ID do usuário deve ser um número",
     })
     .positive("ID do usuário deve ser positivo")
     .describe("ID único do usuário"),
-  PermissaoID: z
+  permissaoId: z
     .number({
       required_error: "ID da permissão é obrigatório",
       invalid_type_error: "ID da permissão deve ser um número",
@@ -45,18 +45,18 @@ export const idParamSchemaSwagger = z.object({
 
 // Response schemas for swagger
 export const permissaoResponseSchema = z.object({
-  PermissaoID: z.number().describe("ID único da permissão"),
-  Descricao: z.string().describe("Descrição da permissão"),
-  Usuarios: z
+  permissaoId: z.number().describe("ID único da permissão"),
+  descricao: z.string().describe("Descrição da permissão"),
+  usuarios: z
     .array(
       z.object({
-        UsuarioID: z.number().describe("ID do usuário"),
-        PermissaoID: z.number().describe("ID da permissão"),
-        Usuario: z
+        usuarioId: z.number().describe("ID do usuário"),
+        permissaoId: z.number().describe("ID da permissão"),
+        usuario: z
           .object({
-            Nome: z.string().describe("Nome do usuário"),
-            Email: z.string().email().describe("Email do usuário"),
-            Tipo: z.string().describe("Tipo de usuário"),
+            nome: z.string().describe("Nome do usuário"),
+            email: z.string().email().describe("Email do usuário"),
+            tipo: z.string().describe("Tipo de usuário"),
           })
           .optional()
           .describe("Dados do usuário (opcional)"),
@@ -75,12 +75,12 @@ export const singlePermissaoResponseSchema = z.object({
 });
 
 export const usuarioPermissaoResponseSchema = z.object({
-  UsuarioID: z.number().describe("ID do usuário"),
-  PermissaoID: z.number().describe("ID da permissão"),
-  Permissao: z
+  usuarioId: z.number().describe("ID do usuário"),
+  permissaoId: z.number().describe("ID da permissão"),
+  permissao: z
     .object({
-      PermissaoID: z.number().describe("ID da permissão"),
-      Descricao: z.string().describe("Descrição da permissão"),
+      permissaoId: z.number().describe("ID da permissão"),
+      descricao: z.string().describe("Descrição da permissão"),
     })
     .describe("Detalhes da permissão"),
 });

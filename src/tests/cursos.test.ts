@@ -1,8 +1,7 @@
 import { app } from "../server";
 import {
-  makeAuthenticatedRequest,
-  createTestCurso,
   createTestProfessor,
+  makeAuthenticatedRequest
 } from "./testHelpers";
 
 describe("Curso Routes", () => {
@@ -14,7 +13,7 @@ describe("Curso Routes", () => {
 
     // Criar dados de teste necessários
     const { professor } = await createTestProfessor();
-    professorId = professor.ProfessorID;
+    professorId = professor.professorId;
   });
 
   afterAll(async () => {
@@ -25,14 +24,14 @@ describe("Curso Routes", () => {
     const res = await makeAuthenticatedRequest("POST", "/cursos", {
       nome: "Engenharia de Software",
       descricao: "Curso focado em desenvolvimento de software e boas práticas.",
-      professorID: professorId,
+      professorId: professorId,
     });
 
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("CursoID");
-    cursoId = body.data.CursoID;
+    expect(body.data).toHaveProperty("cursoId");
+    cursoId = body.data.cursoId;
   });
 
   it("should list all cursos", async () => {
@@ -50,7 +49,7 @@ describe("Curso Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.CursoID).toBe(cursoId);
+    expect(response.data.cursoId).toBe(cursoId);
   });
 
   it("should update a curso", async () => {

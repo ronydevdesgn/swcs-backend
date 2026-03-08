@@ -21,10 +21,10 @@ describe("Auth Routes", () => {
     
     await db.usuario.create({
       data: {
-        Nome: "Login Test User",
-        Email: email,
-        SenhaHash: passwordHash,
-        Tipo: "FUNCIONARIO"
+        nome: "Login Test User",
+        email: email,
+        senhaHash: passwordHash,
+        tipo: "FUNCIONARIO"
       }
     });
 
@@ -39,7 +39,7 @@ describe("Auth Routes", () => {
     });
     
     // Cleanup
-    await db.usuario.delete({ where: { Email: email } });
+    await db.usuario.delete({ where: { email: email } });
     await db.$disconnect();
 
     expect(res.statusCode).toBe(200);

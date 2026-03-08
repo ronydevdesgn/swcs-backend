@@ -1,12 +1,12 @@
+import { faker } from "@faker-js/faker";
 import {
-  PrismaClient,
-  Estado,
-  TipoUsuario,
-  Departamento,
-  Cargo,
+    Cargo,
+    Departamento,
+    Estado,
+    PrismaClient,
+    TipoUsuario,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { faker } from "@faker-js/faker";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -35,18 +35,18 @@ async function main() {
   ];
 
   await prisma.permissao.createMany({
-    data: permissoes.map((p) => ({ Descricao: p })),
+    data: permissoes.map((p) => ({ descricao: p })),
   });
 
   // Buscar as permissões criadas para associar aos usuários
   const permissaoDashboard = await prisma.permissao.findFirst({
-    where: { Descricao: "Visualizar Dashboard" },
+    where: { descricao: "Visualizar Dashboard" },
   });
   const permissaoRegistrarSumario = await prisma.permissao.findFirst({
-    where: { Descricao: "Registrar Sumário" },
+    where: { descricao: "Registrar Sumário" },
   });
   const permissaoAcessoTotal = await prisma.permissao.findFirst({
-    where: { Descricao: "Acesso total ao sistema" },
+    where: { descricao: "Acesso total ao sistema" },
   });
 
   // Gerar dados falsos com faker
@@ -59,8 +59,8 @@ async function main() {
     cursos.push(
       await prisma.curso.create({
         data: {
-          Nome: faker.internet.domainWord() + " " + faker.word.adjective(),
-          Descricao: faker.lorem.sentence(),
+          nome: faker.internet.domainWord() + " " + faker.word.adjective(),
+          descricao: faker.lorem.sentence(),
         },
       })
     );
@@ -71,9 +71,9 @@ async function main() {
     professores.push(
       await prisma.professor.create({
         data: {
-          Nome: faker.person.fullName(),
-          Departamento: faker.helpers.arrayElement(Object.values(Departamento)),
-          CargaHoraria: faker.number.int({ min: 10, max: 40 }),
+          nome: faker.person.fullName(),
+          departamento: faker.helpers.arrayElement(Object.values(Departamento)),
+          cargaHoraria: faker.number.int({ min: 10, max: 40 }),
         },
       })
     );
@@ -84,9 +84,9 @@ async function main() {
     funcionarios.push(
       await prisma.funcionario.create({
         data: {
-          Nome: faker.person.fullName(),
-          Email: faker.internet.email().toLowerCase(),
-          Cargo: faker.helpers.arrayElement(Object.values(Cargo)),      
+          nome: faker.person.fullName(),
+          email: faker.internet.email().toLowerCase(),
+          cargo: faker.helpers.arrayElement(Object.values(Cargo)),      
         },
       })
     );
@@ -96,11 +96,11 @@ async function main() {
   for (const f of funcionarios) {
     const funcionarioUser = await prisma.usuario.create({
       data: {
-        Nome: f.Nome,
-        Email: f.Email,
-        SenhaHash: await bcrypt.hash("funcionario123", 5),
-        Tipo: TipoUsuario.FUNCIONARIO,
-        Funcionario: { connect: { FuncionarioID: f.FuncionarioID } },
+        nome: f.nome,
+        email: f.email,
+        senhaHash: await bcrypt.hash("funcionario123", 5),
+        tipo: TipoUsuario.FUNCIONARIO,
+        funcionario: { connect: { funcionarioId: f.funcionarioId } },
       },
     });
 
@@ -108,8 +108,8 @@ async function main() {
     if (permissaoAcessoTotal) {
       await prisma.usuarioPermissao.create({
         data: {
-          UsuarioID: funcionarioUser.UsuarioID,
-          PermissaoID: permissaoAcessoTotal.PermissaoID,
+          usuarioId: funcionarioUser.usuarioId,
+          permissaoId: permissaoAcessoTotal.permissaoId,
         },
       });
     }
@@ -118,11 +118,11 @@ async function main() {
   for (const p of professores.slice(0, 6)) {
     const profUser = await prisma.usuario.create({
       data: {
-        Nome: p.Nome,
-        Email: faker.internet.email().toLowerCase(),
-        SenhaHash: await bcrypt.hash("professor123", 5),
-        Tipo: TipoUsuario.PROFESSOR,
-        Professor: { connect: { ProfessorID: p.ProfessorID } },
+        nome: p.nome,
+        email: faker.internet.email().toLowerCase(),
+        senhaHash: await bcrypt.hash("professor123", 5),
+        tipo: TipoUsuario.PROFESSOR,
+        professor: { connect: { professorId: p.professorId } },
       },
     });
 
@@ -130,16 +130,16 @@ async function main() {
     if (permissaoDashboard) {
       await prisma.usuarioPermissao.create({
         data: {
-          UsuarioID: profUser.UsuarioID,
-          PermissaoID: permissaoDashboard.PermissaoID,
+          usuarioId: profUser.usuarioId,
+          permissaoId: permissaoDashboard.permissaoId,
         },
       });
     }
     if (permissaoRegistrarSumario) {
       await prisma.usuarioPermissao.create({
         data: {
-          UsuarioID: profUser.UsuarioID,
-          PermissaoID: permissaoRegistrarSumario.PermissaoID,
+          usuarioId: profUser.usuarioId,
+          permissaoId: permissaoRegistrarSumario.permissaoId,
         },
       });
     }
@@ -148,8 +148,8 @@ async function main() {
     await prisma.professorCurso.createMany({
       data: [
         {
-          ProfessorID: p.ProfessorID,
-          CursoID: faker.helpers.arrayElement(cursos).CursoID,
+          professorId: p.professorId,
+          cursoId: faker.helpers.arrayElement(cursos).cursoId,
         },
       ],
     });
@@ -160,28 +160,28 @@ async function main() {
     const curso = faker.helpers.arrayElement(cursos);
     await prisma.sumario.create({
       data: {
-        Data: faker.date.recent(),
-        Conteudo: faker.lorem.paragraph(),
-        CursoID: curso.CursoID,
-        ProfessorID: p.ProfessorID,
+        data: faker.date.recent(),
+        conteudo: faker.lorem.paragraph(),
+        cursoId: curso.cursoId,
+        professorId: p.professorId,
       },
     });
 
     await prisma.presenca.create({
       data: {
-        Data: faker.date.recent(),
-        Estado: faker.helpers.arrayElement(Object.values(Estado)),
-        ProfessorID: p.ProfessorID,
-        CursoID: curso.CursoID,
+        data: faker.date.recent(),
+        estado: faker.helpers.arrayElement(Object.values(Estado)),
+        professorId: p.professorId,
+        cursoId: curso.cursoId,
       },
     });
 
     await prisma.efetividade.create({
       data: {
-        Data: faker.date.recent(),
-        HorasTrabalhadas: faker.number.int({ min: 1, max: 6 }),
-        ProfessorID: p.ProfessorID,
-        CursoID: curso.CursoID,
+        data: faker.date.recent(),
+        horasTrabalhadas: faker.number.int({ min: 1, max: 6 }),
+        professorId: p.professorId,
+        cursoId: curso.cursoId,
       },
     });
   }

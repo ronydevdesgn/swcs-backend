@@ -1,8 +1,7 @@
+import { Estado } from "@prisma/client";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { reportPresencasPorMesTemplate } from "../templates/report-presencas-por-mes.template";
-import { Estado } from "@prisma/client";
 import { sendError } from "../utils/http";
-import { send } from "node:process";
 
 export async function reportPresencasPorMes( req: FastifyRequest, reply: FastifyReply){
     try {
@@ -11,10 +10,10 @@ export async function reportPresencasPorMes( req: FastifyRequest, reply: Fastify
 
     const professores = await prisma.professor.findMany({
         include: {
-            Efetividades: true
+            efetividades: true
         },
         where: {
-            Departamento: data.departamento
+            departamento: data.departamento
         }
     })
     const startDate = new Date(data.startDate)
@@ -40,8 +39,8 @@ export async function reportPresencasPorMes( req: FastifyRequest, reply: Fastify
          const presencas = await prisma.presenca.findMany({
             where: {
                 AND: [
-                    {PresencaID: professor.ProfessorID},
-                    {Data: {
+                    {professorId: professor.professorId},
+                    {data: {
                     gte: startDate,
                     lte: endDate,
                 }}
@@ -53,8 +52,8 @@ export async function reportPresencasPorMes( req: FastifyRequest, reply: Fastify
             where: {
                 
                 AND:{
-                    ProfessorID: professor.ProfessorID,
-                    Data: {
+                    professorId: professor.professorId,
+                    data: {
                         gte: startDate,
                         lte: endDate
                     }
@@ -62,14 +61,14 @@ export async function reportPresencasPorMes( req: FastifyRequest, reply: Fastify
             }
         })
 
-        const totalPresencas = presencas.filter(p => p.Estado === Estado.PRESENTE).length;
-        const totalFaltas = presencas.filter(p => p.Estado === Estado.FALTA).length;
-        const totalHorasTrabalhadas = efetividades.reduce((acc, current) => acc + current.HorasTrabalhadas, 0)
+        const totalPresencas = presencas.filter(p => p.estado === Estado.PRESENTE).length;
+        const totalFaltas = presencas.filter(p => p.estado === Estado.FALTA).length;
+        const totalHorasTrabalhadas = efetividades.reduce((acc, current) => acc + current.horasTrabalhadas, 0)
 
         return {
-            professor: professor.Nome,
+            professor: professor.nome,
             faltas: totalFaltas,
-            carga: professor.CargaHoraria, 
+            carga: professor.cargaHoraria, 
             presencas: totalPresencas,
             horasTrabalhadas: totalHorasTrabalhadas
         } 
@@ -100,10 +99,10 @@ export async function listPresencasPorMes( req: FastifyRequest, reply: FastifyRe
 
     const professores = await prisma.professor.findMany({
         include: {
-            Efetividades: true
+            efetividades: true
         },
         where: {
-            Departamento: data.departamento
+            departamento: data.departamento
         }
     })
     const startDate = new Date(data.startDate)
@@ -138,8 +137,8 @@ export async function listPresencasPorMes( req: FastifyRequest, reply: FastifyRe
         const presencas = await prisma.presenca.findMany({
             where: {
                 AND: [
-                    {PresencaID: professor.ProfessorID},
-                    {Data: {
+                    {professorId: professor.professorId},
+                    {data: {
                     gte: startDate,
                     lte: endDate,
                 }}
@@ -151,8 +150,8 @@ export async function listPresencasPorMes( req: FastifyRequest, reply: FastifyRe
             where: {
                 
                 AND:{
-                    ProfessorID: professor.ProfessorID,
-                    Data: {
+                    professorId: professor.professorId,
+                    data: {
                         gte: startDate,
                         lte: endDate
                     }
@@ -160,15 +159,15 @@ export async function listPresencasPorMes( req: FastifyRequest, reply: FastifyRe
             }
         })
 
-        const totalPresencas = presencas.filter(p => p.Estado === Estado.PRESENTE).length;
-        const totalFaltas = presencas.filter(p => p.Estado === Estado.FALTA).length;
-        const totalHorasTrabalhadas = efetividades.reduce((acc, current) => acc + current.HorasTrabalhadas, 0)
+        const totalPresencas = presencas.filter(p => p.estado === Estado.PRESENTE).length;
+        const totalFaltas = presencas.filter(p => p.estado === Estado.FALTA).length;
+        const totalHorasTrabalhadas = efetividades.reduce((acc, current) => acc + current.horasTrabalhadas, 0)
 
         return {
-            professorID: professor.ProfessorID,
-            professorName: professor.Nome,
+            professorID: professor.professorId,
+            professorName: professor.nome,
             faltas: totalFaltas,
-            carga: professor.CargaHoraria, 
+            carga: professor.cargaHoraria, 
             presencas: totalPresencas,
             horasTrabalhadas: totalHorasTrabalhadas
         } 

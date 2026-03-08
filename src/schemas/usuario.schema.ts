@@ -1,5 +1,5 @@
+import { Cargo, Departamento, TipoUsuario } from "@prisma/client";
 import { z } from "zod";
-import { TipoUsuario, Cargo, Departamento } from "@prisma/client";
 
 // Esquema base para propriedades do usuário
 const usuarioBase = {
@@ -42,8 +42,8 @@ export const usuarioSchema = z.object({
 
 // Esquema para atualização de usuário (todas as propriedades opcionais, exceto Tipo)
 export const updateUsuarioSchema = z.object({
-  Nome: usuarioBase.nome.optional(),
-  Email: usuarioBase.email.optional(),
+  nome: usuarioBase.nome.optional(),
+  email: usuarioBase.email.optional(),
 });
 
 // Esquema para atualização de senha
@@ -103,36 +103,36 @@ export const idParamSchemaSwagger = z.object({
 
 // Esquemas de resposta
 export const permissaoDetailsSchema = z.object({
-  PermissaoID: z.number().describe("ID da permissão"),
-  Descricao: z.string().describe("Descrição da permissão"),
+  permissaoId: z.number().describe("ID da permissão"),
+  descricao: z.string().describe("Descrição da permissão"),
 });
 
 export const usuarioPermissaoSchemaResponse = z.object({
-  Permissao: permissaoDetailsSchema.describe("Detalhes da permissão"),
+  permissao: permissaoDetailsSchema.describe("Detalhes da permissão"),
 });
 
 export const professorDetailsResponseSchema = z.object({
-  Departamento: z
+  departamento: z
     .nativeEnum(Departamento)
     .describe("Departamento do professor"),
 });
 
 export const funcionarioDetailsResponseSchema = z.object({
-  Cargo: z.nativeEnum(Cargo).describe("Cargo do funcionário"),
+  cargo: z.nativeEnum(Cargo).describe("Cargo do funcionário"),
 });
 
 export const usuarioResponseSchema = z.object({
-  UsuarioID: z.number().describe("ID único do usuário"),
-  Nome: z.string().describe("Nome completo do usuário"),
-  Email: z.string().email().describe("Email do usuário"),
-  Tipo: z.nativeEnum(TipoUsuario).describe("Tipo do usuário"),
-  Permissoes: z
+  usuarioId: z.number().describe("ID único do usuário"),
+  nome: z.string().describe("Nome completo do usuário"),
+  email: z.string().email().describe("Email do usuário"),
+  tipo: z.nativeEnum(TipoUsuario).describe("Tipo do usuário"),
+  permissoes: z
     .array(usuarioPermissaoSchemaResponse)
     .describe("Lista de permissões do usuário"),
-  Professor: professorDetailsResponseSchema
+  professor: professorDetailsResponseSchema
     .optional()
     .describe("Detalhes do professor (se aplicável)"),
-  Funcionario: funcionarioDetailsResponseSchema
+  funcionario: funcionarioDetailsResponseSchema
     .optional()
     .describe("Detalhes do funcionário (se aplicável)"),
 });

@@ -1,9 +1,9 @@
-import { z } from "zod";
 import { Cargo } from "@prisma/client";
+import { z } from "zod";
 
 // Esquema base para propriedades de funcionário
 const funcionarioBase = {
-  Nome: z
+  nome: z
     .string({
       required_error: "Nome é obrigatório",
       invalid_type_error: "Nome deve ser uma string",
@@ -11,7 +11,7 @@ const funcionarioBase = {
     .min(3, "Nome deve ter no mínimo 3 caracteres")
     .max(100, "Nome muito longo")
     .describe("Nome completo do funcionário"),
-  Email: z
+  email: z
     .string({
       required_error: "Email é obrigatório",
       invalid_type_error: "Email deve ser uma string",
@@ -19,7 +19,7 @@ const funcionarioBase = {
     .email("Email inválido")
     .max(100, "Email muito longo")
     .describe("Email do funcionário (único)"),
-  Cargo: z
+  cargo: z
     .nativeEnum(Cargo, {
       required_error: "Cargo é obrigatório",
       invalid_type_error: "Cargo inválido",
@@ -30,7 +30,7 @@ const funcionarioBase = {
 // Esquema para criação de funcionário
 export const createFuncionarioSchema = z.object({
   ...funcionarioBase,
-  Senha: z
+  senha: z
     .string({
       required_error: "Senha é obrigatória",
       invalid_type_error: "Senha deve ser uma string",
@@ -62,23 +62,23 @@ export const idParamSchemaSwagger = z.object({
 
 // Esquemas de resposta
 export const funcionarioResponseSchema = z.object({
-  FuncionarioID: z.number().describe("ID único do funcionário"),
-  Nome: z.string().describe("Nome completo do funcionário"),
-  Email: z.string().email().describe("Email do funcionário"),
-  Cargo: z.nativeEnum(Cargo).describe("Cargo do funcionário"),
-  UsuarioID: z.number().describe("ID do usuário associado"),
-  Usuario: z
+  funcionarioId: z.number().describe("ID único do funcionário"),
+  nome: z.string().describe("Nome completo do funcionário"),
+  email: z.string().email().describe("Email do funcionário"),
+  cargo: z.nativeEnum(Cargo).describe("Cargo do funcionário"),
+  usuarioId: z.number().describe("ID do usuário associado"),
+  usuario: z
     .object({
-      Email: z.string().email().describe("Email do usuário associado"),
-      Tipo: z
+      email: z.string().email().describe("Email do usuário associado"),
+      tipo: z
         .enum(["FUNCIONARIO", "PROFESSOR", "SUMARISTA"])
         .describe("Tipo de usuário (FUNCIONARIO ou PROFESSOR)"),
-      Permissoes: z
+      permissoes: z
         .array(
           z.object({
-            Permissao: z.object({
-              PermissaoID: z.number().describe("ID da permissão"),
-              Descricao: z.string().describe("Descrição da permissão"),
+            permissao: z.object({
+              permissaoId: z.number().describe("ID da permissão"),
+              descricao: z.string().describe("Descrição da permissão"),
             }),
           })
         )
