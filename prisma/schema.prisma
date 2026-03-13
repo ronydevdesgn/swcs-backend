@@ -1,12 +1,13 @@
 // prisma/schema.prisma
 // Atualizado conforme novo schema com Funcionario, enums e ajustes
 
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
 }
 
 // Modelo para controlo de Token de Refresh
