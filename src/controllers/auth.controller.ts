@@ -8,6 +8,7 @@ import {
 } from "../schemas/auth.schema";
 import { compararSenha, hashSenha } from "../utils/hash";
 import { gerarRefreshToken, gerarToken } from "../utils/jwt";
+import { enviarEmailRecuperacao } from "../services/email.service";
 
 import {
     AuthenticatedUser,
@@ -237,8 +238,8 @@ export async function requestPasswordResetHandler(
       },
     });
 
-    // TODO: Implementar envio de email
-    // await enviarEmailRecuperacao(usuario.email, resetToken);
+    // Enviar email de recuperação via Nodemailer
+    await enviarEmailRecuperacao(usuario.email, resetToken);
 
     req.log.info(
       `Token de reset gerado para usuário ${usuario.email}: ${resetToken}`

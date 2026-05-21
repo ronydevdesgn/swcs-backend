@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 export async function enviarEmailRecuperacao(email: string, token: string) {
   const transporter = nodemailer.createTransporter({

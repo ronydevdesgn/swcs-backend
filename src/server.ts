@@ -77,8 +77,12 @@ app.get("/", async (request, reply) => {
 
 app.register(prismaPlugin);
 
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',') 
+  : ["http://localhost:5173"];
+
 app.register(cors, {
-  origin: ["http://localhost:5173"],
+  origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: [

@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Modelo para controlo de Token de Refresh
@@ -161,7 +162,6 @@ model Presenca {
   professorId Int       @map("ProfessorID")
   cursoId     Int       @default(1) @map("CursoID")
   professor   Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
-  status      String?   @map("Status")
   curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Restrict)
   createdAt   DateTime  @default(now()) @map("CreatedAt")
   updatedAt   DateTime  @updatedAt @map("UpdatedAt")
