@@ -383,4 +383,3 @@ Authorization: Bearer {{authToken}}
 {
 	"Nome": "Ana Costa"
 }
-

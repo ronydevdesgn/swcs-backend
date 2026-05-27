@@ -8,7 +8,6 @@ import {
 } from "fastify-type-provider-zod";
 import prismaPlugin from "./plugins/prisma";
 import swaggerPlugin from "./plugins/swagger";
-
 import { errorHandler } from "./middlewares/errorHandler";
 import authRoutes from "./Routers/auth.routes";
 import cursosRoutes from "./Routers/cursos.routes";
