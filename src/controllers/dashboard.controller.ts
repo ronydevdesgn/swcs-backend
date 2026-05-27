@@ -8,13 +8,32 @@ export async function getDashboardStats(
   const prisma = req.server.prisma;
 
   try {
-    // Executar contagens em paralelo para melhor performance
-    const [professores, cursos, sumarios, presencas, funcionarios] = await Promise.all([
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+
+    // Executar todas as contagens em paralelo para melhor performance
+    const [
+      professores,
+      cursos,
+      sumarios,
+      totalPresencas,
+      totalFaltas,
+      funcionarios,
+      sumariosRecentes,
+      presencasRecentes,
+    ] = await Promise.all([
       prisma.professor.count(),
       prisma.curso.count(),
       prisma.sumario.count(),
-      prisma.presenca.count(),
+      prisma.presenca.count({ where: { estado: "PRESENTE" } }),
+      prisma.presenca.count({ where: { estado: "FALTA" } }),
       prisma.funcionario.count(),
+      prisma.sumario.count({
+        where: { data: { gte: trintaDiasAtras } },
+      }),
+      prisma.presenca.count({
+        where: { data: { gte: trintaDiasAtras } },
+      }),
     ]);
 
     return reply.send({
@@ -22,8 +41,11 @@ export async function getDashboardStats(
         professores,
         cursos,
         sumarios,
-        presencas,
+        presencas: totalPresencas,
+        totalFaltas,
         funcionarios,
+        sumariosRecentes,
+        presencasRecentes,
       },
     });
   } catch (error) {
