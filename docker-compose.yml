@@ -1,16 +1,40 @@
 version: "3.9"
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: swcs_mysql
-    restart: always
+  postgres:
+    image: postgres:16-alpine
+    container_name: swcs_postgres
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: swcs_backend
-      MYSQL_ROOT_PASSWORD: swcs_backend_init
+      POSTGRES_DB: swcs_db
+      POSTGRES_USER: swcs_user
+      POSTGRES_PASSWORD: swcs_pass
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swcs_user -d swcs_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: swcs_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@swcs.dev
+      PGADMIN_DEFAULT_PASSWORD: swcs_admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
 volumes:
-  mysql_data:
+  postgres_data:
+  pgadmin_data:

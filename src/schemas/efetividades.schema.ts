@@ -2,14 +2,14 @@ import { z } from "zod";
 
 // Schema base para efetividade com descrições detalhadas
 export const efetividadeSchema = z.object({
-  Data: z
+  data: z
     .string({
       required_error: "Data é obrigatória",
       invalid_type_error: "Data deve ser uma string",
     })
     .datetime("Data deve estar no formato ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)")
     .describe("Data do registro de efetividade"),
-  HorasTrabalhadas: z
+  horasTrabalhadas: z
     .number({
       required_error: "Horas trabalhadas é obrigatório",
       invalid_type_error: "Horas trabalhadas deve ser um número",
@@ -17,7 +17,7 @@ export const efetividadeSchema = z.object({
     .min(0, "Horas trabalhadas não pode ser negativo")
     .max(24, "Horas trabalhadas não pode exceder 24")
     .describe("Número de horas trabalhadas pelo professor"),
-  ProfessorID: z
+  professorId: z
     .number({
       required_error: "ID do professor é obrigatório",
       invalid_type_error: "ID do professor deve ser um número",
@@ -25,13 +25,22 @@ export const efetividadeSchema = z.object({
     .int("ID do professor deve ser um número inteiro")
     .positive("ID do professor deve ser positivo")
     .describe("ID do professor que registrou a efetividade"),
+  cursoId: z
+    .number({
+      required_error: "ID do curso é obrigatório",
+      invalid_type_error: "ID do curso deve ser um número",
+    })
+    .int("ID do curso deve ser um número inteiro")
+    .positive("ID do curso deve ser positivo")
+    .describe("ID do curso associado"),
 });
 
 // Schema para atualizar efetividade (todos os campos opcionais)
 export const updateEfetividadeSchema = z.object({
-  Data: efetividadeSchema.shape.Data.optional(),
-  HorasTrabalhadas: efetividadeSchema.shape.HorasTrabalhadas.optional(),
-  ProfessorID: efetividadeSchema.shape.ProfessorID.optional(),
+  data: efetividadeSchema.shape.data.optional(),
+  horasTrabalhadas: efetividadeSchema.shape.horasTrabalhadas.optional(),
+  professorId: efetividadeSchema.shape.professorId.optional(),
+  cursoId: efetividadeSchema.shape.cursoId.optional(),
 });
 
 // Schema para parâmetro ID
@@ -53,14 +62,14 @@ export const periodoSchema = z.object({
       required_error: "Data inicial é obrigatória",
       invalid_type_error: "Data inicial deve ser uma string",
     })
-    .datetime("Data inicial deve estar no formato ISO 8601")
+    .date("Data inicial deve estar no formato ISO 8601")
     .describe("Data de início do período para consulta"),
   dataFim: z
     .string({
       required_error: "Data final é obrigatória",
       invalid_type_error: "Data final deve ser uma string",
     })
-    .datetime("Data final deve estar no formato ISO 8601")
+    .date("Data final deve estar no formato ISO 8601")
     .describe("Data de fim do período para consulta"),
 });
 
@@ -80,53 +89,53 @@ export const professorEfetividadeQuerySchema = z.object({
 
 // Schemas de resposta
 export const professorResponseSchema = z.object({
-  ProfessorID: z.number().describe("ID único do professor"),
-  Nome: z.string().describe("Nome completo do professor"),
-  Departamento: z.string().describe("Departamento do professor"),
-  CargaHoraria: z.number().describe("Carga horária do professor"),
-  Usuario: z
+  professorId: z.number().describe("ID único do professor"),
+  nome: z.string().describe("Nome completo do professor"),
+  departamento: z.string().describe("Departamento do professor"),
+  cargaHoraria: z.number().describe("Carga horária do professor"),
+  usuario: z
     .object({
-      Email: z.string().email().describe("Email do professor"),
+      email: z.string().email().describe("Email do professor"),
     })
     .optional(),
 });
 
 export const efetividadeResponseSchema = z.object({
-  EfetividadeID: z.number().describe("ID único da efetividade"),
-  Data: z.string().describe("Data do registro"),
-  HorasTrabalhadas: z.number().describe("Horas trabalhadas registradas"),
-  ProfessorID: z.number().describe("ID do professor"),
-  Professor: professorResponseSchema.optional(),
+  efetividadeId: z.number().describe("ID único da efetividade"),
+  data: z.string().describe("Data do registro"),
+  horasTrabalhadas: z.number().describe("Horas trabalhadas registradas"),
+  professorId: z.number().describe("ID do professor"),
+  professor: professorResponseSchema.optional(),
 });
 
 export const estatisticasProfessorSchema = z.object({
-  professorID: z.number().describe("ID do professor"),
+  professorId: z.number().describe("ID do professor"),
   totalHoras: z.number().describe("Total de horas trabalhadas"),
   totalDias: z.number().describe("Total de dias registrados"),
   mediaDiaria: z.number().describe("Média de horas por dia"),
   professor: z.object({
-    Nome: z.string().describe("Nome do professor"),
-    Departamento: z.string().describe("Departamento do professor"),
-    CargaHoraria: z.number().describe("Carga horária do professor"),
+    nome: z.string().describe("Nome do professor"),
+    departamento: z.string().describe("Departamento do professor"),
+    cargaHoraria: z.number().describe("Carga horária do professor"),
   }),
 });
 
 export const createEfetividadeResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const listEfetividadesResponseSchema = z.object({
-  data: z.array(efetividadeResponseSchema).describe("Lista de efetividades"),
+  data: z.array(z.any()).describe("Lista de efetividades"),
 });
 
 export const singleEfetividadeResponseSchema = z.object({
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const updateEfetividadeResponseSchema = z.object({
   mensagem: z.string().describe("Mensagem de sucesso"),
-  data: efetividadeResponseSchema,
+  data: z.any(),
 });
 
 export const deleteEfetividadeResponseSchema = z.object({
@@ -135,23 +144,33 @@ export const deleteEfetividadeResponseSchema = z.object({
 
 export const efetividadesPorPeriodoResponseSchema = z.object({
   data: z
-    .array(efetividadeResponseSchema)
+    .array(z.any())
     .describe("Lista de efetividades do período"),
   meta: z.object({
     periodo: z.object({
       inicio: z.string().describe("Data de início"),
       fim: z.string().describe("Data de fim"),
-    }),
-    total: z.number().describe("Total de registros encontrados"),
+    }).optional(),
+    total: z.number().describe("Total de registros encontrados").optional(),
     estatisticas: z
-      .array(estatisticasProfessorSchema)
-      .describe("Estatísticas por professor"),
+      .array(z.any())
+      .describe("Estatísticas por professor").optional(),
   }),
+  // meta: z.object({
+  //   periodo: z.object({
+  //     inicio: z.string().describe("Data de início"),
+  //     fim: z.string().describe("Data de fim"),
+  //   }).optional(),
+  //   total: z.number().describe("Total de registros encontrados").optional(),
+  //   estatisticas: z
+  //     .array(z.any())
+  //     .describe("Estatísticas por professor").optional(),
+  // }),
 });
 
 export const efetividadesProfessorResponseSchema = z.object({
   data: z
-    .array(efetividadeResponseSchema)
+    .array(z.any())
     .describe("Lista de efetividades do professor"),
   meta: z.object({
     professor: z.object({

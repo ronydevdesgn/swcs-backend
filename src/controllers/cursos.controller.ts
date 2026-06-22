@@ -1,12 +1,12 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  CreateCursoInput,
-  UpdateCursoInput,
-  IdParam,
-  ListarCursosQuery,
-  DepartamentoQuery,
-} from "../schemas/cursos.schema";
 import { Departamento } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
+import {
+    CreateCursoInput,
+    DepartamentoQuery,
+    IdParam,
+    ListarCursosQuery,
+    UpdateCursoInput,
+} from "../schemas/cursos.schema";
 
 // Helper para respostas de erro padronizadas
 const sendError = (
@@ -26,14 +26,14 @@ export async function criarCurso(
   reply: FastifyReply
 ) {
   try {
-    const { Nome, Descricao = "", ProfessorID } = req.body;
+    const { nome, descricao = "", professorId } = req.body;
     const prisma = req.server.prisma;
 
     // Usar transação para garantir consistência
     const curso = await prisma.$transaction(async (tx) => {
       // Verificar se o professor existe
       const professor = await tx.professor.findUnique({
-        where: { ProfessorID },
+        where: { professorId },
       });
 
       if (!professor) {
@@ -43,8 +43,8 @@ export async function criarCurso(
       // Verificar se já existe um curso com o mesmo nome
       const cursoExistente = await tx.curso.findFirst({
         where: {
-          Nome: {
-            equals: Nome,
+          nome: {
+            equals: nome,
             // mode: "insensitive",
           },
         },
@@ -57,25 +57,25 @@ export async function criarCurso(
       // Criar o curso
       const novoCurso = await tx.curso.create({
         data: {
-          Nome,
-          Descricao,
+          nome,
+          descricao,
         },
       });
 
       // Associar professor ao curso (tabela intermediária)
       await tx.professorCurso.create({
         data: {
-          ProfessorID,
-          CursoID: novoCurso.CursoID,
+          professorId,
+          cursoId: novoCurso.cursoId,
         },
       });
 
       // Retornar curso com professores
       return await tx.curso.findUnique({
-        where: { CursoID: novoCurso.CursoID },
+        where: { cursoId: novoCurso.cursoId },
         include: {
-          Professores: true,
-          _count: { select: { Sumarios: true } },
+          professores: true,
+          _count: { select: { sumarios: true } },
         },
       });
     });
@@ -85,15 +85,15 @@ export async function criarCurso(
     }
 
     req.log.info(
-      `Curso criado com sucesso: ${curso.Nome} (ID: ${curso.CursoID})`
+      `Curso criado com sucesso: ${curso.nome} (ID: ${curso.cursoId})`
     );
 
     return reply.status(201).send({
       mensagem: "Curso criado com sucesso",
       data: {
         ...curso,
-        Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        nome: curso.nome.trim(),
+        descricao: curso.descricao?.trim(),
       },
     });
   } catch (error) {
@@ -131,13 +131,13 @@ export async function listarCursos(
       whereCondition.AND.push({
         OR: [
           {
-            Nome: {
+            nome: {
               contains: search,
               mode: "insensitive",
             },
           },
           {
-            Descricao: {
+            descricao: {
               contains: search,
               mode: "insensitive",
             },
@@ -153,10 +153,10 @@ export async function listarCursos(
       }
 
       whereCondition.AND.push({
-        Professores: {
+        professores: {
           some: {
-            Professor: {
-              Departamento: departamento as Departamento,
+            professor: {
+              departamento: departamento as Departamento,
             },
           },
         },
@@ -166,23 +166,29 @@ export async function listarCursos(
     const cursos = await prisma.curso.findMany({
       where: whereCondition.AND.length > 0 ? whereCondition : {},
       include: {
-        Professores: true,
-        Sumarios: {
+        professores: {
+          select: {
+            professor: true
+          }
+        },
+        sumarios: {
           take: 5,
-          orderBy: { Data: "desc" },
+          orderBy: { data: "desc" },
         },
         _count: {
-          select: { Sumarios: true },
+          select: { sumarios: true },
         },
       },
-      orderBy: { Nome: "asc" },
+      orderBy: { nome: "asc" },
     });
 
+    console.log(cursos.map(u=> u.professores))
     return reply.send({
       data: cursos.map((curso) => ({
         ...curso,
-        Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        professores: curso.professores.map((p) => p.professor),
+        nome: curso.nome.trim(),
+        descricao: curso.descricao?.trim()
       })),
       meta: { total: cursos.length },
     });
@@ -258,14 +264,14 @@ export async function buscarCurso(
     const prisma = req.server.prisma;
 
     const curso = await prisma.curso.findUnique({
-      where: { CursoID: id },
+      where: { cursoId: id },
       include: {
-        Professores: true,
-        Sumarios: {
-          orderBy: { Data: "desc" },
+        professores: true,
+        sumarios: {
+          orderBy: { data: "desc" },
         },
         _count: {
-          select: { Sumarios: true },
+          select: { sumarios: true },
         },
       },
     });
@@ -277,8 +283,8 @@ export async function buscarCurso(
     return reply.send({
       data: {
         ...curso,
-        Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        nome: curso.nome.trim(),
+        descricao: curso.descricao?.trim(),
       },
     });
   } catch (error) {
@@ -302,7 +308,7 @@ export async function atualizarCurso(
     const curso = await prisma.$transaction(async (tx) => {
       // Verificar se o curso existe
       const cursoExiste = await tx.curso.findUnique({
-        where: { CursoID: id },
+        where: { cursoId: id },
       });
 
       if (!cursoExiste) {
@@ -310,13 +316,13 @@ export async function atualizarCurso(
       }
 
       // Se o nome foi alterado, verificar duplicidade
-      if (dados.Nome && dados.Nome !== cursoExiste.Nome) {
+      if (dados.nome && dados.nome !== cursoExiste.nome) {
         const cursoNomeExiste = await tx.curso.findFirst({
           where: {
-            Nome: {
-              equals: dados.Nome,
+            nome: {
+              equals: dados.nome,
             },
-            NOT: { CursoID: id },
+            NOT: { cursoId: id },
           },
         });
 
@@ -326,9 +332,9 @@ export async function atualizarCurso(
       }
 
       // Se houver mudança de professor, verificar se existe
-      if (dados.ProfessorID) {
+      if (dados.professorId) {
         const professor = await tx.professor.findUnique({
-          where: { ProfessorID: dados.ProfessorID },
+          where: { professorId: dados.professorId },
         });
 
         if (!professor) {
@@ -338,32 +344,32 @@ export async function atualizarCurso(
 
       // Atualizar o curso
       const cursoAtualizado = await tx.curso.update({
-        where: { CursoID: id },
+        where: { cursoId: id },
         data: {
-          ...(dados.Nome && { Nome: dados.Nome }),
-          ...(dados.Descricao !== undefined && { Descricao: dados.Descricao }),
+          ...(dados.nome && { nome: dados.nome }),
+          ...(dados.descricao !== undefined && { descricao: dados.descricao }),
         },
       });
 
       // Atualizar associação de professor (se informado)
-      if (dados.ProfessorID) {
+      if (dados.professorId) {
         // Remove todas as associações anteriores
-        await tx.professorCurso.deleteMany({ where: { CursoID: id } });
+        await tx.professorCurso.deleteMany({ where: { cursoId: id } });
         // Adiciona nova associação
         await tx.professorCurso.create({
           data: {
-            ProfessorID: dados.ProfessorID,
-            CursoID: id,
+            professorId: dados.professorId,
+            cursoId: id,
           },
         });
       }
 
       // Retornar curso com professores
       return await tx.curso.findUnique({
-        where: { CursoID: id },
+        where: { cursoId: id },
         include: {
-          Professores: true,
-          _count: { select: { Sumarios: true } },
+          professores: true,
+          _count: { select: { sumarios: true } },
         },
       });
     });
@@ -373,15 +379,15 @@ export async function atualizarCurso(
     }
 
     req.log.info(
-      `Curso atualizado com sucesso: ${curso.Nome} (ID: ${curso.CursoID})`
+      `Curso atualizado com sucesso: ${curso.nome} (ID: ${curso.cursoId})`
     );
 
     return reply.send({
       mensagem: "Curso atualizado com sucesso",
       data: {
         ...curso,
-        Nome: curso.Nome.trim(),
-        Descricao: curso.Descricao?.trim(),
+        nome: curso.nome.trim(),
+        descricao: curso.descricao?.trim(),
       },
     });
   } catch (error) {
@@ -422,7 +428,7 @@ export async function deletarCurso(
     await prisma.$transaction(async (tx) => {
       // Verificar se o curso existe
       const curso = await tx.curso.findUnique({
-        where: { CursoID: id },
+        where: { cursoId: id },
       });
 
       if (!curso) {
@@ -431,11 +437,11 @@ export async function deletarCurso(
 
       // Remover todas as associações professor-curso
       await tx.professorCurso.deleteMany({
-        where: { CursoID: id },
+        where: { cursoId: id },
       });
 
       // Remover o curso
-      await tx.curso.delete({ where: { CursoID: id } });
+      await tx.curso.delete({ where: { cursoId: id } });
     });
 
     req.log.info(`Curso deletado com sucesso (ID: ${id})`);

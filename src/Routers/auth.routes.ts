@@ -1,21 +1,25 @@
 import { FastifyInstance } from "fastify";
+import { z } from "zod";
 import {
-  loginHandler,
-  refreshTokenHandler,
-  requestPasswordResetHandler,
-  resetPasswordHandler,
-  logoutHandler,
+    loginHandler,
+    logoutHandler,
+    meHandler,
+    refreshTokenHandler,
+    requestPasswordResetHandler,
+    resetPasswordHandler,
+    verificarTipoUsuarioHandler,
 } from "../controllers/auth.controller";
-import {
-  loginSchema,
-  refreshTokenSchema,
-  passwordResetSchemaSwagger,
-  passwordResetRequestSchema,
-  loginResponseSchema,
-  errorResponseSchema,
-  successResponseSchema,
-} from "../schemas/auth.schema";
 import { autenticar } from "../middlewares/authMiddleware";
+import {
+    errorResponseSchema,
+    loginResponseSchema,
+    loginSchema,
+    passwordResetRequestSchema,
+    passwordResetSchemaSwagger,
+    refreshTokenSchema,
+    successResponseSchema,
+    usuarioResponseSchema,
+} from "../schemas/auth.schema";
 
 export default async function authRoutes(fastify: FastifyInstance) {
   // Login
@@ -42,6 +46,28 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     loginHandler
+  );
+
+  // Me - Get current user info
+  fastify.get(
+    "/me",
+    {
+      onRequest: [autenticar],
+      schema: {
+        tags: ["auth"],
+        summary: "Obter dados do usuário atual",
+        description: "Retorna os dados do usuário autenticado atualmente",
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: usuarioResponseSchema,
+          401: 
+            errorResponseSchema,        
+          500: 
+            errorResponseSchema,
+        },
+      },
+    },
+    meHandler
   );
 
   // Refresh Token
@@ -141,5 +167,28 @@ export default async function authRoutes(fastify: FastifyInstance) {
       },
     },
     logoutHandler
+  );
+
+  // Verificar tipo de usuário (test)
+  fastify.get(
+    "/verificar-tipo",
+    {
+      schema: {
+        querystring: z.object({
+          email: z.string().email("Email inválido"),
+        }),
+        response: {
+          200: z.object({
+            tipo: z.enum(["PROFESSOR", "FUNCIONARIO"]),
+            nome: z.string(),
+            existe: z.boolean(),
+          }),
+          404: z.object({
+            mensagem: z.string(),
+          }),
+        },
+      },
+    },
+    verificarTipoUsuarioHandler
   );
 }

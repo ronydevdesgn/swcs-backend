@@ -1,12 +1,11 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  CreatePresencaInput,
-  UpdatePresencaInput,
-  IdParam,
-  CreateBatchPresencaInput,
-} from "../schemas/presencas.schema";
 import { Estado, Prisma } from "@prisma/client";
-import { AppError } from "../types/errors";
+import { FastifyReply, FastifyRequest } from "fastify";
+import {
+    CreateBatchPresencaInput,
+    CreatePresencaInput,
+    IdParam,
+    UpdatePresencaInput,
+} from "../schemas/presencas.schema";
 import { sendError } from "../utils/http";
 
 export async function registrarPresenca(
@@ -16,18 +15,19 @@ export async function registrarPresenca(
   const prisma = req.server.prisma;
 
   try {
-    const { Data, ProfessorID, Estado: estado } = req.body;
+    const { data, professorId, cursoId, estado } = req.body;
 
     // Validar data
-    const dataPresenca = new Date(Data);
+    const dataPresenca = new Date(data);
     const dataPresencaSemHora = new Date(dataPresenca);
     dataPresencaSemHora.setHours(0, 0, 0, 0);
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
     if (dataPresencaSemHora.getTime() > hoje.getTime()) {
-      throw new AppError(
-        "VALIDATION_ERROR",
+      return sendError(
+        reply,
+        400,
         "Não é possível registrar presença para datas futuras"
       );
     }
@@ -36,49 +36,47 @@ export async function registrarPresenca(
     const presenca = await prisma.$transaction(async (tx) => {
       // Verificar se o professor existe
       const professor = await tx.professor.findUnique({
-        where: { ProfessorID },
+        where: { professorId },
         select: {
-          Nome: true,
-          Departamento: true,
-          Usuario: {
+          nome: true,
+          departamento: true,
+          usuario: {
             select: {
-              Email: true,
+              email: true,
             },
           },
         },
       });
 
       if (!professor) {
-        throw new AppError("NOT_FOUND", "Professor não encontrado");
+        throw new Error("Professor não encontrado");
       }
 
       // Verificar se já existe registro para esta data
       const presencaExistente = await tx.presenca.findFirst({
         where: {
-          Data: dataPresenca,
-          ProfessorID,
+          data: dataPresenca,
+          professorId,
         },
       });
 
       if (presencaExistente) {
-        throw new AppError(
-          "DUPLICATE",
-          "Já existe registro de presença para esta data"
-        );
+        throw new Error("Já existe registro de presença para esta data");
       }
 
       // Criar o registro
       return await tx.presenca.create({
         data: {
-          Data: dataPresenca,
-          Estado: estado,
-          ProfessorID,
+          data: dataPresenca,
+          estado: estado as Estado,
+          professorId,
+          cursoId,
         },
         include: {
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
+              nome: true,
+              departamento: true,
             },
           },
         },
@@ -90,20 +88,16 @@ export async function registrarPresenca(
       data: presenca,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao registrar presença:", error);
 
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
 
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    if (errorMessage === "Professor não encontrado") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    if (errorMessage === "Já existe registro de presença para esta data") {
+      return sendError(reply, 409, errorMessage);
     }
 
     return sendError(reply, 500, "Erro interno ao registrar presença");
@@ -123,66 +117,61 @@ export async function registrarPresencasEmLote(
 
     // Validar datas e professor
     for (const presenca of presencas) {
-      const dataPresenca = new Date(presenca.Data);
+      const dataPresenca = new Date(presenca.data);
       if (dataPresenca > hoje) {
-        throw new AppError(
-          "VALIDATION_ERROR",
-          `Não é possível registrar presença para a data futura ${presenca.Data}`
+        return sendError(
+          reply,
+          400,
+          `Não é possível registrar presença para a data futura ${presenca.data}`
         );
       }
     }
 
     // Usar transação para garantir consistência
     const resultados = await prisma.$transaction(async (tx) => {
-      const professoresIds = [...new Set(presencas.map((p) => p.ProfessorID))];
+      const professoresIds = [...new Set(presencas.map((p) => p.professorId))];
 
       // Verificar se todos os professores existem
       const professores = await tx.professor.findMany({
         where: {
-          ProfessorID: {
+          professorId: {
             in: professoresIds as number[],
           },
         },
         select: {
-          ProfessorID: true,
-          Nome: true,
+          professorId: true,
+          nome: true,
         },
       });
 
       if (professores.length !== professoresIds.length) {
-        throw new AppError(
-          "NOT_FOUND",
-          "Um ou mais professores não encontrados"
-        );
+        throw new Error("Um ou mais professores não encontrados");
       }
 
       // Verificar registros existentes
-      const datasParaVerificar = presencas.map((p) => new Date(p.Data));
+      const datasParaVerificar = presencas.map((p) => new Date(p.data));
       const presencasExistentes = await tx.presenca.findMany({
         where: {
-          ProfessorID: { in: professoresIds as number[] },
-          Data: { in: datasParaVerificar },
+          professorId: { in: professoresIds as number[] },
+          data: { in: datasParaVerificar },
         },
       });
 
       if (presencasExistentes.length > 0) {
         const registrosDuplicados = presencasExistentes
           .map(
-            (p) => `${p.ProfessorID} - ${p.Data.toISOString().split("T")[0]}`
+            (p) => `${p.professorId} - ${p.data.toISOString().split("T")[0]}`
           )
           .join(", ");
-        throw new AppError(
-          "DUPLICATE",
-          `Já existem registros de presença para: ${registrosDuplicados}`
-        );
+        throw new Error(`Já existem registros de presença para: ${registrosDuplicados}`);
       }
 
       // Criar todos os registros
       return await tx.presenca.createMany({
         data: presencas.map((p: CreatePresencaInput) => ({
-          Data: new Date(p.Data),
-          Estado: p.Estado,
-          ProfessorID: p.ProfessorID,
+          data: new Date(p.data),
+          estado: p.estado as Estado,
+          professorId: p.professorId,
         })),
       });
     });
@@ -194,20 +183,16 @@ export async function registrarPresencasEmLote(
       },
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao registrar presenças em lote:", error);
 
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
 
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    if (errorMessage === "Um ou mais professores não encontrados") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    if (errorMessage.startsWith("Já existem registros de presença para:")) {
+      return sendError(reply, 409, errorMessage);
     }
 
     return sendError(reply, 500, "Erro interno ao registrar presenças em lote");
@@ -234,39 +219,39 @@ export async function listarPresencas(
     const where: Prisma.PresencaWhereInput = {
       ...(inicio || fim
         ? {
-            Data: {
+            data: {
               ...(inicio && { gte: new Date(inicio) }),
               ...(fim && { lte: new Date(fim) }),
             },
           }
         : {}),
-      ...(estado && { Estado: estado }),
-      ...(professorId && { ProfessorID: parseInt(professorId) }),
+      ...(estado && { estado: estado }),
+      ...(professorId && { professorId: parseInt(professorId) }),
     };
 
     // Buscar presenças
     const presencas = await prisma.presenca.findMany({
       where,
       include: {
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
+            nome: true,
+            departamento: true,
           },
         },
       },
       orderBy: {
-        Data: "desc",
+        data: "desc",
       },
     });
 
     // Calcular estatísticas usando findMany e reduce
     const estatisticasPorEstado = presencas.reduce(
       (acc, curr) => {
-        if (!acc[curr.Estado]) {
-          acc[curr.Estado] = 0;
+        if (!acc[curr.estado]) {
+          acc[curr.estado] = 0;
         }
-        acc[curr.Estado]++;
+        acc[curr.estado]++;
         return acc;
       },
       {
@@ -290,8 +275,31 @@ export async function listarPresencas(
       },
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao listar presenças:", error);
     return sendError(reply, 500, "Erro interno ao listar presenças");
+  }
+}
+
+export async function buscarPresencaPorId(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+
+  try {
+    const { id } = req.params;
+    const registro = await prisma.presenca.findUnique({
+      where: { presencaId: id },
+    });
+
+    if (!registro) {
+      return sendError(reply, 404, "Presença não encontrada");
+    }
+
+    return reply.send({ data: registro });
+  } catch (error) {
+    req.log.error("Erro ao buscar presença por ID:", error);
+    return sendError(reply, 500, "Erro interno ao buscar presença");
   }
 }
 
@@ -314,44 +322,44 @@ export async function buscarPresencasProfessor(
 
     // Verificar se o professor existe
     const professor = await prisma.professor.findUnique({
-      where: { ProfessorID: id },
+      where: { professorId: id },
       select: {
-        Nome: true,
-        Departamento: true,
+        nome: true,
+        departamento: true,
       },
     });
 
     if (!professor) {
-      throw new AppError("NOT_FOUND", "Professor não encontrado");
+      return sendError(reply, 404, "Professor não encontrado");
     }
 
     // Construir filtros
     const where: Prisma.PresencaWhereInput = {
-      ProfessorID: id,
+      professorId: id,
       ...(inicio || fim
         ? {
-            Data: {
+            data: {
               ...(inicio && { gte: new Date(inicio) }),
               ...(fim && { lte: new Date(fim) }),
             },
           }
         : {}),
-      ...(estado && { Estado: estado }),
+      ...(estado && { estado: estado }),
     };
 
     // Buscar presenças
     const presencas = await prisma.presenca.findMany({
       where,
       include: {
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
+            nome: true,
+            departamento: true,
           },
         },
       },
       orderBy: {
-        Data: "desc",
+        data: "desc",
       },
     });
 
@@ -367,15 +375,15 @@ export async function buscarPresencasProfessor(
 
     // Contar presenças por estado
     for (const presenca of presencas) {
-      estatisticasPorEstado[presenca.Estado].count++;
+      estatisticasPorEstado[presenca.estado].count++;
     }
 
     // Calcular percentuais
     if (total > 0) {
-      for (const estado in estatisticasPorEstado) {
-        estatisticasPorEstado[estado as Estado].percentual = Number(
+      for (const estadoKey in estatisticasPorEstado) {
+        estatisticasPorEstado[estadoKey as Estado].percentual = Number(
           (
-            (estatisticasPorEstado[estado as Estado].count / total) *
+            (estatisticasPorEstado[estadoKey as Estado].count / total) *
             100
           ).toFixed(2)
         );
@@ -386,8 +394,8 @@ export async function buscarPresencasProfessor(
       data: presencas,
       meta: {
         professor: {
-          nome: professor.Nome,
-          departamento: professor.Departamento,
+          nome: professor.nome,
+          departamento: professor.departamento,
         },
         total,
         estatisticas: estatisticasPorEstado,
@@ -401,13 +409,7 @@ export async function buscarPresencasProfessor(
       },
     });
   } catch (error) {
-    req.log.error(error);
-
-    if (error instanceof AppError && error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
+    req.log.error("Erro ao buscar presenças do professor:", error);
 
     return sendError(
       reply,
@@ -428,14 +430,15 @@ export async function atualizarPresenca(
     const dados = req.body;
 
     // Validar data se fornecida
-    if (dados.Data) {
-      const dataPresenca = new Date(dados.Data);
+    if (dados.data) {
+      const dataPresenca = new Date(dados.data);
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
       if (dataPresenca > hoje) {
-        throw new AppError(
-          "VALIDATION_ERROR",
+        return sendError(
+          reply,
+          400,
           "Não é possível registrar presença para datas futuras"
         );
       }
@@ -445,45 +448,42 @@ export async function atualizarPresenca(
     const presenca = await prisma.$transaction(async (tx) => {
       // Verificar se a presença existe
       const presencaExiste = await tx.presenca.findUnique({
-        where: { PresencaID: id },
+        where: { presencaId: id },
       });
 
       if (!presencaExiste) {
-        throw new AppError("NOT_FOUND", "Registro de presença não encontrado");
+        throw new Error("Registro de presença não encontrado");
       }
 
       // Se a data está sendo alterada, verificar duplicidade
-      if (dados.Data) {
+      if (dados.data) {
         const duplicada = await tx.presenca.findFirst({
           where: {
-            Data: new Date(dados.Data),
-            ProfessorID: presencaExiste.ProfessorID,
+            data: new Date(dados.data),
+            professorId: presencaExiste.professorId,
             NOT: {
-              PresencaID: id,
+              presencaId: id,
             },
           },
         });
 
         if (duplicada) {
-          throw new AppError(
-            "DUPLICATE",
-            "Já existe registro de presença para esta data"
-          );
+          throw new Error("Já existe registro de presença para esta data");
         }
       }
 
       // Atualizar o registro
       return await tx.presenca.update({
-        where: { PresencaID: id },
+        where: { presencaId: id },
         data: {
-          Estado: dados.Estado as Estado,
-          Data: dados.Data ? new Date(dados.Data) : undefined,
+          estado: dados.estado as Estado,
+          data: dados.data ? new Date(dados.data) : undefined,
         },
         include: {
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
+              nome: true,
+              departamento: true,
             },
           },
         },
@@ -495,22 +495,43 @@ export async function atualizarPresenca(
       data: presenca,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao atualizar presença:", error);
 
-    if (error instanceof AppError) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
 
-      if (error.code === "DUPLICATE" || error.code === "VALIDATION_ERROR") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    if (errorMessage === "Registro de presença não encontrado") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    if (errorMessage === "Já existe registro de presença para esta data") {
+      return sendError(reply, 409, errorMessage);
     }
 
     return sendError(reply, 500, "Erro interno ao atualizar presença");
+  }
+}
+
+export async function deletarPresenca(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+  try {
+    const { id } = req.params;
+    const presencaExiste = await prisma.presenca.findUnique({
+      where: { presencaId: id },
+    });
+
+    if (!presencaExiste) {
+      return sendError(reply, 404, "Presença não encontrada");
+    }
+
+    await prisma.presenca.delete({ where: { presencaId: id } });
+    return reply.send({
+      mensagem: "Presença removida com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar presença:", error);
+    return sendError(reply, 500, "Erro interno ao deletar presença");
   }
 }

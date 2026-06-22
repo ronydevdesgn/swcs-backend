@@ -1,0 +1,208 @@
+// prisma/schema.prisma
+// Atualizado conforme novo schema com Funcionario, enums e ajustes
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para controlo de Token de Refresh
+model RefreshToken {
+  tokenId   Int      @id @default(autoincrement()) @map("TokenID")
+  token     String   @unique
+  usuarioId Int      @map("UsuarioID")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  expiresAt DateTime @map("ExpiresAt")
+  createdAt DateTime @default(now()) @map("CreatedAt")
+
+  @@index([usuarioId])
+  @@index([expiresAt])
+}
+
+model PasswordReset {
+  passwordResetId Int      @id @default(autoincrement()) @map("PasswordResetID")
+  token           String   @unique @map("Token")
+  usuarioId       Int      @map("UsuarioID")
+  usuario         Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  expiresAt       DateTime @map("ExpiresAt")
+  used            Boolean  @default(false) @map("Used")
+  createdAt       DateTime @default(now()) @map("CreatedAt")
+
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@index([token, used])
+}
+
+enum Estado {
+  PRESENTE
+  FALTA
+}
+
+enum TipoUsuario {
+  FUNCIONARIO
+  PROFESSOR
+  SUMARISTA
+}
+
+enum Departamento {
+  INFORMATICA
+  OUTROS
+}
+
+enum Cargo {
+  SUMARISTA
+  SECRETARIO
+  ADMINISTRATIVO
+  OUTROS
+}
+
+model Professor {
+  professorId  Int              @id @default(autoincrement()) @map("ProfessorID")
+  nome         String           @map("Nome") @db.VarChar(100)
+  departamento Departamento     @map("Departamento")
+  cargaHoraria Int              @map("CargaHoraria")
+  cursos       ProfessorCurso[]
+  sumarios     Sumario[]        @relation("ProfessorSumarios")
+  presencas    Presenca[]
+  efetividades Efetividade[]
+  usuario      Usuario?         @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  usuarioId    Int?             @unique @map("UsuarioID")
+  createdAt    DateTime         @default(now()) @map("CreatedAt")
+  updatedAt    DateTime         @default(now()) @updatedAt @map("UpdatedAt")
+
+  @@index([departamento])
+  @@index([nome])
+}
+
+model Funcionario {
+  funcionarioId Int      @id @default(autoincrement()) @map("FuncionarioID")
+  nome          String   @map("Nome") @db.VarChar(100)
+  email         String   @unique @map("Email") @db.VarChar(100)
+  cargo         Cargo    @map("Cargo")
+  usuario       Usuario? @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  usuarioId     Int?     @unique @map("UsuarioID")
+  createdAt     DateTime @default(now()) @map("CreatedAt")
+  updatedAt     DateTime @default(now()) @updatedAt @map("UpdatedAt")
+
+  @@index([cargo])
+  @@index([nome])
+}
+
+model Usuario {
+  usuarioId   Int                @id @default(autoincrement()) @map("UsuarioID")
+  nome        String             @map("Nome") @db.VarChar(100)
+  email       String             @unique @map("Email") @db.VarChar(100)
+  senhaHash   String             @map("SenhaHash") @db.VarChar(255)
+  tipo        TipoUsuario        @map("Tipo")
+  permissoes  UsuarioPermissao[]
+  professor   Professor?
+  funcionario Funcionario?
+
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  createdAt      DateTime        @default(now()) @map("CreatedAt")
+  updatedAt      DateTime        @default(now()) @updatedAt @map("UpdatedAt")
+
+  @@index([tipo])
+  @@index([nome])
+}
+
+model Curso {
+  cursoId     Int              @id @default(autoincrement()) @map("CursoID")
+  nome        String           @map("Nome") @db.VarChar(100)
+  descricao   String           @map("Descricao") @db.Text
+  professores ProfessorCurso[]
+  sumarios    Sumario[]
+  createdAt   DateTime         @default(now()) @map("CreatedAt")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("UpdatedAt")
+  presenca    Presenca[]
+  efetividade Efetividade[]
+
+  @@index([nome])
+}
+
+model Sumario {
+  sumarioId   Int       @id @default(autoincrement()) @map("SumarioID")
+  data        DateTime  @map("Data")
+  conteudo    String    @map("Conteudo") @db.Text
+  cursoId     Int       @map("CursoID")
+  professorId Int       @map("ProfessorID")
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Cascade)
+  professor   Professor @relation("ProfessorSumarios", fields: [professorId], references: [professorId], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("UpdatedAt")
+
+  @@index([cursoId])
+  @@index([professorId])
+  @@index([data])
+  @@index([data, cursoId])
+}
+
+model ProfessorCurso {
+  professorId Int       @map("ProfessorID")
+  cursoId     Int       @map("CursoID")
+  professor   Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
+
+  @@id([professorId, cursoId])
+  @@index([professorId])
+  @@index([cursoId])
+}
+
+model Presenca {
+  presencaId  Int       @id @default(autoincrement()) @map("PresencaID")
+  data        DateTime  @map("Data")
+  estado      Estado    @map("Estado")
+  professorId Int       @map("ProfessorID")
+  cursoId     Int       @default(1) @map("CursoID")
+  professor   Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Restrict)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
+  updatedAt   DateTime  @updatedAt @map("UpdatedAt")
+
+  @@index([professorId])
+  @@index([cursoId])
+  @@index([data])
+  @@index([data, professorId])
+  @@index([estado])
+}
+
+model Efetividade {
+  efetividadeId    Int       @id @default(autoincrement()) @map("EfetividadeID")
+  data             DateTime  @map("Data")
+  horasTrabalhadas Int       @map("HorasTrabalhadas")
+  professorId      Int       @map("ProfessorID")
+  cursoId          Int       @default(1) @map("CursoID")
+  professor        Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso            Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Restrict)
+  createdAt        DateTime  @default(now()) @map("CreatedAt")
+  updatedAt        DateTime  @updatedAt @map("UpdatedAt")
+
+  @@index([professorId])
+  @@index([cursoId])
+  @@index([data])
+  @@index([data, professorId])
+}
+
+model Permissao {
+  permissaoId Int                @id @default(autoincrement()) @map("PermissaoID")
+  descricao   String             @map("Descricao") @db.VarChar(100)
+  usuarios    UsuarioPermissao[]
+
+  @@index([descricao])
+}
+
+model UsuarioPermissao {
+  usuarioId   Int       @map("UsuarioID")
+  permissaoId Int       @map("PermissaoID")
+  usuario     Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  permissao   Permissao @relation(fields: [permissaoId], references: [permissaoId], onDelete: Cascade)
+
+  @@id([usuarioId, permissaoId])
+}

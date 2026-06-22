@@ -1,176 +1,265 @@
-# SWCS — Sistema de Gestão de Sumários  (Backend)
+# SWCS — Backend API
 
-## Descrição
+> **Sistema Web para Controlo de Sumário Universitário**  
+> API RESTful construída com Fastify, Prisma e MySQL para gerir professores, funcionários, cursos, sumários, presenças, efetividades e autenticação com JWT.
 
-API backend para gestão de sumário — controle de professores, cursos, sumários, presenças e efetividades. Projetado com Fastify, Prisma e Zod para validação e testes automatizados com Jest.
+---
 
-## Status
+## 🚀 Stack Tecnológica
 
-Projeto de exemplo / não pronto para produção sem ajustes de segurança e configuração.
+| Tecnologia | Função |
+|---|---|
+| **Node.js + TypeScript** | Runtime e tipagem estática |
+| **Fastify 5** | Framework HTTP de alta performance |
+| **Prisma 5** | ORM para MySQL |
+| **MySQL** | Base de dados relacional |
+| **Zod** | Validação de schemas (`fastify-type-provider-zod`) |
+| **JWT + bcryptjs** | Autenticação e hash de senhas |
+| **node-cron** | Agendador de tarefas periódicas |
+| **nodemailer** | Envio de emails (ex: recuperação de senha) |
+| **jsPDF + autotable** | Geração de relatórios PDF no servidor |
+| **Jest + ts-jest** | Testes unitários e de integração |
+| **Docker Compose** | Infraestrutura de desenvolvimento local |
+| **Swagger UI** | Documentação interativa da API (opcional) |
 
-## Principais tecnologias
+---
 
-- Fastify (servidor) — [`app`](src/server.ts)
-- Prisma (ORM) — [src/plugins/prisma.ts](src/plugins/prisma.ts)
-- Zod (validação de schemas)
-- JWT (autenticação) — [src/utils/jwt.ts](src/utils/jwt.ts)
-- Swagger (documentação) — [src/plugins/swagger.ts](src/plugins/swagger.ts)
-- Jest (testes)
-- Docker (infraestrutura de servidor componetizado)
+## 📂 Estrutura do Projeto
 
-## Estrutura resumida
+```
+swcs-backend/
+├── prisma/
+│   ├── schema.prisma        # Modelos e relações da base de dados
+│   ├── seed.ts              # Script para popular a BD com dados de teste
+│   └── migrations/          # Histórico de migrações
+├── src/
+│   ├── server.ts            # Ponto de entrada, registo de plugins e rotas
+│   ├── scheduler-cron.ts    # Agendador de tarefas com node-cron
+│   ├── Routers/             # Definição das rotas por recurso
+│   │   ├── auth.routes.ts
+│   │   ├── professor.routes.ts
+│   │   ├── funcionario.routes.ts
+│   │   ├── usuario.routes.ts
+│   │   ├── permissoes.routes.ts
+│   │   ├── cursos.routes.ts
+│   │   ├── sumarios.routes.ts
+│   │   ├── presencas.routes.ts
+│   │   ├── efetividades.routes.ts
+│   │   ├── dashboard.routes.ts
+│   │   └── report.routes.ts
+│   ├── controllers/         # Lógica de negócio por recurso
+│   ├── schemas/             # Schemas Zod para validação de entrada e saída
+│   ├── middlewares/         # Autenticação JWT e tratamento de erros
+│   ├── plugins/             # Plugins Fastify (Prisma, Swagger)
+│   ├── services/            # Camada de serviços (lógica reutilizável)
+│   ├── templates/           # Templates de email
+│   ├── types/               # Tipos e interfaces TypeScript partilhados
+│   ├── utils/               # Utilitários (jwt, hash, etc.)
+│   └── tests/               # Testes de integração (Jest)
+│       ├── auth.test.ts
+│       ├── professor.test.ts
+│       ├── funcionario.test.ts
+│       ├── presencas.test.ts
+│       ├── sumarios.test.ts
+│       ├── rbac.test.ts
+│       ├── testHelpers.ts
+│       ├── env-setup.ts
+│       └── setup.ts
+```
 
-- Rotas: [src/Routers](src/Routers)
-- Controladores: [src/controllers](src/controllers)
-- Schemas (Zod/JSON Schema): [src/schemas](src/schemas)
-- Middlewares: [src/middlewares](src/middlewares)
-- Plugins: [src/plugins](src/plugins)
-- Utilitários: [src/utils](src/utils)
-- Testes: [src/tests](src/tests)
+---
 
-## Pré-requisitos
+## 🗄️ Modelo de Dados (Prisma Schema)
 
-- Node.js (>= 18 recomendado)
+### Entidades Principais
+
+| Modelo | Descrição |
+|---|---|
+| `Usuario` | Utilizadores do sistema com tipo (`FUNCIONARIO`, `PROFESSOR`, `SUMARISTA`) |
+| `Professor` | Professores com departamento (`INFORMATICA`, `OUTROS`) e carga horária |
+| `Funcionario` | Funcionários com cargo (`SUMARISTA`, `SECRETARIO`, `ADMINISTRATIVO`, `OUTROS`) |
+| `Curso` | Cursos académicos |
+| `Sumario` | Registo de aulas dadas por professor e curso |
+| `Presenca` | Controlo de presenças e faltas (`PRESENTE`, `FALTA`) |
+| `Efetividade` | Registo de horas trabalhadas por professor/curso |
+| `Permissao` / `UsuarioPermissao` | Sistema de permissões granulares por utilizador |
+| `RefreshToken` | Tokens de renovação de sessão |
+| `PasswordReset` | Tokens para recuperação de senha |
+
+---
+
+## ⚙️ Pré-requisitos
+
+- Node.js >= 18
 - npm
-- Banco de dados compatível (CONFIGURAR via DATABASE_URL ou DOCKER-COMPOSE)
+- Docker e Docker Compose (recomendado para a BD em desenvolvimento)
 
-## Instalação
+---
 
-1. Clone:
-   git clone https://github.com/ronydevdesgn/swcs-backend.git
-   cd swcs-backend
+## 🛠️ Instalação e Configuração
 
-2. Instale dependências:
-   npm install
+### 1. Clonar o repositório
 
-## Configuração de ambiente
+```bash
+git clone https://github.com/ronydevdesgn/swcs-backend.git
+cd swcs-backend
+```
 
-Copie e ajuste variáveis:
+### 2. Instalar dependências
+
+```bash
+npm install
+```
+
+### 3. Configurar variáveis de ambiente
+
+```bash
 cp .env.example .env
+```
 
-Variáveis essenciais:
+Editar o `.env` com os valores corretos:
 
-- DATABASE_URL (prisma)
-- JWT_SECRET
-- REFRESH_TOKEN_SECRET
-  Outras variáveis opcionais: SWAGGER_ENABLED, TEST_DATABASE_URL, NODE_ENV.
+```env
+DATABASE_URL="mysql://user:password@localhost:3306/swcs_db"
+JWT_SECRET="sua_chave_secreta_forte"
+REFRESH_TOKEN_SECRET="outra_chave_secreta_forte"
+NODE_ENV="development"
+SWAGGER_ENABLED="true"          # opcional — ativa a documentação Swagger
+TEST_DATABASE_URL="mysql://..."  # opcional — BD separada para testes
+EMAIL_HOST="smtp.example.com"   # opcional — para envio de emails
+EMAIL_PORT=587
+EMAIL_USER="..."
+EMAIL_PASS="..."
+```
 
-## Banco de dados
+### 4. Iniciar a base de dados com Docker
 
-Gerar client e aplicar migrations:
-npx prisma generate
-npx prisma migrate dev
+```bash
+npm run dev:docker:up
+```
 
-(Seed opcional)
-npx prisma db seed
+### 5. Aplicar migrações e popular a BD
 
-## Executando
+```bash
+npm run db:migrate
+npm run db:generate
+npm run db:seed
+```
 
-- Desenvolvimento:
-  npm run dev
-- Produção:
-  npm run build
-  npm start
+---
 
-Ao iniciar, o servidor expõe `http://localhost:3333` por padrão. A constante exportada [`app`](src/server.ts) é usada nos testes de integração.
+## ▶️ Executar o Projeto
 
-## Documentação da API
+### Desenvolvimento (servidor + scheduler em paralelo)
 
-- Swagger UI: http://localhost:3333/docs (se habilitado via SWAGGER_ENABLED)
-- JSON OpenAPI: http://localhost:3333/docs/json
+```bash
+npm run dev
+```
 
-## Principais endpoints
+O servidor estará disponível em `http://localhost:3333`.
 
-Autenticação
+### Produção
 
-- POST /auth/login
-- POST /auth/refresh
-- POST /auth/logout
-- POST /auth/reset-password
+```bash
+npm run build
+npm start
+```
 
-Professores
+---
 
-- GET /professores
-- POST /professores
-- GET /professores/:id
-- PUT /professores/:id
+## 📡 Endpoints da API
 
-Cursos
+O servidor expõe os seguintes prefixos de rotas:
 
-- GET /cursos
-- POST /cursos — cria curso via controller [`criarCurso`](src/controllers/cursos.controller.ts)
-- GET /cursos/:id
-- PUT /cursos/:id
+| Prefixo | Recurso |
+|---|---|
+| `/auth` | Login, Refresh Token, Logout, Reset de Senha |
+| `/professores` | CRUD de Professores |
+| `/funcionarios` | CRUD de Funcionários |
+| `/usuarios` | CRUD de Utilizadores |
+| `/permissoes` | Gestão de Permissões |
+| `/cursos` | CRUD de Cursos |
+| `/sumarios` | CRUD de Sumários |
+| `/presencas` | Controlo de Presenças (incluindo registo em lote) |
+| `/efetividades` | Registo de Efetividades e filtros por período |
+| `/dashboard` | Estatísticas gerais do sistema |
+| `/reports` | Geração de relatórios em PDF |
 
-Sumários
+### Autenticação — Detalhes
 
-- GET /sumarios
-- POST /sumarios
-- GET /sumarios/:id
-- PUT /sumarios/:id
-- DELETE /sumarios/:id
+```
+POST /auth/login           → Retorna accessToken + refreshToken
+POST /auth/refresh         → Renova o accessToken
+POST /auth/logout          → Invalida o refreshToken
+POST /auth/forgot-password → Envia email de recuperação
+POST /auth/reset-password  → Redefine a senha com token
+```
 
-Presenças
+---
 
-- POST /presencas
-- POST /presencas/batch
-- GET /presencas
-- GET /presencas/:id
-- GET /presencas/professor/:id
-- PUT /presencas/:id
-- DELETE /presencas/:id
-- Gerenciamento em controller: [`registrarPresenca`](src/controllers/presencas.controller.ts)
+## 🧪 Testes
 
-Efetividades
+Os testes são de integração e utilizam a instância real do servidor Fastify.
 
-- POST /efetividades
-- GET /efetividades
-- GET /efetividades/:id
-- PUT /efetividades/:id
-- DELETE /efetividades/:id
-- GET /efetividades/periodo (filtros e estatísticas)
+```bash
+# Executar todos os testes
+npm test
 
-## Validação e normalizações
+# Modo watch (durante desenvolvimento)
+npm run test:watch
 
-- Os endpoints usam Zod para validação nos schemas em [src/schemas](src/schemas).
-- O servidor normaliza campos de entrada (por exemplo, campos em caixa baixa → propriedades do modelo) em [src/server.ts].
+# Com relatório de cobertura
+npm run test:cov
+```
 
-## Tratamento de erros
+**Suites de teste disponíveis:**
+- `auth.test.ts` — Login e rejeição de credenciais inválidas
+- `professor.test.ts` — CRUD de professores
+- `funcionario.test.ts` — CRUD de funcionários
+- `presencas.test.ts` — Registo e gestão de presenças
+- `sumarios.test.ts` — Criação e gestão de sumários
+- `rbac.test.ts` — Controlo de acesso baseado em roles
 
-O projeto centraliza erros com uma estrutura tipo AppError (código, mensagem, status). O Fastify também tem handler de erro global em [src/server.ts]. Respostas padronizadas ajudam a diferenciar erros de validação, conflito, não encontrado e servidor.
+---
 
-## Testes
+## 📖 Documentação Swagger
 
-- Testes unitários/integrados: [src/tests](src/tests)
-- Configuração Jest: [jest.config.js](jest.config.js)
-- Executar:
-  npm test
+Quando `SWAGGER_ENABLED=true`, a documentação interativa está disponível em:
 
-## Práticas de segurança / produção
+- **Swagger UI:** `http://localhost:3333/docs`
+- **OpenAPI JSON:** `http://localhost:3333/docs/json`
 
-- Definir segredos robustos (JWT_SECRET / REFRESH_TOKEN_SECRET) no ambiente.
-- Habilitar HTTPS/Proxy em produção.
-- Revisar CORS e allowed origins em [src/server.ts].
-- Auditar dependências e remover dados de seed público antes de produção.
+---
 
-## Notas e recomendações
+## 🔐 Boas Práticas de Segurança
 
-- A documentação Swagger pode ser habilitada via variável SWAGGER_ENABLED.
-- Ajustar políticas de log e níveis para ambientes de produção (Fastify logger).
-- Revisar e endurecer a geração e verificação de tokens em [src/utils/jwt.ts].
+- Utilize segredos JWT robustos e diferentes para `JWT_SECRET` e `REFRESH_TOKEN_SECRET`.
+- Em produção, configure HTTPS via proxy reverso (nginx, Caddy, etc.).
+- Reveja os `allowedOrigins` no CORS em `src/server.ts`.
+- Remova os dados do seed antes de ir para produção.
+- Audite as dependências regularmente com `npm audit`.
 
-## Contribuição
+---
 
-1. Fork → nova branch feature/
-2. Commit claro e testes
-3. Pull request com descrição
+## 🤝 Contribuição
 
-## Licença
+1. Fork → branch `feature/nome-da-feature`
+2. Escreva testes para o código novo
+3. `git commit -m "feat: descrição clara"`
+4. Abra um Pull Request com descrição detalhada
+
+---
+
+## 📄 Licença
 
 MIT — ver [LICENSE](LICENSE).
 
-## Autor
+---
+
+## 👤 Autor
 
 <a href="https://github.com/ronydevdesgn">
- <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/82418215?v=4" width="100px;" alt=""/>
- </a>
+  <img style="border-radius: 50%;" src="https://avatars.githubusercontent.com/u/82418215?v=4" width="80px;" alt="ronydevdesgn"/>
+  <br />
+  <b>Rodivânio Alberto Da Costa</b>
+</a>

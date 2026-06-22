@@ -1,15 +1,12 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { Cargo, Prisma, TipoUsuario } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
 import {
-  CreateFuncionarioInput,
-  UpdateFuncionarioInput,
-  IdParam,
+    CreateFuncionarioInput,
+    IdParam,
+    UpdateFuncionarioInput,
 } from "../schemas/funcionario.schema";
 import { hashSenha } from "../utils/hash";
-import { TipoUsuario, Prisma, Cargo } from "@prisma/client";
-import { AppError, isAppError } from "../types/errors";
-
-// Regex para validação de email
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+import { sendError } from "../utils/http";
 
 export async function criarFuncionario(
   req: FastifyRequest<{ Body: CreateFuncionarioInput }>,
@@ -18,43 +15,33 @@ export async function criarFuncionario(
   const prisma = req.server.prisma;
 
   try {
-    const { Nome, Email, Senha, Cargo } = req.body;
+    const { nome, email, senha, cargo } = req.body;
 
-    // Validar formato do email
-    if (!EMAIL_REGEX.test(Email)) {
-      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
-    }
+    // Hash da senha
+    const senhaHash = await hashSenha(senha);
 
     // Usar transação para garantir consistência
     const funcionario = await prisma.$transaction(async (tx) => {
       // Verificar email único
       const emailExiste = await tx.usuario.findUnique({
-        where: { Email },
+        where: { email },
       });
 
       if (emailExiste) {
-        throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
-      }
-
-      // Hash da senha
-      const senhaHash = await hashSenha(Senha);
-
-      // Validar Cargo
-      if (!Object.values(Cargo).includes(Cargo as unknown as Cargo)) {
-        throw new AppError("VALIDATION_ERROR", "Cargo inválido");
+        throw new Error("Email já está em uso");
       }
 
       // Criar o usuário primeiro
       const novoUsuario = await tx.usuario.create({
         data: {
-          Nome,
-          Email,
-          SenhaHash: senhaHash,
-          Tipo: TipoUsuario.FUNCIONARIO,
-          Permissoes: {
+          nome,
+          email,
+          senhaHash: senhaHash,
+          tipo: TipoUsuario.FUNCIONARIO,
+          permissoes: {
             create: [
-              { PermissaoID: 1 }, // Permissões padrão do funcionário
-              { PermissaoID: 3 }, // Adicione as permissões conforme necessário
+              { permissaoId: 1 }, // Permissões padrão do funcionário
+              { permissaoId: 3 }, // Adicione as permissões conforme necessário
             ],
           },
         },
@@ -63,22 +50,22 @@ export async function criarFuncionario(
       // Criar o funcionário vinculado ao usuário
       return await tx.funcionario.create({
         data: {
-          Nome,
-          Email,
-          Cargo: Cargo as unknown as Cargo,
-          UsuarioID: novoUsuario.UsuarioID,
+          nome,
+          email,
+          cargo: cargo,
+          usuarioId: novoUsuario.usuarioId,
         },
         include: {
-          Usuario: {
+          usuario: {
             select: {
-              Email: true,
-              Tipo: true,
-              Permissoes: {
+              email: true,
+              tipo: true,
+              permissoes: {
                 select: {
-                  Permissao: {
+                  permissao: {
                     select: {
-                      PermissaoID: true,
-                      Descricao: true,
+                      permissaoId: true,
+                      descricao: true,
                     },
                   },
                 },
@@ -94,37 +81,21 @@ export async function criarFuncionario(
       data: funcionario,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao criar funcionário:", error);
 
-    if (isAppError(error)) {
-      if (error.code === "VALIDATION_ERROR") {
-        return reply.status(400).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (error.code === "DUPLICATE_EMAIL") {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    if (errorMessage === "Email já está em uso") {
+      return sendError(reply, 409, errorMessage);
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao criar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    return sendError(reply, 500, "Erro interno ao criar funcionário");
   }
 }
 
@@ -141,39 +112,36 @@ export async function listarFuncionarios(
     let where: Prisma.FuncionarioWhereInput = {};
     if (search) {
       where.OR = [
-        { Nome: { contains: search } },
-        { Usuario: { Email: { contains: search } } },
+        { nome: { contains: search } },
+        { usuario: { email: { contains: search } } },
       ];
     }
     if (cargo) {
-      if (!Object.values(Cargo).includes(cargo as Cargo)) {
-        return reply.status(400).send({ mensagem: "Cargo inválido" });
-      }
-      where.Cargo = cargo as Cargo;
+      where.cargo = cargo as Cargo;
     }
 
     const funcionarios = await prisma.funcionario.findMany({
       where,
       include: {
-        Usuario: {
+        usuario: {
           select: {
-            Email: true,
-            Permissoes: {
+            email: true,
+            permissoes: {
               include: {
-                Permissao: true,
+                permissao: true,
               },
             },
           },
         },
       },
       orderBy: {
-        Nome: "asc",
+        nome: "asc",
       },
     });
 
     // Agrupar por cargo para estatísticas
     const estatisticas = funcionarios.reduce((acc, curr) => {
-      const cargo = curr.Cargo;
+      const cargo = curr.cargo;
       if (!acc[cargo]) {
         acc[cargo] = 0;
       }
@@ -189,14 +157,8 @@ export async function listarFuncionarios(
       },
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar funcionários",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    req.log.error("Erro ao listar funcionários:", error);
+    return sendError(reply, 500, "Erro interno ao listar funcionários");
   }
 }
 
@@ -210,14 +172,14 @@ export async function buscarFuncionario(
     const { id } = req.params;
 
     const funcionario = await prisma.funcionario.findUnique({
-      where: { FuncionarioID: id },
+      where: { funcionarioId: id },
       include: {
-        Usuario: {
+        usuario: {
           select: {
-            Email: true,
-            Permissoes: {
+            email: true,
+            permissoes: {
               include: {
-                Permissao: true,
+                permissao: true,
               },
             },
           },
@@ -226,26 +188,13 @@ export async function buscarFuncionario(
     });
 
     if (!funcionario) {
-      throw new AppError("NOT_FOUND", "Funcionário não encontrado");
+      return sendError(reply, 404, "Funcionário não encontrado");
     }
 
     return reply.send({ data: funcionario });
   } catch (error) {
-    req.log.error(error);
-
-    if (isAppError(error) && error.code === "NOT_FOUND") {
-      return reply.status(404).send({
-        mensagem: error.message,
-      });
-    }
-
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
-    });
+    req.log.error("Erro ao buscar funcionário:", error);
+    return sendError(reply, 500, "Erro interno ao buscar funcionário");
   }
 }
 
@@ -259,54 +208,45 @@ export async function atualizarFuncionario(
     const { id } = req.params;
     const dados = req.body;
 
-    // Validar email se fornecido
-    if (dados.Email && !EMAIL_REGEX.test(dados.Email)) {
-      throw new AppError("VALIDATION_ERROR", "Formato de email inválido");
-    }
-
     // Usar transação para garantir consistência
     const funcionario = await prisma.$transaction(async (tx) => {
       // Verificar se o funcionário existe
       const funcionarioExiste = await tx.funcionario.findUnique({
-        where: { FuncionarioID: id },
-        include: { Usuario: true },
+        where: { funcionarioId: id },
+        include: { usuario: true },
       });
 
       if (!funcionarioExiste) {
-        throw new AppError("NOT_FOUND", "Funcionário não encontrado");
+        throw new Error("Funcionário não encontrado");
       }
 
       // Verificar email único se estiver sendo alterado
-      if (dados.Email && dados.Email !== funcionarioExiste.Usuario?.Email) {
+      if (dados.email && dados.email !== funcionarioExiste.usuario?.email) {
         const emailExiste = await tx.usuario.findUnique({
-          where: { Email: dados.Email },
+          where: { email: dados.email },
         });
 
         if (emailExiste) {
-          throw new AppError("DUPLICATE_EMAIL", "Email já está em uso");
+          throw new Error("Email já está em uso");
         }
       }
 
       // Atualizar funcionário
       const funcionarioAtualizado = await tx.funcionario.update({
-        where: { FuncionarioID: id },
+        where: { funcionarioId: id },
         data: {
-          Nome: dados.Nome,
-          Cargo: dados.Cargo
-            ? Object.values(Cargo).includes(dados.Cargo as Cargo)
-              ? (dados.Cargo as Cargo)
-              : undefined
-            : undefined,
+          nome: dados.nome,
+          cargo: dados.cargo,
         },
       });
 
       // Atualizar usuário se necessário
-      if (dados.Email && funcionarioExiste.Usuario) {
+      if (dados.email && funcionarioExiste.usuario) {
         await tx.usuario.update({
-          where: { UsuarioID: funcionarioExiste.Usuario.UsuarioID },
+          where: { usuarioId: funcionarioExiste.usuario.usuarioId },
           data: {
-            Email: dados.Email,
-            Nome: dados.Nome,
+            email: dados.email,
+            nome: dados.nome,
           },
         });
       }
@@ -319,39 +259,74 @@ export async function atualizarFuncionario(
       data: funcionario,
     });
   } catch (error) {
-    req.log.error(error);
+    req.log.error("Erro ao atualizar funcionário:", error);
 
-    if (isAppError(error)) {
-      if (error.code === "NOT_FOUND") {
-        return reply.status(404).send({
-          mensagem: error.message,
-        });
-      }
-
-      if (
-        error.code === "DUPLICATE_EMAIL" ||
-        error.code === "VALIDATION_ERROR"
-      ) {
-        return reply.status(409).send({
-          mensagem: error.message,
-        });
-      }
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    if (errorMessage === "Funcionário não encontrado") {
+      return sendError(reply, 404, errorMessage);
+    }
+    if (errorMessage === "Email já está em uso") {
+      return sendError(reply, 409, errorMessage);
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
     }
 
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar funcionário",
-      detalhes:
-        process.env.NODE_ENV === "development" && error instanceof Error
-          ? error.message
-          : undefined,
+    return sendError(reply, 500, "Erro interno ao atualizar funcionário");
+  }
+}
+
+export async function deletarFuncionario(
+  req: FastifyRequest<{ Params: IdParam }>,
+  reply: FastifyReply
+) {
+  const prisma = req.server.prisma;
+
+  try {
+    const { id } = req.params;
+
+    await prisma.$transaction(async (tx) => {
+      // Verificar se o funcionário existe
+      const funcionario = await tx.funcionario.findUnique({
+        where: { funcionarioId: id },
+      });
+
+      if (!funcionario) {
+        throw new Error("Funcionário não encontrado");
+      }
+
+      // Remover o funcionário (o usuário associado pode ser mantido ou removido dependendo da regra, 
+      // aqui vamos remover ambos para manter a limpeza se for desejo do sistema, 
+      // mas usualmente deletamos o perfil mantendo o log se necessário. 
+      // Neste caso o teste espera que o funcionário suma).
+      
+      await tx.funcionario.delete({
+        where: { funcionarioId: id },
+      });
+
+      // Se houver um usuário órfão, opcionalmente deletar:
+      if (funcionario.usuarioId) {
+        await tx.usuario.delete({
+          where: { usuarioId: funcionario.usuarioId },
+        });
+      }
     });
+
+    return reply.status(200).send({
+      mensagem: "Funcionário removido com sucesso",
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar funcionário:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    if (errorMessage === "Funcionário não encontrado") {
+      return sendError(reply, 404, errorMessage);
+    }
+
+    return sendError(reply, 500, "Erro interno ao remover funcionário");
   }
 }

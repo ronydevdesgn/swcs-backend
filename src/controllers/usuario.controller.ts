@@ -1,66 +1,72 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import {
-  usuarioSchema,
-  updateUsuarioSchema,
-  updateSenhaSchema,
-  idParamSchema,
-} from "../schemas/usuario.schema";
+import { Prisma } from "@prisma/client";
+import { FastifyReply } from "fastify";
 import type {
-  CreateUsuarioInput,
-  UpdateUsuarioInput,
-  UpdateSenhaInput,
-  IdParam,
+    CreateUsuarioInput,
+    IdParam,
+    UpdateSenhaInput,
+    UpdateUsuarioInput,
 } from "../schemas/usuario.schema";
-import { hashSenha, compararSenha } from "../utils/hash";
+import { compararSenha, hashSenha } from "../utils/hash";
+import { FastifyRequestWithUser, sendError } from "../utils/http";
 
 export async function criarUsuario(
-  req: FastifyRequest<{ Body: CreateUsuarioInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
     const prisma = req.server.prisma;
-    const data = usuarioSchema.parse(req.body);
-    const SenhaHash = await hashSenha(data.Senha);
-    const { Senha, Tipo, ...restData } = data;
+    const { nome, email, senha, tipo } = req.body as CreateUsuarioInput;
+    const senhaHash = await hashSenha(senha);
 
     const usuario = await prisma.usuario.create({
       data: {
-        ...restData,
-        SenhaHash: SenhaHash,
-        Tipo: data.Tipo,
+        nome: nome,
+        email: email,
+        senhaHash: senhaHash,
+        tipo: tipo,
       },
-      include: { Permissoes: true },
+      include: { permissoes: true },
     });
-    return reply.status(201).send(usuario);
+    return reply.status(201).send({
+      mensagem: "Usuário criado com sucesso",
+      data: usuario,
+    });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao criar usuário",
-    });
+    req.log.error("Erro ao criar usuário:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
+    }
+    return sendError(reply, 500, "Erro interno ao criar usuário");
   }
 }
 
-export async function listarUsuarios(req: FastifyRequest, reply: FastifyReply) {
+export async function listarUsuarios(
+  req: FastifyRequestWithUser,
+  reply: FastifyReply
+) {
   try {
     const usuarios = await req.server.prisma.usuario.findMany({
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
-        Permissoes: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        permissoes: {
           include: {
-            Permissao: true,
+            permissao: true,
           },
         },
-        Professor: {
+        professor: {
           select: {
-            Departamento: true,
+            departamento: true,
           },
         },
-        Funcionario: {
+        funcionario: {
           select: {
-            Cargo: true,
+            cargo: true,
           },
         },
       },
@@ -68,85 +74,77 @@ export async function listarUsuarios(req: FastifyRequest, reply: FastifyReply) {
 
     return reply.send({ data: usuarios });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao listar usuários",
-    });
+    req.log.error("Erro ao listar usuários:", error);
+    return sendError(reply, 500, "Erro interno ao listar usuários");
   }
 }
 
 export async function buscarUsuario(
-  req: FastifyRequest<{ Params: IdParam }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = idParamSchema.parse(req.params);
+    const { id } = req.params as IdParam;
     const usuario = await req.server.prisma.usuario.findUnique({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
-        Permissoes: {
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
+        permissoes: {
           include: {
-            Permissao: true,
+            permissao: true,
           },
         },
-        Professor: true,
-        Funcionario: true,
+        professor: true,
+        funcionario: true,
       },
     });
 
     if (!usuario) {
-      return reply.status(404).send({
-        mensagem: "Usuário não encontrado",
-      });
+      return sendError(reply, 404, "Usuário não encontrado");
     }
 
     return reply.send({ data: usuario });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao buscar usuário",
-    });
+    req.log.error("Erro ao buscar usuário:", error);
+    return sendError(reply, 500, "Erro interno ao buscar usuário");
   }
 }
 
 export async function atualizarUsuario(
-  req: FastifyRequest<{ Params: IdParam; Body: UpdateUsuarioInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = idParamSchema.parse(req.params);
-    const dados = updateUsuarioSchema.parse(req.body);
+    const { id } = req.params as IdParam;
+    const dados = req.body as UpdateUsuarioInput;
 
     // Verificar se o email já está em uso por outro usuário
-    if (dados.Email) {
+    if (dados.email) {
       const emailExiste = await req.server.prisma.usuario.findFirst({
         where: {
-          Email: dados.Email,
+          email: dados.email,
           NOT: {
-            UsuarioID: id,
+            usuarioId: id,
           },
         },
       });
 
       if (emailExiste) {
-        return reply.status(409).send({
-          mensagem: "Email já está em uso",
-        });
+        return sendError(reply, 409, "Email já está em uso");
       }
     }
 
     const usuario = await req.server.prisma.usuario.update({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
       data: dados,
       select: {
-        UsuarioID: true,
-        Nome: true,
-        Email: true,
-        Tipo: true,
+        usuarioId: true,
+        nome: true,
+        email: true,
+        tipo: true,
       },
     });
 
@@ -155,61 +153,87 @@ export async function atualizarUsuario(
       data: usuario,
     });
   } catch (error: unknown) {
+    req.log.error("Erro ao atualizar usuário:", error);
     if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
-      return reply.status(404).send({
-        mensagem: "Usuário não encontrado",
-      });
+      return sendError(reply, 404, "Usuário não encontrado");
     }
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar usuário",
-    });
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return sendError(reply, 409, "Email já está em uso");
+    }
+    return sendError(reply, 500, "Erro interno ao atualizar usuário");
   }
 }
 
 export async function atualizarSenha(
-  req: FastifyRequest<{ Params: IdParam; Body: UpdateSenhaInput }>,
+  req: FastifyRequestWithUser,
   reply: FastifyReply
 ) {
   try {
-    const { id } = idParamSchema.parse(req.params);
-    const { senhaAtual, novaSenha } = updateSenhaSchema.parse(req.body);
+    const { id } = req.params as IdParam;
+    const { senhaAtual, novaSenha } = req.body as UpdateSenhaInput;
 
     const usuario = await req.server.prisma.usuario.findUnique({
-      where: { UsuarioID: id },
+      where: { usuarioId: id },
     });
 
     if (!usuario) {
-      return reply.status(404).send({
-        mensagem: "Usuário não encontrado",
-      });
+      return sendError(reply, 404, "Usuário não encontrado");
     }
 
-    const senhaCorreta = await compararSenha(senhaAtual, usuario.SenhaHash);
+    const senhaCorreta = await compararSenha(senhaAtual, usuario.senhaHash);
     if (!senhaCorreta) {
-      return reply.status(401).send({
-        mensagem: "Senha atual incorreta",
-      });
+      return sendError(reply, 401, "Senha atual incorreta");
     }
 
     const novaSenhaHash = await hashSenha(novaSenha);
     await req.server.prisma.usuario.update({
-      where: { UsuarioID: id },
-      data: { SenhaHash: novaSenhaHash },
+      where: { usuarioId: id },
+      data: { senhaHash: novaSenhaHash },
     });
 
     return reply.send({
       mensagem: "Senha atualizada com sucesso",
     });
   } catch (error) {
-    req.log.error(error);
-    return reply.status(500).send({
-      mensagem: "Erro interno ao atualizar senha",
+    req.log.error("Erro ao atualizar senha:", error);
+    return sendError(reply, 500, "Erro interno ao atualizar senha");
+  }
+}
+
+export async function deletarUsuario(
+  req: FastifyRequestWithUser,
+  reply: FastifyReply
+) {
+  try {
+    const prisma = req.server.prisma;
+    const { id } = req.params as IdParam;
+
+    const usuario = await prisma.usuario.delete({
+      where: { usuarioId: id },
     });
+
+    if (!usuario) {
+      return sendError(reply, 404, "Usuário não encontrado");
+    }
+
+    return reply.send({
+      mensagem: "Usuário deletado com sucesso",
+      data: usuario,
+    });
+  } catch (error) {
+    req.log.error("Erro ao deletar usuário:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return sendError(reply, 404, "Usuário não encontrado");
+    }
+    return sendError(reply, 500, "Erro interno ao deletar usuário");
   }
 }

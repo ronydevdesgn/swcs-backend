@@ -1,8 +1,9 @@
 import { app } from "../server";
 import {
-  makeAuthenticatedRequest,
-  createTestProfessor,
+  createProfessorCurso,
   createTestCurso,
+  createTestProfessor,
+  makeAuthenticatedRequest,
 } from "./testHelpers";
 
 describe("Sumario Routes", () => {
@@ -16,8 +17,9 @@ describe("Sumario Routes", () => {
     // Criar dados de teste necessários
     const { professor } = await createTestProfessor();
     const curso = await createTestCurso();
-    cursoId = curso.CursoID;
-    professorId = professor.ProfessorID;
+    cursoId = curso.cursoId;
+    professorId = professor.professorId;
+    await createProfessorCurso(professorId, cursoId);
   });
 
   afterAll(async () => {
@@ -28,15 +30,15 @@ describe("Sumario Routes", () => {
     const res = await makeAuthenticatedRequest("POST", "/sumarios", {
       data: new Date().toISOString(),
       conteudo: "Revisão de conteúdos da aula anterior.",
-      cursoID: cursoId,
-      professorID: professorId,
+      cursoId: cursoId,
+      professorId: professorId,
     });
 
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("SumarioID");
-    sumarioId = body.data.SumarioID;
+    expect(body.data).toHaveProperty("sumarioId");
+    sumarioId = body.data.sumarioId;
   });
 
   it("should list all sumarios", async () => {
@@ -54,7 +56,7 @@ describe("Sumario Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.SumarioID).toBe(sumarioId);
+    expect(response.data.sumarioId).toBe(sumarioId);
   });
 
   it("should update a sumario", async () => {

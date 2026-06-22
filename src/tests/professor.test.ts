@@ -1,12 +1,13 @@
-import { app } from "../server";
-import { makeAuthenticatedRequest } from "./testHelpers";
 import { Departamento } from "@prisma/client";
+import { app } from "../server";
+import { makeAuthenticatedRequest, seedTestPermissions } from "./testHelpers";
 
 describe("Professor Routes", () => {
   let professorId: number;
 
   beforeAll(async () => {
     await app.ready();
+    await seedTestPermissions();
   });
 
   afterAll(async () => {
@@ -25,8 +26,8 @@ describe("Professor Routes", () => {
     expect(res.statusCode).toBe(201);
     const body = JSON.parse(res.payload);
     expect(body).toHaveProperty("data");
-    expect(body.data).toHaveProperty("ProfessorID");
-    professorId = body.data.ProfessorID;
+    expect(body.data).toHaveProperty("professorId");
+    professorId = body.data.professorId;
   });
 
   it("should list all professores", async () => {
@@ -45,7 +46,7 @@ describe("Professor Routes", () => {
     expect(res.statusCode).toBe(200);
     const response = JSON.parse(res.payload);
     expect(response).toHaveProperty("data");
-    expect(response.data.ProfessorID).toBe(professorId);
+    expect(response.data.professorId).toBe(professorId);
   });
 
   it("should update a professor", async () => {

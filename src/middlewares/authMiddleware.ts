@@ -1,21 +1,8 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { verificarToken } from "../utils/jwt";
-import type { JwtPayload } from "jsonwebtoken";
 import { TipoUsuario } from "@prisma/client";
-
-// Interface melhorada para usuário autenticado
-export interface AuthenticatedUser extends JwtPayload {
-  id: number;
-  tipo: TipoUsuario;
-  email: string;
-  nome: string;
-  permissions?: string[];
-}
-
-// Extend FastifyRequest to include user
-export interface FastifyRequestWithUser extends FastifyRequest {
-  user?: AuthenticatedUser;
-}
+import { FastifyReply } from "fastify";
+import type { JwtPayload } from "jsonwebtoken";
+import { AuthenticatedUser, FastifyRequestWithUser } from "../utils/http";
+import { verificarToken } from "../utils/jwt";
 
 // Helper para padronizar respostas de erro
 const sendAuthError = (
@@ -69,22 +56,16 @@ export async function autenticar(
     }
 
     // Extrair dados do usuário do payload
-    const userData = payload as JwtPayload & {
-      id?: number;
-      userId?: number;
-      tipo?: TipoUsuario;
-      email?: string;
-      nome?: string;
-    };
+    // O payload gerado no login já deve conter permissoes
+    const userData = payload as unknown as AuthenticatedUser;
 
     // Normalizar dados do usuário
     const normalizedUser: AuthenticatedUser = {
-      ...payload,
-      id: userData.id ?? userData.userId ?? 0,
-      tipo: userData.tipo ?? TipoUsuario.FUNCIONARIO,
-      email: userData.email ?? "",
-      nome: userData.nome ?? "",
-      permissions: [],
+      id: userData.id,
+      tipo: userData.tipo,
+      email: userData.email,
+      nome: userData.nome,
+      permissoes: userData.permissoes || [], // Usa do payload se existir
     };
 
     // Validar campos obrigatórios
@@ -96,56 +77,32 @@ export async function autenticar(
       return sendAuthError(reply, "Token com dados incompletos");
     }
 
-    // Verificar se o usuário ainda existe no banco de dados
-    try {
-      const userExists = await req.server.prisma.usuario.findUnique({
-        where: { UsuarioID: normalizedUser.id },
-        select: { UsuarioID: true, Tipo: true, Email: true },
-      });
-
-      if (!userExists) {
-        req.log.warn(
-          `Token válido mas usuário ${normalizedUser.id} não existe mais`
-        );
-        return sendAuthError(reply, "Usuário não encontrado");
-      }
-
-      // Verificar se os dados do token ainda são válidos
-      if (
-        userExists.Email !== normalizedUser.email ||
-        userExists.Tipo !== normalizedUser.tipo
-      ) {
-        req.log.warn(`Token desatualizado para usuário ${normalizedUser.id}`);
-        return sendAuthError(reply, "Token desatualizado");
-      }
-    } catch (dbError) {
-      req.log.error("Erro ao verificar usuário no banco:", dbError);
-      // Não bloquear por erro de banco, mas logar
-    }
-
-    // Carregar permissões do usuário
-    try {
-      const userPermissions = await req.server.prisma.usuarioPermissao.findMany(
-        {
-          where: { UsuarioID: normalizedUser.id },
-          include: {
-            Permissao: {
-              select: { Descricao: true },
+    // Opcional: Validar existência no banco APENAS se crítico ou cacheado?
+    // Para performance, confiamos no token assinado (stateless).
+    // Se precisarmos de revogação imediata, verificaríamos o RefreshToken ou uma blacklist.
+    
+    // Fallback: Se não vier permissoes no token (users antigos), buscar no banco
+    if (!userData.permissoes) {
+      try {
+        const userPermissions = await req.server.prisma.usuarioPermissao.findMany(
+          {
+            where: { usuarioId: normalizedUser.id },
+            include: {
+              permissao: {
+                select: { descricao: true },
+              },
             },
-          },
-        }
-      );
+          }
+        );
 
-      normalizedUser.permissions = userPermissions
-        .map((p) => p.Permissao?.Descricao)
-        .filter((desc): desc is string => typeof desc === "string");
-
-      req.log.debug(
-        `Usuário ${normalizedUser.id} carregado com ${normalizedUser.permissions.length} permissões`
-      );
-    } catch (permError) {
-      req.log.warn("Erro ao carregar permissões:", permError);
-      normalizedUser.permissions = [];
+        normalizedUser.permissoes = userPermissions
+          .map((p) => p.permissao?.descricao)
+          .filter((desc): desc is string => typeof desc === "string");
+          
+      } catch (permError) {
+        req.log.warn("Erro ao carregar permissões do banco (fallback):", permError);
+        normalizedUser.permissoes = [];
+      }
     }
 
     // Anexar usuário à requisição
@@ -156,29 +113,7 @@ export async function autenticar(
   }
 }
 
-// Middleware para verificar permissões específicas
-export function requererPermissao(...permissoesRequeridas: string[]) {
-  return async function (req: FastifyRequestWithUser, reply: FastifyReply) {
-    if (!req.user) {
-      return sendAuthError(reply, "Usuário não autenticado");
-    }
 
-    const userPermissions = req.user.permissions || [];
-    const hasPermission = permissoesRequeridas.some((permissao) =>
-      userPermissions.includes(permissao)
-    );
-
-    if (!hasPermission) {
-      return reply.status(403).send({
-        mensagem: "Permissão insuficiente",
-        statusCode: 403,
-        error: "Forbidden",
-        permissoesRequeridas: permissoesRequeridas,
-        permissoesUsuario: userPermissions,
-      });
-    }
-  };
-}
 
 // Middleware para verificar tipo de usuário
 export function requererTipoUsuario(...tiposPermitidos: TipoUsuario[]) {

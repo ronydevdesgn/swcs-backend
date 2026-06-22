@@ -12,16 +12,36 @@ describe("Auth Routes", () => {
   });
 
   it("should login with valid credentials", async () => {
-    // Usando usuário do seed
+    // Criar um usuário para teste de login
+    const email = `login_test_${Date.now()}@test.com`;
+    const password = "senha123";
+    const passwordHash = await require("bcryptjs").hash(password, 10);
+    const prisma = require("@prisma/client").PrismaClient;
+    const db = new prisma();
+    
+    await db.usuario.create({
+      data: {
+        nome: "Login Test User",
+        email: email,
+        senhaHash: passwordHash,
+        tipo: "FUNCIONARIO"
+      }
+    });
+
     const res = await app.inject({
       method: "POST",
       url: "/auth/login",
       payload: {
-        email: "sumarista@instituicao.com",
-        senha: "senha123",
+        email: email,
+        senha: password,
         tipo: "FUNCIONARIO",
       },
     });
+    
+    // Cleanup
+    await db.usuario.delete({ where: { email: email } });
+    await db.$disconnect();
+
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.payload)).toHaveProperty("accessToken");
   });

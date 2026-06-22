@@ -1,26 +1,26 @@
 import { FastifyInstance } from "fastify";
 import {
-  createCursoSchema,
-  updateCursoSchema,
-  idParamSchema,
-  listarCursosQuerySchema,
-  departamentoQuerySchema,
-  createCursoResponseSchema,
-  listCursosResponseSchema,
-  singleCursoResponseSchema,
-  updateCursoResponseSchema,
-  deleteCursoResponseSchema,
-  errorResponseSchema,
-} from "../schemas/cursos.schema";
-import {
-  criarCurso,
-  listarCursos,
-  listarCursosPorDepartamento,
-  buscarCurso,
-  atualizarCurso,
-  deletarCurso,
+    atualizarCurso,
+    buscarCurso,
+    criarCurso,
+    deletarCurso,
+    listarCursos,
+    listarCursosPorDepartamento,
 } from "../controllers/cursos.controller";
 import { autenticar } from "../middlewares/authMiddleware";
+import {
+    createCursoResponseSchema,
+    createCursoSchema,
+    deleteCursoResponseSchema,
+    departamentoQuerySchema,
+    errorResponseSchema,
+    idParamSchema,
+    listarCursosQuerySchema,
+    listCursosResponseSchema,
+    singleCursoResponseSchema,
+    updateCursoResponseSchema,
+    updateCursoSchema,
+} from "../schemas/cursos.schema";
 
 export default async function cursoRoutes(app: FastifyInstance) {
   // Aplica autenticação em todas as rotas
@@ -56,7 +56,6 @@ export default async function cursoRoutes(app: FastifyInstance) {
         summary: "Listar cursos",
         description:
           "Lista todos os cursos com filtros opcionais de busca e departamento",
-        security: [{ bearerAuth: [] }],
         querystring: listarCursosQuerySchema,
         response: {
           200: listCursosResponseSchema,

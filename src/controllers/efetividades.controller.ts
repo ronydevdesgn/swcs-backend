@@ -1,12 +1,12 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { Prisma } from "@prisma/client";
+import { FastifyReply, FastifyRequest } from "fastify";
 import {
   CreateEfetividadeInput,
-  UpdateEfetividadeInput,
   IdParam,
   PeriodoInput,
   ProfessorEfetividadeQuery,
+  UpdateEfetividadeInput,
 } from "../schemas/efetividades.schema";
-import { Prisma } from "@prisma/client";
 
 // Helper para respostas de erro padronizadas
 const sendError = (
@@ -26,11 +26,11 @@ export async function registrarEfetividade(
   reply: FastifyReply
 ) {
   try {
-    const { Data, HorasTrabalhadas, ProfessorID } = req.body;
+    const { data, horasTrabalhadas, professorId, cursoId } = req.body;
     const prisma = req.server.prisma;
 
     // Validar data
-    const dataEfetividade = new Date(Data);
+    const dataEfetividade = new Date(data);
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999); // Permitir até o final do dia atual
 
@@ -46,14 +46,14 @@ export async function registrarEfetividade(
     const efetividade = await prisma.$transaction(async (tx) => {
       // Verificar se o professor existe
       const professor = await tx.professor.findUnique({
-        where: { ProfessorID },
+        where: { professorId },
         select: {
-          Nome: true,
-          Departamento: true,
-          CargaHoraria: true,
-          Usuario: {
+          nome: true,
+          departamento: true,
+          cargaHoraria: true,
+          usuario: {
             select: {
-              Email: true,
+              email: true,
             },
           },
         },
@@ -71,11 +71,12 @@ export async function registrarEfetividade(
 
       const efetividadeExistente = await tx.efetividade.findFirst({
         where: {
-          Data: {
+          data: {
             gte: dataInicio,
             lte: dataFim,
           },
-          ProfessorID,
+          professorId,
+          cursoId,
         },
       });
 
@@ -84,28 +85,29 @@ export async function registrarEfetividade(
       }
 
       // Validar horas trabalhadas
-      if (HorasTrabalhadas > professor.CargaHoraria) {
+      if (horasTrabalhadas > professor.cargaHoraria) {
         throw new Error(
-          `As horas trabalhadas não podem exceder a carga horária do professor (${professor.CargaHoraria}h)`
+          `As horas trabalhadas não podem exceder a carga horária do professor (${professor.cargaHoraria}h)`
         );
       }
 
       // Criar o registro
       return await tx.efetividade.create({
         data: {
-          Data: dataEfetividade,
-          HorasTrabalhadas,
-          ProfessorID,
+          data: dataEfetividade,
+          horasTrabalhadas,
+          professorId,
+          cursoId,
         },
         include: {
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
-              CargaHoraria: true,
-              Usuario: {
+              nome: true,
+              departamento: true,
+              cargaHoraria: true,
+              usuario: {
                 select: {
-                  Email: true,
+                  email: true,
                 },
               },
             },
@@ -115,7 +117,7 @@ export async function registrarEfetividade(
     });
 
     req.log.info(
-      `Efetividade registrada: Professor ID ${ProfessorID}, Data: ${Data}, Horas: ${HorasTrabalhadas}`
+      `Efetividade registrada: Professor ID ${professorId}, Curso ID ${cursoId}, Data: ${data}, Horas: ${horasTrabalhadas}`
     );
 
     return reply.status(201).send({
@@ -158,15 +160,16 @@ export async function listarEfetividades(
 
     const registros = await prisma.efetividade.findMany({
       include: {
-        Professor: {
+        curso: true,
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
-            CargaHoraria: true,
+            nome: true,
+            departamento: true,
+            cargaHoraria: true,
           },
         },
       },
-      orderBy: { Data: "desc" },
+      orderBy: { data: "desc" },
     });
 
     return reply.send({
@@ -194,13 +197,13 @@ export async function buscarEfetividade(
     const prisma = req.server.prisma;
 
     const registro = await prisma.efetividade.findUnique({
-      where: { EfetividadeID: id },
+      where: { efetividadeId: id },
       include: {
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
-            CargaHoraria: true,
+            nome: true,
+            departamento: true,
+            cargaHoraria: true,
           },
         },
       },
@@ -237,11 +240,11 @@ export async function atualizarEfetividade(
     const efetividade = await prisma.$transaction(async (tx) => {
       // Verificar se a efetividade existe
       const efetividadeExiste = await tx.efetividade.findUnique({
-        where: { EfetividadeID: id },
+        where: { efetividadeId: id },
         include: {
-          Professor: {
+          professor: {
             select: {
-              CargaHoraria: true,
+              cargaHoraria: true,
             },
           },
         },
@@ -253,17 +256,17 @@ export async function atualizarEfetividade(
 
       // Validar horas trabalhadas se fornecidas
       if (
-        dados.HorasTrabalhadas !== undefined &&
-        dados.HorasTrabalhadas > efetividadeExiste.Professor.CargaHoraria
+        dados.horasTrabalhadas !== undefined &&
+        dados.horasTrabalhadas > efetividadeExiste.professor.cargaHoraria
       ) {
         throw new Error(
-          `As horas trabalhadas não podem exceder a carga horária do professor (${efetividadeExiste.Professor.CargaHoraria}h)`
+          `As horas trabalhadas não podem exceder a carga horária do professor (${efetividadeExiste.professor.cargaHoraria}h)`
         );
       }
 
       // Validar data se fornecida
-      if (dados.Data) {
-        const novaData = new Date(dados.Data);
+      if (dados.data) {
+        const novaData = new Date(dados.data);
         const hoje = new Date();
         hoje.setHours(23, 59, 59, 999);
 
@@ -281,12 +284,12 @@ export async function atualizarEfetividade(
 
         const efetividadeDataExiste = await tx.efetividade.findFirst({
           where: {
-            Data: {
+            data: {
               gte: dataInicio,
               lte: dataFim,
             },
-            ProfessorID: efetividadeExiste.ProfessorID,
-            NOT: { EfetividadeID: id },
+            professorId: efetividadeExiste.professorId,
+            NOT: { efetividadeId: id },
           },
         });
 
@@ -297,20 +300,20 @@ export async function atualizarEfetividade(
 
       // Atualizar o registro
       return await tx.efetividade.update({
-        where: { EfetividadeID: id },
+        where: { efetividadeId: id },
         data: {
-          ...(dados.Data && { Data: new Date(dados.Data) }),
-          ...(dados.HorasTrabalhadas !== undefined && {
-            HorasTrabalhadas: dados.HorasTrabalhadas,
+          ...(dados.data && { data: new Date(dados.data) }),
+          ...(dados.horasTrabalhadas !== undefined && {
+            horasTrabalhadas: dados.horasTrabalhadas,
           }),
-          ...(dados.ProfessorID && { ProfessorID: dados.ProfessorID }),
+          ...(dados.professorId && { professorId: dados.professorId }),
         },
         include: {
-          Professor: {
+          professor: {
             select: {
-              Nome: true,
-              Departamento: true,
-              CargaHoraria: true,
+              nome: true,
+              departamento: true,
+              cargaHoraria: true,
             },
           },
         },
@@ -363,7 +366,7 @@ export async function deletarEfetividade(
 
     // Verificar se existe antes de deletar
     const efetividade = await prisma.efetividade.findUnique({
-      where: { EfetividadeID: id },
+      where: { efetividadeId: id },
     });
 
     if (!efetividade) {
@@ -371,7 +374,7 @@ export async function deletarEfetividade(
     }
 
     await prisma.efetividade.delete({
-      where: { EfetividadeID: id },
+      where: { efetividadeId: id },
     });
 
     req.log.info(`Efetividade deletada: ID ${id}`);
@@ -420,48 +423,48 @@ export async function buscarEfetividadesPorPeriodo(
     // Buscar efetividades e calcular estatísticas
     const efetividades = await prisma.efetividade.findMany({
       where: {
-        Data: {
+        data: {
           gte: inicio,
           lte: fim,
         },
       },
       include: {
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
-            CargaHoraria: true,
-            Usuario: {
+            nome: true,
+            departamento: true,
+            cargaHoraria: true,
+            usuario: {
               select: {
-                Email: true,
+                email: true,
               },
             },
           },
         },
       },
       orderBy: {
-        Data: "desc",
+        data: "desc",
       },
     });
 
     // Calcular estatísticas por professor
     const estatisticasPorProfessor = efetividades.reduce(
       (acc, curr) => {
-        const pid = curr.ProfessorID;
+        const pid = curr.professorId;
         if (!acc[pid]) {
           acc[pid] = {
-            professorID: pid,
+            professorId: pid,
             totalHoras: 0,
             totalDias: 0,
             mediaDiaria: 0,
             professor: {
-              Nome: curr.Professor.Nome,
-              Departamento: curr.Professor.Departamento,
-              CargaHoraria: curr.Professor.CargaHoraria,
+              nome: curr.professor.nome,
+              departamento: curr.professor.departamento,
+              cargaHoraria: curr.professor.cargaHoraria,
             },
           };
         }
-        acc[pid].totalHoras += curr.HorasTrabalhadas;
+        acc[pid].totalHoras += curr.horasTrabalhadas;
         acc[pid].totalDias++;
         acc[pid].mediaDiaria = Number(
           (acc[pid].totalHoras / acc[pid].totalDias).toFixed(2)
@@ -471,14 +474,14 @@ export async function buscarEfetividadesPorPeriodo(
       {} as Record<
         number,
         {
-          professorID: number;
+          professorId: number;
           totalHoras: number;
           totalDias: number;
           mediaDiaria: number;
           professor: {
-            Nome: string;
-            Departamento: string;
-            CargaHoraria: number;
+            nome: string;
+            departamento: string;
+            cargaHoraria: number;
           };
         }
       >
@@ -522,11 +525,11 @@ export async function buscarEfetividadesProfessor(
 
     // Validar professor
     const professor = await prisma.professor.findUnique({
-      where: { ProfessorID: id },
+      where: { professorId: id },
       select: {
-        Nome: true,
-        Departamento: true,
-        CargaHoraria: true,
+        nome: true,
+        departamento: true,
+        cargaHoraria: true,
       },
     });
 
@@ -536,10 +539,10 @@ export async function buscarEfetividadesProfessor(
 
     // Preparar filtro de data
     const where: Prisma.EfetividadeWhereInput = {
-      ProfessorID: id,
+      professorId: id,
       ...(inicio || fim
         ? {
-            Data: {
+            data: {
               ...(inicio && { gte: new Date(inicio) }),
               ...(fim && { lte: new Date(fim) }),
             },
@@ -551,22 +554,22 @@ export async function buscarEfetividadesProfessor(
     const efetividades = await prisma.efetividade.findMany({
       where,
       include: {
-        Professor: {
+        professor: {
           select: {
-            Nome: true,
-            Departamento: true,
-            CargaHoraria: true,
+            nome: true,
+            departamento: true,
+            cargaHoraria: true,
           },
         },
       },
       orderBy: {
-        Data: "desc",
+        data: "desc",
       },
     });
 
     // Calcular estatísticas
     const totalHoras = efetividades.reduce(
-      (sum, ef) => sum + ef.HorasTrabalhadas,
+      (sum, ef) => sum + ef.horasTrabalhadas,
       0
     );
     const mediaDiaria =
@@ -578,9 +581,9 @@ export async function buscarEfetividadesProfessor(
       data: efetividades,
       meta: {
         professor: {
-          nome: professor.Nome,
-          departamento: professor.Departamento,
-          cargaHoraria: professor.CargaHoraria,
+          nome: professor.nome,
+          departamento: professor.departamento,
+          cargaHoraria: professor.cargaHoraria,
         },
         estatisticas: {
           totalHoras,

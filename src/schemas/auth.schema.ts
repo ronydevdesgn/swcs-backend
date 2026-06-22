@@ -21,10 +21,10 @@ export const loginSchema = z.object({
     .describe('Senha do usuário'),
   tipo: z
     .nativeEnum(TipoUsuario, {
-      required_error: "Tipo de usuário é obrigatório",
       invalid_type_error: "Tipo de usuário inválido"
     })
-    .describe('Tipo do usuário (PROFESSOR ou FUNCIONARIO)')
+    .optional()
+    .describe('Tipo do usuário (PROFESSOR ou FUNCIONARIO) - opcional, será detectado automaticamente')
 });
 
 // Esquema de pedido de redefinição de palavra-passe
@@ -78,13 +78,14 @@ export const refreshTokenSchema = z.object({
 });
 
 // Esquemas de resposta usando Zod
-export const usuarioResponseSchema = z.object({
-  id: z.number().describe('ID único do usuário'),
-  nome: z.string().describe('Nome completo do usuário'),
-  email: z.string().email().describe('Email do usuário'),
-  tipo: z.nativeEnum(TipoUsuario).describe('Tipo do usuário'),
-  permissoes: z.array(z.string()).describe('Lista de permissões do usuário')
-});
+export const usuarioResponseSchema = z.any()
+// z.object({
+//   id: z.number().describe('ID único do usuário'),
+//   nome: z.string().describe('Nome completo do usuário'),
+//   email: z.string().email().describe('Email do usuário'),
+//   tipo: z.nativeEnum(TipoUsuario).describe('Tipo do usuário'),
+//   permissoes: z.array(z.string()).describe('Lista de permissões do usuário')
+// });
 
 export const loginResponseSchema = z.object({
   usuario: usuarioResponseSchema,

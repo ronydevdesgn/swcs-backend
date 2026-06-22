@@ -1,7 +1,6 @@
 # Variáveis
 @baseUrl = http://localhost:3333/
-@authToken = 29bd14b49a671c2747978fe6
-
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJkb25uaWUyQHlhaG9vLmNvbSIsInRpcG8iOiJGVU5DSU9OQVJJTyIsIm5vbWUiOiJDaHJpcyBNYW5uIiwicGVybWlzc29lcyI6W10sImlhdCI6MTc2Nzk1NjE5NCwiZXhwIjoxNzY4MDQyNTk0fQ.X0_Ui_SBeAZ-vftfkA9uyUHC583QYkQ_wKiArTboSfM
 ### Health / Root
 GET {{baseUrl}}
 
@@ -10,9 +9,8 @@ POST {{baseUrl}}auth/login
 Content-Type: application/json
 
 {
-	"email": "ronydevdesgn@gmail.com",
-	"senha": "946646130Alberto",
-	"tipo": "FUNCIONARIO"
+	"email": "donnie2@yahoo.com",
+	"senha": "funcionario123"
 }
 
 ### Auth - Refresh token
@@ -45,6 +43,12 @@ Content-Type: application/json
 POST {{baseUrl}}auth/logout
 Authorization: Bearer {{authToken}}
 
+### Listar cursos
+GET {{baseUrl}}auth/me
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+
 
 ###########################################################################
 # Cursos
@@ -52,6 +56,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar cursos
 GET {{baseUrl}}cursos
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 ### Criar curso
 POST {{baseUrl}}cursos
@@ -59,26 +65,29 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Introdução à Computação",
-	"Descricao": "Curso introdutório sobre conceitos básicos",
-	"ProfessorID": 1
+	"Nome": "Introdução à Informtica",
+	"Descricao": "introdutório sobre conceitos básicos",
+	"ProfessorID": 5
 }
 
 ### Buscar curso por id
-GET {{baseUrl}}cursos/1
+GET {{baseUrl}}cursos/7
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
 
 ### Atualizar curso
-PUT {{baseUrl}}cursos/1
+PUT {{baseUrl}}cursos/7
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Introdução à Computação (Atualizado)",
-	"Descricao": "Descrição atualizada"
+	"Nome": "Introdução à Informatic",
+	"Descricao": "introdutório sobre conceitos básicos"
 }
 
 ### Remover curso
-DELETE {{baseUrl}}cursos/1
+DELETE {{baseUrl}}cursos/7
 Authorization: Bearer {{authToken}}
 
 
@@ -88,6 +97,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar professores
 GET {{baseUrl}}professores
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 ### Criar professor
 POST {{baseUrl}}professores
@@ -95,15 +106,16 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "João Silva",
-	"Email": "joao.silva@example.com",
+	"Nome": "Paulo da Silva",
+	"Email": "paulo.silva@example.com",
 	"Senha": "senhaProf123",
-	"Departamento": "CIENCIA_COMPUTACAO",
+	"Departamento": "INFORMATICA",
 	"CargaHoraria": 20
 }
 
 ### Buscar professor
-GET {{baseUrl}}professores/1
+GET {{baseUrl}}professores/5
+Authorization: Bearer {{authToken}}
 
 ### Atualizar professor
 PUT {{baseUrl}}professores/1
@@ -121,6 +133,8 @@ Authorization: Bearer {{authToken}}
 
 ### Listar sumários
 GET {{baseUrl}}sumarios
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 
 ### Criar sumário
 POST {{baseUrl}}sumarios
@@ -130,12 +144,13 @@ Authorization: Bearer {{authToken}}
 {
 	"Conteudo": "Resumo da aula sobre Fastify",
 	"Data": "2025-09-01T10:00:00.000Z",
-	"CursoID": 1,
-	"ProfessorID": 1
+	"CursoID": 2,
+	"ProfessorID": 2
 }
 
 ### Buscar sumário
 GET {{baseUrl}}sumarios/1
+Authorization: Bearer {{authToken}}
 
 ### Atualizar sumário
 PUT {{baseUrl}}sumarios/1
@@ -147,7 +162,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Deletar sumário
-DELETE {{baseUrl}}sumarios/1
+DELETE {{baseUrl}}sumarios/2
 Authorization: Bearer {{authToken}}
 
 
@@ -170,6 +185,16 @@ Authorization: Bearer {{authToken}}
 	"Estado": "PRESENTE"
 }
 
+### Gerar relatório
+GET {{baseUrl}}reports/relatorios?startDate=2025-09-01T00:00:00.000Z&endDate=2025-09-02T00:00:00.000Z&departamento=INFORMATICA
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+### listar dados do relatorio de faltas
+GET {{baseUrl}}presencas/list/relatorios?startDate=2025-09-01T00:00:00.000Z&endDate=2025-12-22T00:00:00.000Z&departamento=INFORMATICA
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
 ### Registrar presenças em lote
 POST {{baseUrl}}presencas/batch
 Content-Type: application/json
@@ -179,7 +204,7 @@ Authorization: Bearer {{authToken}}
 	"presencas": [
 		{ 
       "Data": "2025-09-01T00:00:00.000Z", 
-      "ProfessorID": 1, 
+      "ProfessorID": 3, 
       "Estado": "PRESENTE" 
       },
 		{ 
@@ -191,7 +216,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar presença por id
-GET {{baseUrl}}presencas/1
+GET {{baseUrl}}presencas/2
 Authorization: Bearer {{authToken}}
 
 ### Atualizar presença
@@ -228,7 +253,7 @@ Authorization: Bearer {{authToken}}
 }
 
 ### Buscar efetividades por período
-GET {{baseUrl}}efetividades/periodo?dataInicio=2025-09-01&dataFim=2025-09-30
+GET {{baseUrl}}efetividades/periodo?dataInicio=2025-09-01&dataFim=2025-09-28
 Authorization: Bearer {{authToken}}
 
 ### Buscar efetividades de um professor
@@ -241,7 +266,7 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"HorasTrabalhadas": 5
+	"HorasTrabalhadas": 8
 }
 
 ### Remover efetividade
@@ -263,10 +288,10 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"Nome": "Maria",
-	"Email": "maria@example.com",
-	"Senha": "senhaUser123",
-	"Tipo": "FUNCIONARIO"
+	"nome": "Maria",
+	"email": "maria@example.com",
+	"senha": "senhaUser1234",
+	"tipo": "FUNCIONARIO"
 }
 
 ### Buscar usuário
@@ -274,7 +299,7 @@ GET {{baseUrl}}usuarios/1
 Authorization: Bearer {{authToken}}
 
 ### Atualizar usuário
-PUT {{baseUrl}}usuarios/1
+PUT {{baseUrl}}usuarios/10
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -317,12 +342,12 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-	"UsuarioID": 1,
+	"UsuarioID": 3,
 	"PermissaoID": 2
 }
 
 ### Buscar permissões de um usuário
-GET {{baseUrl}}permissoes/usuarios/1
+GET {{baseUrl}}permissoes/usuario/3
 Authorization: Bearer {{authToken}}
 
 
@@ -343,7 +368,7 @@ Authorization: Bearer {{authToken}}
 	"Nome": "Ana",
 	"Email": "ana.func@example.com",
 	"Senha": "senhaFunc123",
-	"Cargo": "ADMIN"
+	"Cargo": "ADMINISTRATIVO"
 }
 
 ### Buscar funcionário

@@ -1,36 +1,37 @@
-import Fastify from "fastify";
-import dotenv from "dotenv";
-import swaggerPlugin from "./plugins/swagger";
-import prismaPlugin from "./plugins/prisma";
 import cors from "@fastify/cors";
+import dotenv from "dotenv";
+import Fastify from "fastify";
 import {
-  validatorCompiler,
-  serializerCompiler,
-  ZodTypeProvider,
+    serializerCompiler,
+    validatorCompiler,
+    ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import authRoutes from "./Routers/auth.routes";
-import professorRoutes from "./Routers/professor.routes";
-import funcionarioRoutes from "./Routers/funcionario.routes";
-import usuarioRoutes from "./Routers/usuario.routes";
-import permissoesRoutes from "./Routers/permissoes.routes";
-import cursosRoutes from "./Routers/cursos.routes";
-import sumariosRoutes from "./Routers/sumarios.routes";
-import presencasRoutes from "./Routers/presencas.routes";
-import efetividadesRoutes from "./Routers/efetividades.routes";
+import prismaPlugin from "./plugins/prisma";
+import swaggerPlugin from "./plugins/swagger";
 import { errorHandler } from "./middlewares/errorHandler";
+import authRoutes from "./Routers/auth.routes";
+import cursosRoutes from "./Routers/cursos.routes";
+import dashboardRoutes from "./Routers/dashboard.routes";
+import efetividadesRoutes from "./Routers/efetividades.routes";
+import funcionarioRoutes from "./Routers/funcionario.routes";
+import permissoesRoutes from "./Routers/permissoes.routes";
+import presencasRoutes from "./Routers/presencas.routes";
+import professorRoutes from "./Routers/professor.routes";
+import reportsRoutes from "./Routers/report.routes";
+import sumariosRoutes from "./Routers/sumarios.routes";
+import usuarioRoutes from "./Routers/usuario.routes";
 
 dotenv.config();
 
 export const app = Fastify({ 
   logger: true,
-  
   ajv: {
     customOptions: {
       removeAdditional: "all",
       coerceTypes: true,
       useDefaults: true,
     }
-  }
+  },
 })
   // habilita o TypeProvider que faz converter Zod→JSONSchema
   .withTypeProvider<ZodTypeProvider>();
@@ -39,32 +40,8 @@ export const app = Fastify({
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Normalização de payloads (aceita campos em caixa baixa vindos dos testes)
-app.addHook("preValidation", async (req) => {
-  const body = req.body as any;
-  if (body && typeof body === "object" && !Array.isArray(body)) {
-    const mapping: Record<string, string> = {
-      email: "Email",
-      senha: "Senha",
-      nome: "Nome",
-      tipo: "Tipo",
-      descricao: "Descricao",
-      cargo: "Cargo",
-      data: "Data",
-      conteudo: "Conteudo",
-      horasTrabalhadas: "HorasTrabalhadas",
-      professorID: "ProfessorID",
-      cursoID: "CursoID",
-      estado: "Estado",
-    };
-    for (const [key, val] of Object.entries(mapping)) {
-      if (body[key] !== undefined && body[val] === undefined) {
-        body[val] = body[key];
-      }
-    }
-    req.body = body;
-  }
-});
+// Normalização de payloads Removida (Agora usamos camelCase diretamente)
+
 
 // Habilita/Desabilita Swagger conforme ambiente (desabilitado por padrão)
 const enableSwagger = process.env.SWAGGER_ENABLED === "true";
@@ -85,6 +62,7 @@ app.get("/", async (request, reply) => {
       sumarios: "/sumarios",
       presencas: "/presencas",
       efetividades: "/efetividades",
+      dashboard: "/dashboard/stats",
     },
   } as Record<string, unknown>;
 
@@ -96,30 +74,47 @@ app.get("/", async (request, reply) => {
 });
 
 
-await app.register(prismaPlugin);
+app.register(prismaPlugin);
 
-await app.register(cors, {
-  origin: ["http://localhost:5173", "http://localhost:3333"],
+const allowedOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',') 
+  : ["http://localhost:5173"];
+
+app.register(cors, {
+  origin: allowedOrigins,
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods",
+  ],
+  exposedHeaders: ["Authorization"],
+  optionsSuccessStatus: 200, // Para suportar browsers legados
 });
 
 
-await app.register(authRoutes, { prefix: "/auth" });
-await app.register(professorRoutes, { prefix: "/professores" });
-await app.register(funcionarioRoutes, { prefix: "/funcionarios" });
-await app.register(usuarioRoutes, { prefix: "/usuarios" });
-await app.register(permissoesRoutes, { prefix: "/permissoes" });
-await app.register(cursosRoutes, { prefix: "/cursos" });
-await app.register(sumariosRoutes, { prefix: "/sumarios" });
-await app.register(presencasRoutes, { prefix: "/presencas" });
-await app.register(efetividadesRoutes, { prefix: "/efetividades" });
+app.register(authRoutes, { prefix: "/auth" });
+app.register(professorRoutes, { prefix: "/professores" });
+app.register(reportsRoutes, { prefix: "/reports" });
+app.register(funcionarioRoutes, { prefix: "/funcionarios" });
+app.register(usuarioRoutes, { prefix: "/usuarios" });
+app.register(permissoesRoutes, { prefix: "/permissoes" });
+app.register(cursosRoutes, { prefix: "/cursos" });
+app.register(sumariosRoutes, { prefix: "/sumarios" });
+app.register(presencasRoutes, { prefix: "/presencas" });
+app.register(efetividadesRoutes, { prefix: "/efetividades" });
+app.register(dashboardRoutes, { prefix: "/dashboard" });
 
 
 if (enableSwagger) {
   try {
-    await app.register(swaggerPlugin);
+    app.register(swaggerPlugin);
     app.log.info("Swagger plugin registered successfully");
   } catch (error) {
     app.log.error("Failed to register Swagger plugin:", error);

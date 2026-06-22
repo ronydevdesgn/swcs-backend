@@ -1,6 +1,8 @@
-import { FastifyPluginAsync } from "fastify";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
+import pg from "pg";
 
 // Declaração de tipos para o Fastify
 declare module "fastify" {
@@ -14,18 +16,16 @@ export class Database {
 
   static getInstance(): PrismaClient {
     if (!Database.instance) {
+      const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+      const adapter = new PrismaPg(pool);
+      
       Database.instance = new PrismaClient({
+        adapter,
         log:
           process.env.NODE_ENV === "development"
             ? ["query", "info", "warn", "error"]
             : ["warn", "error"],
         errorFormat: "pretty",
-        // Configurações otimizadas para MySQL
-        datasources: {
-          db: {
-            url: process.env.DATABASE_URL,
-          },
-        },
       });
     }
     return Database.instance;
@@ -67,20 +67,7 @@ const prismaPlugin: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Hook para lidar com erros de conexão durante runtime
-  fastify.addHook("onRequest", async (request, reply) => {
-    try {
-      // Verifica se a conexão ainda está ativa
-      await fastify.prisma.$queryRaw`SELECT 1`;
-    } catch (error) {
-      fastify.log.error("Database connection lost:", error);
-      reply.status(503).send({
-        statusCode: 503,
-        error: "Service Unavailable",
-        message: "Database connection lost",
-      });
-    }
-  });
+
 };
 
 export default fp(prismaPlugin, {

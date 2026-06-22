@@ -1,41 +1,41 @@
 // prisma/schema.prisma
-
 // Atualizado conforme novo schema com Funcionario, enums e ajustes
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // Modelo para controlo de Token de Refresh
 model RefreshToken {
-  TokenID   Int      @id @default(autoincrement())
+  tokenId   Int      @id @default(autoincrement()) @map("TokenID")
   token     String   @unique
-  UsuarioID Int
-  Usuario   Usuario  @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: Cascade)
-  ExpiresAt DateTime
-  CreatedAt DateTime @default(now())
+  usuarioId Int      @map("UsuarioID")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  expiresAt DateTime @map("ExpiresAt")
+  createdAt DateTime @default(now()) @map("CreatedAt")
 
-  @@index([UsuarioID])
-  @@index([ExpiresAt])
+  @@index([usuarioId])
+  @@index([expiresAt])
 }
 
 model PasswordReset {
-  PasswordResetID Int      @id @default(autoincrement())
-  Token           String   @unique
-  UsuarioID       Int
-  Usuario         Usuario  @relation(fields: [UsuarioID], references: [UsuarioID], onDelete: Cascade)
-  ExpiresAt       DateTime
-  Used            Boolean  @default(false)
-  CreatedAt       DateTime @default(now())
+  passwordResetId Int      @id @default(autoincrement()) @map("PasswordResetID")
+  token           String   @unique @map("Token")
+  usuarioId       Int      @map("UsuarioID")
+  usuario         Usuario  @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  expiresAt       DateTime @map("ExpiresAt")
+  used            Boolean  @default(false) @map("Used")
+  createdAt       DateTime @default(now()) @map("CreatedAt")
 
-  @@index([UsuarioID])
-  @@index([ExpiresAt])
-  @@index([Token, Used])
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@index([token, used])
 }
 
 enum Estado {
@@ -46,6 +46,7 @@ enum Estado {
 enum TipoUsuario {
   FUNCIONARIO
   PROFESSOR
+  SUMARISTA
 }
 
 enum Departamento {
@@ -61,147 +62,147 @@ enum Cargo {
 }
 
 model Professor {
-  ProfessorID  Int              @id @default(autoincrement())
-  Nome         String           @db.VarChar(100)
-  Departamento Departamento
-  CargaHoraria Int              @db.Int
-  Cursos       ProfessorCurso[]
-  Sumarios     Sumario[]        @relation("ProfessorSumarios")
-  Presencas    Presenca[]
-  Efetividades Efetividade[]
-  Usuario      Usuario?         @relation(fields: [UsuarioID], references: [UsuarioID])
-  UsuarioID    Int?             @unique
-  CreatedAt    DateTime         @default(now())
-  UpdatedAt    DateTime         @default(now()) @updatedAt
+  professorId  Int              @id @default(autoincrement()) @map("ProfessorID")
+  nome         String           @map("Nome") @db.VarChar(100)
+  departamento Departamento     @map("Departamento")
+  cargaHoraria Int              @map("CargaHoraria")
+  cursos       ProfessorCurso[]
+  sumarios     Sumario[]        @relation("ProfessorSumarios")
+  presencas    Presenca[]
+  efetividades Efetividade[]
+  usuario      Usuario?         @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  usuarioId    Int?             @unique @map("UsuarioID")
+  createdAt    DateTime         @default(now()) @map("CreatedAt")
+  updatedAt    DateTime         @default(now()) @updatedAt @map("UpdatedAt")
 
-  @@index([Departamento])
-  @@index([Nome])
+  @@index([departamento])
+  @@index([nome])
 }
 
 model Funcionario {
-  FuncionarioID Int      @id @default(autoincrement())
-  Nome          String   @db.VarChar(100)
-  Email         String   @unique @db.VarChar(100)
-  Cargo         Cargo
-  Usuario       Usuario? @relation(fields: [UsuarioID], references: [UsuarioID])
-  UsuarioID     Int?     @unique
-  CreatedAt     DateTime @default(now())
-  UpdatedAt     DateTime @default(now()) @updatedAt
+  funcionarioId Int      @id @default(autoincrement()) @map("FuncionarioID")
+  nome          String   @map("Nome") @db.VarChar(100)
+  email         String   @unique @map("Email") @db.VarChar(100)
+  cargo         Cargo    @map("Cargo")
+  usuario       Usuario? @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  usuarioId     Int?     @unique @map("UsuarioID")
+  createdAt     DateTime @default(now()) @map("CreatedAt")
+  updatedAt     DateTime @default(now()) @updatedAt @map("UpdatedAt")
 
-  @@index([Cargo])
-  @@index([Nome])
+  @@index([cargo])
+  @@index([nome])
 }
 
 model Usuario {
-  UsuarioID   Int                @id @default(autoincrement())
-  Nome        String             @db.VarChar(100)
-  Email       String             @unique @db.VarChar(100)
-  SenhaHash   String             @db.VarChar(255)
-  Tipo        TipoUsuario
-  Permissoes  UsuarioPermissao[]
-  Professor   Professor?
-  Funcionario Funcionario?
+  usuarioId   Int                @id @default(autoincrement()) @map("UsuarioID")
+  nome        String             @map("Nome") @db.VarChar(100)
+  email       String             @unique @map("Email") @db.VarChar(100)
+  senhaHash   String             @map("SenhaHash") @db.VarChar(255)
+  tipo        TipoUsuario        @map("Tipo")
+  permissoes  UsuarioPermissao[]
+  professor   Professor?
+  funcionario Funcionario?
 
-  RefreshTokens  RefreshToken[]
-  PasswordResets PasswordReset[]
-  CreatedAt      DateTime        @default(now())
-  UpdatedAt      DateTime        @default(now()) @updatedAt
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  createdAt      DateTime        @default(now()) @map("CreatedAt")
+  updatedAt      DateTime        @default(now()) @updatedAt @map("UpdatedAt")
 
-  @@index([Tipo])
-  @@index([Nome])
+  @@index([tipo])
+  @@index([nome])
 }
 
 model Curso {
-  CursoID     Int              @id @default(autoincrement())
-  Nome        String           @db.VarChar(100)
-  Descricao   String           @db.Text
-  Professores ProfessorCurso[]
-  Sumarios    Sumario[]
-  CreatedAt   DateTime         @default(now())
-  UpdatedAt   DateTime         @default(now()) @updatedAt
-  Presenca    Presenca[]
-  Efetividade Efetividade[]
+  cursoId     Int              @id @default(autoincrement()) @map("CursoID")
+  nome        String           @map("Nome") @db.VarChar(100)
+  descricao   String           @map("Descricao") @db.Text
+  professores ProfessorCurso[]
+  sumarios    Sumario[]
+  createdAt   DateTime         @default(now()) @map("CreatedAt")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("UpdatedAt")
+  presenca    Presenca[]
+  efetividade Efetividade[]
 
-  @@index([Nome])
+  @@index([nome])
 }
 
 model Sumario {
-  SumarioID   Int       @id @default(autoincrement())
-  Data        DateTime
-  Conteudo    String    @db.Text
-  CursoID     Int
-  ProfessorID Int
-  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Cascade)
-  Professor   Professor @relation("ProfessorSumarios", fields: [ProfessorID], references: [ProfessorID], onDelete: Cascade)
-  CreatedAt   DateTime  @default(now())
-  UpdatedAt   DateTime  @default(now()) @updatedAt
+  sumarioId   Int       @id @default(autoincrement()) @map("SumarioID")
+  data        DateTime  @map("Data")
+  conteudo    String    @map("Conteudo") @db.Text
+  cursoId     Int       @map("CursoID")
+  professorId Int       @map("ProfessorID")
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Cascade)
+  professor   Professor @relation("ProfessorSumarios", fields: [professorId], references: [professorId], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("UpdatedAt")
 
-  @@index([CursoID])
-  @@index([ProfessorID])
-  @@index([Data])
-  @@index([Data, CursoID])
+  @@index([cursoId])
+  @@index([professorId])
+  @@index([data])
+  @@index([data, cursoId])
 }
 
 model ProfessorCurso {
-  ProfessorID Int
-  CursoID     Int
-  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Cascade)
-  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Cascade)
-  CreatedAt   DateTime  @default(now())
+  professorId Int       @map("ProfessorID")
+  cursoId     Int       @map("CursoID")
+  professor   Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
 
-  @@id([ProfessorID, CursoID])
-  @@index([ProfessorID])
-  @@index([CursoID])
+  @@id([professorId, cursoId])
+  @@index([professorId])
+  @@index([cursoId])
 }
 
 model Presenca {
-  PresencaID  Int       @id @default(autoincrement())
-  Data        DateTime
-  Estado      Estado
-  ProfessorID Int
-  CursoID     Int       @default(1)
-  Professor   Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Restrict)
-  Curso       Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Restrict)
-  CreatedAt   DateTime  @default(now())
-  UpdatedAt   DateTime  @updatedAt
+  presencaId  Int       @id @default(autoincrement()) @map("PresencaID")
+  data        DateTime  @map("Data")
+  estado      Estado    @map("Estado")
+  professorId Int       @map("ProfessorID")
+  cursoId     Int       @default(1) @map("CursoID")
+  professor   Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso       Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Restrict)
+  createdAt   DateTime  @default(now()) @map("CreatedAt")
+  updatedAt   DateTime  @updatedAt @map("UpdatedAt")
 
-  @@index([ProfessorID])
-  @@index([CursoID])
-  @@index([Data])
-  @@index([Data, ProfessorID]) // Índice composto para relatórios de presença
-  @@index([Estado]) // Índice para filtros por estado
+  @@index([professorId])
+  @@index([cursoId])
+  @@index([data])
+  @@index([data, professorId])
+  @@index([estado])
 }
 
 model Efetividade {
-  EfetividadeID    Int       @id @default(autoincrement())
-  Data             DateTime
-  HorasTrabalhadas Int       @db.Int
-  ProfessorID      Int
-  CursoID          Int       @default(1)
-  Professor        Professor @relation(fields: [ProfessorID], references: [ProfessorID], onDelete: Restrict)
-  Curso            Curso     @relation(fields: [CursoID], references: [CursoID], onDelete: Restrict)
-  CreatedAt        DateTime  @default(now())
-  UpdatedAt        DateTime  @updatedAt
+  efetividadeId    Int       @id @default(autoincrement()) @map("EfetividadeID")
+  data             DateTime  @map("Data")
+  horasTrabalhadas Int       @map("HorasTrabalhadas")
+  professorId      Int       @map("ProfessorID")
+  cursoId          Int       @default(1) @map("CursoID")
+  professor        Professor @relation(fields: [professorId], references: [professorId], onDelete: Cascade)
+  curso            Curso     @relation(fields: [cursoId], references: [cursoId], onDelete: Restrict)
+  createdAt        DateTime  @default(now()) @map("CreatedAt")
+  updatedAt        DateTime  @updatedAt @map("UpdatedAt")
 
-  @@index([ProfessorID])
-  @@index([CursoID])
-  @@index([Data])
-  @@index([Data, ProfessorID]) // Índice composto para relatórios
+  @@index([professorId])
+  @@index([cursoId])
+  @@index([data])
+  @@index([data, professorId])
 }
 
 model Permissao {
-  PermissaoID Int                @id @default(autoincrement())
-  Descricao   String             @db.VarChar(100)
-  Usuarios    UsuarioPermissao[]
+  permissaoId Int                @id @default(autoincrement()) @map("PermissaoID")
+  descricao   String             @map("Descricao") @db.VarChar(100)
+  usuarios    UsuarioPermissao[]
 
-  @@index([Descricao])
+  @@index([descricao])
 }
 
 model UsuarioPermissao {
-  UsuarioID   Int
-  PermissaoID Int
-  Usuario     Usuario   @relation(fields: [UsuarioID], references: [UsuarioID])
-  Permissao   Permissao @relation(fields: [PermissaoID], references: [PermissaoID])
+  usuarioId   Int       @map("UsuarioID")
+  permissaoId Int       @map("PermissaoID")
+  usuario     Usuario   @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  permissao   Permissao @relation(fields: [permissaoId], references: [permissaoId], onDelete: Cascade)
 
-  @@id([UsuarioID, PermissaoID])
+  @@id([usuarioId, permissaoId])
 }
